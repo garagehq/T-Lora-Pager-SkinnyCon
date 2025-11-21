@@ -28,14 +28,21 @@
 #endif
 #include "LilyGoTypedef.h"
 #include "LilyGoPowerManage.h"
+#include "BrightnessController.h"
 
 #define newModule()   new Module(LORA_CS,LORA_IRQ,LORA_RST,LORA_BUSY,SPI)
 
 class LilyGoWatch2022 : public LilyGo_Display,
     public LilyGoDispSPI,
     public LilyGoEventManage,
-    public LilyGoPowerManage
+    public LilyGoPowerManage,
+    public BrightnessController<LilyGoWatch2022, 0, 255, 5>
 {
+private:
+    LilyGoWatch2022();
+    ~LilyGoWatch2022();
+    LilyGoWatch2022(const LilyGoWatch2022 &) = delete;
+    LilyGoWatch2022 &operator=(const LilyGoWatch2022 &) = delete;
 public:
     GPS gps;
     TouchDrvFT6X36 touch;
@@ -60,8 +67,16 @@ public:
 #endif
 #endif
 
-    LilyGoWatch2022();
-    ~LilyGoWatch2022();
+    /**
+     * @brief  Get the instance of the LilyGoWatch2022 class.
+     * @note   This function returns a pointer to the singleton instance of the class.
+     * @retval Pointer to the LilyGoWatch2022 instance.
+     */
+    static LilyGoWatch2022 *getInstance()
+    {
+        static LilyGoWatch2022 _instance;
+        return &_instance;
+    }
 
     /**
      * @brief Set the boot image.
@@ -163,24 +178,6 @@ public:
      * @return uint8_t Current brightness level.
      */
     uint8_t getBrightness();
-
-    /**
-     * @brief Decrease the display brightness to the target level.
-     *
-     * @param target_level Target brightness level.
-     * @param delay_ms Delay between each brightness decrement (default: 5ms).
-     * @param async Whether to perform the operation asynchronously (default: false).
-     */
-    void decrementBrightness(uint8_t target_level, uint32_t delay_ms = 5, bool async = false);
-
-    /**
-     * @brief Increase the display brightness to the target level.
-     *
-     * @param target_level Target brightness level.
-     * @param delay_ms Delay between each brightness increment (default: 5ms).
-     * @param async Whether to perform the operation asynchronously (default: false).
-     */
-    void incrementalBrightness(uint8_t target_level, uint32_t delay_ms = 5, bool async = false);
 
     /**
      * @brief Set the display rotation.
@@ -322,7 +319,10 @@ public:
      *
      * @return uint8_t The number of codec input channels.
      */
-    uint8_t getCodecInputChannels(){ return 1; };
+    uint8_t getCodecInputChannels()
+    {
+        return 1;
+    };
 
     /**
      * @brief Get the number of codec audio output channels.(Speaker)
@@ -331,7 +331,10 @@ public:
      *
      * @return uint8_t The number of codec audio output channels.
      */
-    uint8_t getCodecOutputChannels(){ return 1; };
+    uint8_t getCodecOutputChannels()
+    {
+        return 1;
+    };
 
     /**
      * @brief Get the maximum display brightness level.
@@ -340,7 +343,10 @@ public:
      *
      * @return uint8_t The maximum display brightness level.
      */
-    uint8_t getDisplayBrightnessMaxLevel(){ return 255; };
+    uint8_t getDisplayBrightnessMaxLevel()
+    {
+        return 255;
+    };
 
 private:
     /**
@@ -400,7 +406,7 @@ private:
     uint8_t *_boot_images_addr;
 };
 
-extern LilyGoWatch2022 instance;
+extern LilyGoWatch2022 &instance;
 
 #if    defined(ARDUINO_LILYGO_LORA_SX1262)
 extern SX1262 radio;

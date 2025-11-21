@@ -39,14 +39,22 @@
 #ifdef USING_AUDIO_CODEC
 #include "bsp_codec/esp_codec.h"
 #endif
-
+#include "BrightnessController.h"
 
 #define newModule()   new Module(LORA_CS,LORA_IRQ,LORA_RST,LORA_BUSY)
 
 using custom_feedback_t = void(*)(void *args);
 
-class LilyGoLoRaPager: public LilyGo_Display, public LilyGoDispArduinoSPI, public LilyGoEventManage
+class LilyGoLoRaPager: public LilyGo_Display,
+    public LilyGoDispArduinoSPI,
+    public LilyGoEventManage,
+    public BrightnessController<LilyGoLoRaPager, 0, 16, 50>
 {
+private:
+    LilyGoLoRaPager();
+    ~LilyGoLoRaPager();
+    LilyGoLoRaPager(const LilyGoLoRaPager &) = delete;
+    LilyGoLoRaPager &operator=(const LilyGoLoRaPager &) = delete;
 public:
     GPS             gps;
     SensorBHI260AP  sensor;
@@ -72,8 +80,16 @@ public:
     EspCodec          codec;
 #endif
 
-    LilyGoLoRaPager();
-    ~LilyGoLoRaPager();
+    /**
+     * @brief  Get the instance of the LilyGoLoRaPager class.
+     * @note   This function returns a pointer to the singleton instance of the class.
+     * @retval Pointer to the LilyGoLoRaPager instance.
+     */
+    static LilyGoLoRaPager *getInstance()
+    {
+        static LilyGoLoRaPager _instance;
+        return &_instance;
+    }
 
     /**
      * @brief Set the boot image.
@@ -216,32 +232,6 @@ public:
      * @return uint8_t The current brightness level.
      */
     uint8_t getBrightness();
-
-    /**
-     * @brief Decrease the display brightness to the target level.
-     *
-     * This function gradually decreases the display brightness to the 'target_level'. The 'delay_ms' parameter
-     * specifies the delay between each decrement step, and the 'async' parameter indicates whether the operation
-     * should be performed asynchronously.
-     *
-     * @param target_level The target brightness level to reach.
-     * @param delay_ms Delay between each brightness decrement step (default: 5ms).
-     * @param async Whether to perform the operation asynchronously (default: false).
-     */
-    void decrementBrightness(uint8_t target_level, uint32_t delay_ms = 5, bool async = false);
-
-    /**
-     * @brief Increase the display brightness to the target level.
-     *
-     * This function gradually increases the display brightness to the 'target_level'. The 'delay_ms' parameter
-     * specifies the delay between each increment step, and the 'async' parameter indicates whether the operation
-     * should be performed asynchronously.
-     *
-     * @param target_level The target brightness level to reach.
-     * @param delay_ms Delay between each brightness increment step (default: 5ms).
-     * @param async Whether to perform the operation asynchronously (default: false).
-     */
-    void incrementalBrightness(uint8_t target_level, uint32_t delay_ms = 5, bool async = false);
 
     /**
      * @brief Set the display rotation.
@@ -519,7 +509,10 @@ public:
      *
      * @return uint8_t The number of codec input channels.
      */
-    uint8_t getCodecInputChannels(){ return 1; };
+    uint8_t getCodecInputChannels()
+    {
+        return 1;
+    };
 
     /**
      * @brief Get the number of codec audio output channels.(Speaker)
@@ -528,7 +521,10 @@ public:
      *
      * @return uint8_t The number of codec audio output channels.
      */
-    uint8_t getCodecOutputChannels(){ return 1; };
+    uint8_t getCodecOutputChannels()
+    {
+        return 1;
+    };
 
     /**
      * @brief Get the maximum display brightness level.
@@ -537,7 +533,10 @@ public:
      *
      * @return uint8_t The maximum display brightness level.
      */
-    uint8_t getDisplayBrightnessMaxLevel(){ return 16; };
+    uint8_t getDisplayBrightnessMaxLevel()
+    {
+        return 16;
+    };
 
 private:
     /**
@@ -579,7 +578,7 @@ private:
 };
 
 extern RfalNfcClass NFCReader;
-extern LilyGoLoRaPager instance;
+extern LilyGoLoRaPager &instance;
 
 #if    defined(ARDUINO_LILYGO_LORA_SX1262)
 extern SX1262 radio;

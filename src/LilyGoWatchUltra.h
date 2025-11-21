@@ -34,6 +34,7 @@
 #include "LilyGoEventManage.h"
 #include "LilyGoTypedef.h"
 #include "LilyGoPowerManage.h"
+#include "BrightnessController.h"
 
 #define newModule()   new Module(LORA_CS,LORA_IRQ,LORA_RST,LORA_BUSY)
 
@@ -63,8 +64,17 @@ static uint8_t BATTER_PARAMS[] = {
     0x00, 0xfb, 0x00, 0x00, 0xfb, 0x00, 0x00, 0xfb, 0x00, 0x00, 0xf6, 0x00, 0x00, 0xf6, 0x00, 0xf6,
 };
 
-class LilyGoUltra: public LilyGo_Display, public LilyGoDispQSPI, public LilyGoEventManage, public LilyGoPowerManage
+class LilyGoUltra: public LilyGo_Display,
+    public LilyGoDispQSPI,
+    public LilyGoEventManage,
+    public LilyGoPowerManage,
+    public BrightnessController<LilyGoUltra, 0, 255, 5>
 {
+private:
+    LilyGoUltra();
+    ~LilyGoUltra();
+    LilyGoUltra(const LilyGoUltra &) = delete;
+    LilyGoUltra &operator=(const LilyGoUltra &) = delete;
 public:
     XPowersAXP2101 pmu;
     GPS gps;
@@ -93,8 +103,18 @@ public:
     ExtensionIOXL9555 io;
 #endif
 
-    LilyGoUltra();
-    ~LilyGoUltra();
+
+    /**
+     * @brief  Get the instance of the LilyGoUltra class.
+     * @note   This function returns a pointer to the singleton instance of the class.
+     * @retval Pointer to the LilyGoUltra instance.
+     */
+    static LilyGoUltra *getInstance()
+    {
+        static LilyGoUltra _instance;
+        return &_instance;
+    }
+
 
     /**
      * @brief Set the boot image.
@@ -264,32 +284,6 @@ public:
      * @return uint8_t The current brightness level.
      */
     uint8_t getBrightness();
-
-    /**
-     * @brief Decrease the display brightness to the target level.
-     *
-     * This function gradually decreases the display brightness to the 'target_level'. The 'delay_ms' parameter
-     * specifies the delay between each decrement step, and the 'reserve' parameter might be used for some
-     * additional reservation settings.
-     *
-     * @param target_level The target brightness level to reach.
-     * @param delay_ms Delay between each brightness decrement step (default: 5ms).
-     * @param reserve Optional parameter for additional reservation settings (default: false).
-     */
-    void decrementBrightness(uint8_t target_level, uint32_t delay_ms = 5, bool reserve = false);
-
-    /**
-     * @brief Increase the display brightness to the target level.
-     *
-     * This function gradually increases the display brightness to the 'target_level'. The 'delay_ms' parameter
-     * specifies the delay between each increment step, and the 'reserve' parameter might be used for some
-     * additional reservation settings.
-     *
-     * @param target_level The target brightness level to reach.
-     * @param delay_ms Delay between each brightness increment step (default: 5ms).
-     * @param reserve Optional parameter for additional reservation settings (default: false).
-     */
-    void incrementalBrightness(uint8_t target_level, uint32_t delay_ms = 5, bool reserve = false);
 
     /**
      * @brief Set the display rotation.
@@ -634,7 +628,7 @@ private:
 extern RfalNfcClass NFCReader;
 #endif
 
-extern LilyGoUltra instance;
+extern LilyGoUltra &instance;
 
 #if    defined(ARDUINO_LILYGO_LORA_SX1262)
 extern SX1262 radio;

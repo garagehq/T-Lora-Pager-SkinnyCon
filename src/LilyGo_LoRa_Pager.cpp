@@ -48,7 +48,6 @@ static EventGroupHandle_t  rotaryTaskFlag = NULL;
 static void rotaryTask(void *p);
 extern void setupMSC(lock_callback_t lock_cb, lock_callback_t ulock_cb);
 
-
 #ifndef RADIOLIB_EXCLUDE_NRF24
 nRF24 nrf24 = new Module(44/*CS*/, 9/*IRQ*/, 43/*CE*/);
 #endif
@@ -360,20 +359,6 @@ uint32_t LilyGoLoRaPager::begin(uint32_t disable_hw_init)
 
     if (!(disable_hw_init & NO_HW_LORA)) {
 
-#if    defined(ARDUINO_LILYGO_LORA_SX1262)
-        log_d("Radio select  SX1262");
-#elif  defined(ARDUINO_LILYGO_LORA_SX1280)
-        log_d("Radio select  SX1280");
-#elif  defined(ARDUINO_LILYGO_LORA_CC1101)
-        log_d("Radio select  CC1101");
-#elif  defined(ARDUINO_LILYGO_LORA_LR1121)
-        log_d("Radio select  LR1121");
-#elif  defined(ARDUINO_LILYGO_LORA_SI4432)
-        log_d("Radio select  SI4432");
-#else
-        log_d("Radio select  None");
-#endif
-
         int state = radio.begin();
         if (state == RADIOLIB_ERR_NONE) {
             devices_probe |= HW_RADIO_ONLINE;
@@ -401,10 +386,12 @@ uint32_t LilyGoLoRaPager::begin(uint32_t disable_hw_init)
             // Set TCXO voltage to 3.0V
             radio.setTCXO(3.0);
 
+            log_i("✅Radio init succeeded, module: %s", USING_RADIO_NAME);
+
 #endif /*ARDUINO_LILYGO_LORA_LR1121*/
 
         } else {
-            log_e("Radio init failed, code :%d", state);
+            log_e("❌Radio init failed, code :%d , Use %s", state, USING_RADIO_NAME);
         }
     }
 
@@ -553,82 +540,6 @@ void LilyGoLoRaPager::setBrightness(uint8_t level)
 uint8_t LilyGoLoRaPager::getBrightness()
 {
     return backlight.getBrightness();
-}
-
-void LilyGoLoRaPager::decrementBrightness(uint8_t target_level, uint32_t delay_ms, bool async)
-{
-    if (target_level <= 0)target_level = 0;
-    if (target_level > 16)target_level = 16;
-
-    if (!async) {
-        uint8_t brightness = getBrightness();
-        if (target_level > brightness)
-            return;
-        for (int i = brightness; i >= target_level; i--) {
-            setBrightness(i);
-            delay(delay_ms);
-        }
-    } else {
-        // NO BLOCK
-        static uint8_t pvTimerParams;
-        pvTimerParams = target_level;
-        if (!timerHandler) {
-            timerHandler = xTimerCreate("bri", pdMS_TO_TICKS(delay_ms), pdTRUE, &pvTimerParams, [](TimerHandle_t xTimer) {
-                uint8_t *target_level = (uint8_t *) pvTimerGetTimerID( xTimer );
-                uint8_t brightness = instance.getBrightness();
-                brightness--;
-                instance.setBrightness(brightness);
-                if (brightness <= *target_level ) {
-                    xTimerStop(timerHandler, portMAX_DELAY);
-                    xTimerDelete(timerHandler, portMAX_DELAY);
-                    timerHandler = NULL;
-                }
-            });
-        }
-        if (xTimerIsTimerActive(timerHandler) == pdTRUE) {
-            return;
-        }
-        xTimerStart(timerHandler, portMAX_DELAY);
-    }
-}
-
-
-void LilyGoLoRaPager::incrementalBrightness(uint8_t target_level, uint32_t delay_ms, bool async)
-{
-    if (target_level <= 0)target_level = 0;
-    if (target_level > 16)target_level = 16;
-
-    if (!async) {
-        uint8_t brightness = getBrightness();
-        if (target_level < brightness)
-            return;
-        for (int i = brightness; i < target_level; i++) {
-            setBrightness(i);
-            delay(delay_ms);
-        }
-    } else {
-
-        // NO BLOCK
-        static uint8_t pvTimerParams;
-        pvTimerParams = target_level;
-        if (!timerHandler) {
-            timerHandler = xTimerCreate("bri", pdMS_TO_TICKS(delay_ms), pdTRUE, &pvTimerParams, [](TimerHandle_t xTimer) {
-                uint8_t *target_level = (uint8_t *) pvTimerGetTimerID( xTimer );
-                uint8_t brightness = instance.getBrightness();
-                brightness++;
-                instance.setBrightness(brightness);
-                if (brightness >= *target_level ) {
-                    xTimerStop(timerHandler, portMAX_DELAY);
-                    xTimerDelete(timerHandler, portMAX_DELAY);
-                    timerHandler = NULL;
-                }
-            });
-        }
-        if (xTimerIsTimerActive(timerHandler) == pdTRUE) {
-            return;
-        }
-        xTimerStart(timerHandler, portMAX_DELAY);
-    }
 }
 
 void LilyGoLoRaPager::pushColors(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2, uint16_t *color)
@@ -821,7 +732,7 @@ void LilyGoLoRaPager::sleep(WakeupSource_t wakeup_src, bool off_rtc_backup_domai
     vTaskDelete(rotaryHandler);
 
     ppm.disableMeasure();
-    
+
     if (devices_probe & HW_KEYBOARD_ONLINE) {
         kb.end();
     }
@@ -1301,6 +1212,13 @@ static void rotaryTask(void *p)
 }
 
 
-LilyGoLoRaPager instance;
+namespace
+{
+LilyGoLoRaPager &getInstanceRef()
+{
+    return *LilyGoLoRaPager::getInstance();
+}
+}
+LilyGoLoRaPager &instance = getInstanceRef();
 
 #endif //ARDUINO_T_LORA_PAGER

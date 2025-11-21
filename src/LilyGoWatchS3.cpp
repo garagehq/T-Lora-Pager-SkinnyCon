@@ -68,7 +68,7 @@ void LilyGoWatch2022::clearEventBits(const EventBits_t uxBitsToClear)
 
 void LilyGoWatch2022::setEventBits(const EventBits_t uxBitsToSet)
 {
-    xEventGroupClearBits(_event, uxBitsToSet);
+    xEventGroupSetBits(_event, uxBitsToSet);
 }
 
 const char *LilyGoWatch2022::getName()
@@ -175,25 +175,12 @@ uint32_t LilyGoWatch2022::begin(uint32_t disable_hw_init)
 
     if (!(disable_hw_init & NO_HW_LORA)) {
 
-#if    defined(ARDUINO_LILYGO_LORA_SX1262)
-        log_d("Radio select  SX1262");
-#elif  defined(ARDUINO_LILYGO_LORA_SX1280)
-        log_d("Radio select  SX1280");
-#elif  defined(ARDUINO_LILYGO_LORA_CC1101)
-        log_d("Radio select  CC1101");
-#elif  defined(ARDUINO_LILYGO_LORA_LR1121)
-        log_d("Radio select  LR1121");
-#elif  defined(ARDUINO_LILYGO_LORA_SI4432)
-        log_d("Radio select  SI4432");
-#else
-        log_d("Radio select  None");
-#endif
-
         int state = radio.begin();
         if (state == RADIOLIB_ERR_NONE) {
             devices_probe |= HW_RADIO_ONLINE;
+            log_i("✅Radio init succeeded, module: %s", USING_RADIO_NAME);
         } else {
-            log_e("Radio init failed, code :%d", state);
+            log_e("❌Radio init failed, code :%d , Use %s", state, USING_RADIO_NAME);
         }
     }
 
@@ -405,74 +392,6 @@ uint8_t LilyGoWatch2022::getBrightness()
 void LilyGoWatch2022::setBrightness(uint8_t level)
 {
     LilyGoDispSPI::setBrightness(level);
-}
-
-void LilyGoWatch2022::decrementBrightness(uint8_t target_level, uint32_t delay_ms, bool async)
-{
-    if (!async) {
-        uint8_t brightness = getBrightness();
-        if (target_level > brightness)
-            return;
-        for (int i = brightness; i >= target_level; i--) {
-            setBrightness(i);
-            delay(delay_ms);
-        }
-        return;
-    }
-
-    static uint8_t pvTimerParams;
-    pvTimerParams = target_level;
-    if (!timerHandler) {
-        timerHandler = xTimerCreate("bri", pdMS_TO_TICKS(delay_ms), pdTRUE, &pvTimerParams, [](TimerHandle_t xTimer) {
-            uint8_t *target_level = (uint8_t *) pvTimerGetTimerID( xTimer );
-            uint8_t brightness = instance.getBrightness();
-            brightness--;
-            instance.setBrightness(brightness);
-            if (brightness <= *target_level ) {
-                xTimerStop(timerHandler, portMAX_DELAY);
-                xTimerDelete(timerHandler, portMAX_DELAY);
-                timerHandler = NULL;
-            }
-        });
-    }
-    if (xTimerIsTimerActive(timerHandler) == pdTRUE) {
-        return;
-    }
-    xTimerStart(timerHandler, portMAX_DELAY);
-
-}
-
-void LilyGoWatch2022::incrementalBrightness(uint8_t target_level, uint32_t delay_ms, bool async)
-{
-    if (!async) {
-        uint8_t brightness = getBrightness();
-        if (target_level < brightness)
-            return;
-        for (int i = brightness; i < target_level; i++) {
-            setBrightness(i);
-            delay(delay_ms);
-        }
-        return;
-    }
-    static uint8_t pvTimerParams;
-    pvTimerParams = target_level;
-    if (!timerHandler) {
-        timerHandler = xTimerCreate("bri", pdMS_TO_TICKS(delay_ms), pdTRUE, &pvTimerParams, [](TimerHandle_t xTimer) {
-            uint8_t *target_level = (uint8_t *) pvTimerGetTimerID( xTimer );
-            uint8_t brightness = instance.getBrightness();
-            brightness++;
-            instance.setBrightness(brightness);
-            if (brightness >= *target_level ) {
-                xTimerStop(timerHandler, portMAX_DELAY);
-                xTimerDelete(timerHandler, portMAX_DELAY);
-                timerHandler = NULL;
-            }
-        });
-    }
-    if (xTimerIsTimerActive(timerHandler) == pdTRUE) {
-        return;
-    }
-    xTimerStart(timerHandler, portMAX_DELAY);
 }
 
 /*
@@ -1066,7 +985,15 @@ void LilyGoWatch2022::unlockSPI()
 
 }
 
-LilyGoWatch2022 instance;
+namespace
+{
+LilyGoWatch2022 &getInstanceRef()
+{
+    return *LilyGoWatch2022::getInstance();
+}
+}
+
+LilyGoWatch2022 &instance = getInstanceRef();
 
 #endif
 
