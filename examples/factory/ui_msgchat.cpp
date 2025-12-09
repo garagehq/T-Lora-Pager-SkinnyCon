@@ -201,18 +201,16 @@ static void _msg_ta_cb(lv_event_t *e)
 
     if (code == LV_EVENT_CLICKED && indev->type == LV_INDEV_TYPE_POINTER) {
         lv_group_set_editing((lv_group_t *)lv_obj_get_group(ta), true);
+#ifdef USING_TOUCHPAD
+        lv_keyboard_set_textarea(keyboard, ta);
+        lv_obj_remove_flag(keyboard, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_align(quit_btn, quit_btn_align, quit_btn_x_ofs, quit_btn_y_ofs);
+#endif
     } else  if (code == LV_EVENT_CLICKED && indev->type == LV_INDEV_TYPE_ENCODER) {
         if (edited) {
             lv_group_set_editing((lv_group_t *)lv_obj_get_group(ta), false);
             disable_keyboard();
         }
-#ifdef USING_TOUCHPAD
-        else {
-            lv_keyboard_set_textarea(keyboard, ta);
-            lv_obj_clear_flag(keyboard, LV_OBJ_FLAG_HIDDEN);
-            lv_obj_align(quit_btn, quit_btn_align, quit_btn_x_ofs, quit_btn_y_ofs);
-        }
-#endif
     } else if (code == LV_EVENT_FOCUSED) {
         if (edited) {
             enable_keyboard();
