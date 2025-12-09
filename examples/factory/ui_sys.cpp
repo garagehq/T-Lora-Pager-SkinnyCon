@@ -87,11 +87,21 @@ static void keyboard_brightness_cb(lv_event_t *e)
     lv_obj_t *obj = (lv_obj_t *)lv_event_get_target(e);
     uint8_t val =  lv_slider_get_value(obj);
     lv_obj_t *slider_label = (lv_obj_t *)lv_obj_get_user_data(obj);
-    lv_label_set_text_fmt(slider_label, "   %u%%  ", map_r(val, 0, 16, 0, 100));
-    val = map_r(val, 0, 16, 0, 255);
+    lv_label_set_text_fmt(slider_label, "   %u%%  ", map_r(val, 0, 255, 0, 100));
     local_param.keyboard_bl_level = val;
     hw_set_kb_backlight(val);
 }
+
+static void led_brightness_cb(lv_event_t *e)
+{
+    lv_obj_t *obj = (lv_obj_t *)lv_event_get_target(e);
+    uint8_t val =  lv_slider_get_value(obj);
+    lv_obj_t *slider_label = (lv_obj_t *)lv_obj_get_user_data(obj);
+    lv_label_set_text_fmt(slider_label, "   %u%%  ", map_r(val, 0, 255, 0, 100));
+    local_param.led_indicator_level = val;
+    hw_set_led_backlight(val);
+}
+
 
 static void disp_timeout_cb(lv_event_t *e)
 {
@@ -164,12 +174,23 @@ static lv_obj_t *create_subpage_backlight(lv_obj_t *menu, lv_obj_t *main_page)
     lv_group_add_obj(lv_group_get_default(), (slider));
 
     if (hw_has_keyboard()) {
-        uint8_t level =  map_r(local_param.keyboard_bl_level, 0, 255, 0, 16);
+        uint8_t level =  local_param.keyboard_bl_level;
         printf("Keyboard level = %u value=%u\n", level, local_param.keyboard_bl_level);
-        slider = create_slider(sub_page, LV_SYMBOL_SETTINGS, "Keyboard Brightness", 0, 16, level, keyboard_brightness_cb, LV_EVENT_VALUE_CHANGED);
+        slider = create_slider(sub_page, LV_SYMBOL_SETTINGS, "Keyboard Brightness", 0, 255, level, keyboard_brightness_cb, LV_EVENT_VALUE_CHANGED);
         parent = lv_obj_get_parent(slider);
         slider_label = lv_label_create(parent);
         lv_label_set_text_fmt(slider_label, "   %u%%  ", map_r(local_param.keyboard_bl_level, 0, 255, 0, 100));
+        lv_obj_set_user_data(slider, slider_label);
+        lv_group_add_obj(lv_group_get_default(), (slider));
+    }
+
+    if (hw_has_indicator_led()) {
+        uint8_t level =  local_param.led_indicator_level;
+        printf("LED level = %u value=%u\n", level, local_param.led_indicator_level);
+        slider = create_slider(sub_page, LV_SYMBOL_SETTINGS, "LED Brightness", 0, 255, level, led_brightness_cb, LV_EVENT_VALUE_CHANGED);
+        parent = lv_obj_get_parent(slider);
+        slider_label = lv_label_create(parent);
+        lv_label_set_text_fmt(slider_label, "   %u%%  ", map_r(local_param.led_indicator_level, 0, 255, 0, 100));
         lv_obj_set_user_data(slider, slider_label);
         lv_group_add_obj(lv_group_get_default(), (slider));
     }

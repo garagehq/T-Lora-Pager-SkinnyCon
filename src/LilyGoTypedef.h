@@ -30,7 +30,7 @@
 #define HW_SI473X_ONLINE            (_BV(15))
 #define HW_BME280_ONLINE            (_BV(16))
 #define HW_QMC5883P_ONLINE          (_BV(17))
-
+#define HW_LED_INDIC_ONLINE         (_BV(18))
 
 /* Selectively disable some initialisation */
 #define NO_HW_RTC                   (_BV(0))
@@ -51,6 +51,7 @@
 #define NO_HW_SI4735                (_BV(14))
 #define NO_HW_BME280                (_BV(15))
 #define NO_HW_QMC5883P              (_BV(16))
+#define NO_HW_CODEC                 (_BV(17))   
 
 /* Hardware interrupt mask */
 #define HW_IRQ_TOUCHPAD             (_BV(0))
@@ -85,6 +86,10 @@ typedef enum PowerCtrlChannel {
     POWER_EXT_GPIO,
     // SI4735 Radio 
     POWER_SI4735_RADIO,
+    // Codec
+    POWER_CODEC,
+    // RTC
+    POWER_RTC,
 
 } PowerCtrlChannel_t;
 

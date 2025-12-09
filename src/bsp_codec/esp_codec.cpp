@@ -83,10 +83,12 @@ bool EspCodec::begin(TwoWire&wire, uint8_t address, EspCodecType type)
 {
     wire.beginTransmission(address);
     if (wire.endTransmission() != 0) {
+        log_e("I2C device not found at address 0x%02X", address);
         return false;
     }
 
     if (_i2s_init() != ESP_OK) {
+        log_e("I2S init failed!");
         return false;
     }
 
@@ -200,8 +202,10 @@ bool EspCodec::begin(TwoWire&wire, uint8_t address, EspCodecType type)
         audio_codec_delete_gpio_if(gpio_if);
         audio_codec_delete_ctrl_if(i2c_ctrl_if);
         audio_codec_delete_codec_if(codec_if);
+        log_e("Codec open failed!");
         return false;
     }
+
     close();
 
     return true;
@@ -213,6 +217,7 @@ void EspCodec::end()
     audio_codec_delete_gpio_if(gpio_if);
     audio_codec_delete_ctrl_if(i2c_ctrl_if);
     audio_codec_delete_codec_if(codec_if);
+    _i2s_deinit();
 }
 
 void EspCodec::setMute(bool enable)
@@ -286,6 +291,8 @@ int EspCodec::read(uint8_t * buffer, size_t size)
 
 esp_err_t EspCodec::_i2s_init()
 {
+    log_d("I2S pins: MCLK=%d, BCK=%d, WS=%d, DOUT=%d, DIN=%d", _mck_io_num, _bck_io_num, _ws_io_num, _data_out_num, _data_in_num);
+    log_d("I2S port=%d initialized", _i2s_num);
 #if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 0, 0)
     static i2s_chan_handle_t tx_channel;
     static i2s_chan_handle_t rx_channel;
@@ -345,6 +352,23 @@ esp_err_t EspCodec::_i2s_init()
 
     i2s_data_if = audio_codec_new_i2s_data(&i2s_cfg);
     return i2s_data_if != NULL  ? ESP_OK : ESP_FAIL;
+}
+
+
+void EspCodec::_i2s_deinit()
+{
+#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 0, 0)
+    //TODO: Deinitialize I2S for IDF 5.x
+#else
+
+    i2s_driver_uninstall((i2s_port_t )_i2s_num);
+
+    pinMode(_mck_io_num, INPUT);
+    pinMode(_bck_io_num, INPUT);
+    pinMode(_ws_io_num, INPUT);
+    pinMode(_data_out_num, INPUT);
+    pinMode(_data_in_num, INPUT);
+#endif
 }
 
 const int WAVE_HEADER_SIZE = PCM_WAV_HEADER_SIZE;

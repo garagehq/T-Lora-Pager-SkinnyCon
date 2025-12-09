@@ -24,7 +24,7 @@ static lv_obj_t *frequency_dd = nullptr;
 static lv_obj_t *power_level_dd = nullptr;
 static lv_obj_t *menu = NULL;
 static lv_obj_t *radio_msg_label = NULL;
-static radio_params_t radio_params_copy;
+radio_params_t radio_params_copy;
 static uint8_t radio_run_mode = RADIO_DISABLE;
 static lv_timer_t *timer = NULL;
 static void ui_set_msg_label(const char *msg);
@@ -63,6 +63,8 @@ static void _ui_radio_obj_event(lv_event_t *e)
     if (*flag != 'b') {
         selected =  lv_dropdown_get_selected(obj);
     }
+
+    hw_feedback();
 
     switch (*flag) {
     case 'f':   //*frequency
@@ -128,12 +130,17 @@ static void _ui_radio_obj_event(lv_event_t *e)
                 lv_timer_resume(timer);
                 lv_timer_set_period(timer, radio_params_copy.interval);
             }
+            ui_set_msg_label("Waiting to send");
             break;
         case RADIO_RX:
             if (timer) {
                 lv_timer_resume(timer);
                 lv_timer_set_period(timer, 300);
             }
+            ui_set_msg_label("Listening");
+            break;
+        case RADIO_CW:
+            ui_set_msg_label("Continuous wave");
             break;
         default:
             break;
@@ -154,7 +161,7 @@ static void _ui_radio_obj_event(lv_event_t *e)
 }
 
 
-static lv_obj_t *create_frequency_dropdown(lv_obj_t *parent)
+lv_obj_t *create_frequency_dropdown(lv_obj_t *parent)
 {
     static const char flag = 'f';
     lv_obj_t *dd = lv_dropdown_create(parent);
@@ -174,7 +181,7 @@ static lv_obj_t *create_frequency_dropdown(lv_obj_t *parent)
     return dd;
 }
 
-static lv_obj_t *create_bandwidth_dropdown(lv_obj_t *parent)
+lv_obj_t *create_bandwidth_dropdown(lv_obj_t *parent)
 {
     static const char flag = 'w';
     lv_obj_t *dd = lv_dropdown_create(parent);
@@ -193,7 +200,7 @@ static lv_obj_t *create_bandwidth_dropdown(lv_obj_t *parent)
     return dd;
 }
 
-static lv_obj_t *create_tx_power_dropdown(lv_obj_t *parent)
+lv_obj_t *create_tx_power_dropdown(lv_obj_t *parent)
 {
     static const char flag = 't';
     lv_obj_t *dd = lv_dropdown_create(parent);
@@ -258,7 +265,7 @@ static lv_obj_t *create_mode_dropdown(lv_obj_t *parent)
     return dd;
 }
 
-static lv_obj_t *create_cr_dropdown(lv_obj_t *parent)
+lv_obj_t *create_cr_dropdown(lv_obj_t *parent)
 {
     static const char flag = 'c';
     lv_obj_t *dd = lv_dropdown_create(parent);
@@ -277,7 +284,7 @@ static lv_obj_t *create_cr_dropdown(lv_obj_t *parent)
 }
 
 
-static lv_obj_t *create_sf_dropdown(lv_obj_t *parent)
+lv_obj_t *create_sf_dropdown(lv_obj_t *parent)
 {
     static const char flag = 's';
     lv_obj_t *dd = lv_dropdown_create(parent);
@@ -357,14 +364,14 @@ static void _msg_ta_cb(lv_event_t *e)
     }
 }
 
-static lv_obj_t *create_syncword_textarea(lv_obj_t *parent)
+lv_obj_t *create_syncword_textarea(lv_obj_t *parent)
 {
     lv_obj_t *ta = lv_textarea_create(parent);
     lv_textarea_set_text_selection(ta, false);
     lv_textarea_set_cursor_click_pos(ta, false);
     lv_textarea_set_one_line(ta, true);
     lv_textarea_set_accepted_chars(ta, "0123456789");
-    lv_textarea_set_max_length(ta, 2);
+    lv_textarea_set_max_length(ta, 3);
     lv_textarea_set_placeholder_text(ta, "Dec format");
     lv_obj_set_scrollbar_mode(ta, LV_SCROLLBAR_MODE_OFF);
 
@@ -475,6 +482,7 @@ void ui_radio_enter(lv_obj_t *parent)
 
     int w =  lv_disp_get_hor_res(NULL) / 5;
     lv_obj_t *quit_btn = create_radius_button(cont, LV_SYMBOL_LEFT, [](lv_event_t *e) {
+        hw_feedback();
         lv_obj_send_event(lv_menu_get_main_header_back_button(menu), LV_EVENT_CLICKED, NULL);
     }, NULL);
     lv_obj_remove_flag(quit_btn, LV_OBJ_FLAG_FLOATING);

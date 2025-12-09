@@ -18,6 +18,7 @@ static bool _high_freq = false;
 #include <LilyGoLib.h>
 
 static EventGroupHandle_t radioEvent = NULL;
+static uint32_t last_send_millis = 0;
 
 #define LORA_ISR_FLAG                  _BV(0)
 
@@ -46,14 +47,13 @@ void hw_radio_begin()
 int16_t hw_set_radio_params(radio_params_t &params)
 {
     printf("Set radio params:\n");
-    printf("frequency:%.2f MHz\n", params.freq);
-    printf("bandwidth:%.2f KHz\n", params.bandwidth);
+    printf("Frequency:%.2f MHz\n", params.freq);
+    printf("Bandwidth:%.2f KHz\n", params.bandwidth);
     printf("TxPower:%u dBm\n", params.power);
-    printf("interval:%u ms\n", params.interval);
-    printf("CR:%u ms\n", params.cr);
-    printf("SF:%u ms\n", params.sf);
+    printf("CR:%u \n", params.cr);
+    printf("SF:%u \n", params.sf);
     printf("SyncWord:%u \n", params.syncWord);
-    printf("interval:%u ms\n", params.interval);
+    printf("Interval:%u ms\n", params.interval);
     printf("Mode: ");
     switch (params.mode) {
     case RADIO_DISABLE:
@@ -80,6 +80,11 @@ int16_t hw_set_radio_params(radio_params_t &params)
 #ifdef ARDUINO
     int16_t state = 0;
     instance.lockSPI();
+
+#ifdef ARDUINO_T_DECK_V2
+    instance.setRFFrequencyBand(params.freq);
+#endif
+
     state = radio.setFrequency(params.freq);
     if (state == RADIOLIB_ERR_INVALID_FREQUENCY) {
         Serial.println(F("Selected frequency is invalid for this module!"));
@@ -106,11 +111,14 @@ int16_t hw_set_radio_params(radio_params_t &params)
     }
     if (params.freq >= 2400 && params.power > 13) {
         params.power = 13;
+        Serial.println(F("High frequency band, max output power limited to 13dBm"));
     }
     // set output power
-    state = radio.setOutputPower(params.power);
+    state = radio.setOutputPower(params.power, true);
     if (state  == RADIOLIB_ERR_INVALID_OUTPUT_POWER) {
         Serial.println(F("Selected output power is invalid for this module!"));
+    } else {
+        log_d("Set TxPower:%u dBm", params.power);
     }
 
     printf("Mode: ");
@@ -129,6 +137,9 @@ int16_t hw_set_radio_params(radio_params_t &params)
         break;
     case RADIO_CW:
         printf("RADIO_CW\n");
+        radio.standby();
+        delay(5);
+        radio.transmitDirect();
         break;
     default:
         break;
@@ -235,6 +246,14 @@ void hw_get_radio_rx(radio_rx_params_t &params)
     instance.unlockSPI();
 
 
+    if (last_send_millis + 200 > millis()) {
+        // avoid showing own sent messages
+        params.length = 0;
+        return;
+    }
+
+    params.data[params.length] = '\0';
+
     Serial.print("[RX DATA:]");
     for (int i = 0; i < params.length; ++i) {
         Serial.printf("%02X,", params.data[i]);
@@ -263,12 +282,24 @@ void hw_get_radio_rx(radio_rx_params_t &params)
     params.length = 0;
 #endif
 }
+
+bool radio_transmit(const uint8_t *data, size_t length)
+{
+#ifdef ARDUINO
+    int state = radio.transmit(data, length);
+    last_send_millis = millis();
+    return (state == RADIOLIB_ERR_NONE);
+#else
+    return true;
+#endif
+}
+
 #ifdef RADIO_FIXED_FREQUENCY
 static const float freq_list[] = {RADIO_FIXED_FREQUENCY,
                                   2400.0, 2410.0, 2420.0, 2430.0, 2440.0, 2450.0, 2460.0, 2470.0, 2480.0, 2490.0, 2500.0
                                  };
 #else
-static const float freq_list[] = {433.0, 470.0, 842.0, 850, 868.0, 915.0, 923.0, 945.0,
+static const float freq_list[] = {315.0, 433.0, 434.0, 470.0, 842.0, 850, 868.0, 915.0, 923.0, 945.0,
                                   2400.0, 2410.0, 2420.0, 2430.0, 2440.0, 2450.0, 2460.0, 2470.0, 2480.0, 2490.0, 2500.0
                                  };
 #endif
@@ -305,7 +336,7 @@ const char *radio_get_freq_list()
 #ifdef RADIO_FIXED_FREQUENCY
     return RADIO_FIXED_FREQUENCY_STRING"\n2400MHz\n""2410MHz\n""2420MHz\n""2430MHz\n""2440MHz\n""2450MHz\n""2460MHz\n""2470MHz\n""2480MHz\n""2490MHz\n""2500MHz";
 #else
-    return "433MHz\n""470MHz\n""842MHZ\n""850MHZ\n""868MHz\n""915MHz\n""923MHz\n""945MHz\n"
+    return "315MHz\n""433MHz\n""434MHz\n""470MHz\n""842MHZ\n""850MHZ\n""868MHz\n""915MHz\n""923MHz\n""945MHz\n"
            "2400MHz\n""2410MHz\n""2420MHz\n""2430MHz\n""2440MHz\n""2450MHz\n""2460MHz\n""2470MHz\n""2480MHz\n""2490MHz\n""2500MHz";
 #endif
 }

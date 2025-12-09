@@ -221,6 +221,11 @@ private:
      */
     esp_err_t _i2s_init();
 
+    /**
+     * @brief Internal function to deinitialize the I2S peripheral.
+     */
+    void _i2s_deinit();
+
     int _mck_io_num;     /**< Master clock (MCK) pin number (limited to GPIO0/GPIO1/GPIO3 on ESP32) */
     int _bck_io_num;     /**< Bit clock (BCK) pin number */
     int _ws_io_num;      /**< Word select (WS) pin number */

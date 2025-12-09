@@ -13,6 +13,7 @@
 #include <LilyGoLib.h>
 
 static EventGroupHandle_t radioEvent = NULL;
+static uint32_t last_send_millis = 0;
 
 #define LORA_ISR_FLAG                  _BV(0)
 
@@ -40,14 +41,13 @@ void hw_radio_begin()
 int16_t hw_set_radio_params(radio_params_t &params)
 {
     printf("Set radio params:\n");
-    printf("frequency:%.2f MHz\n", params.freq);
-    printf("bandwidth:%.2f KHz\n", params.bandwidth);
+    printf("Frequency:%.2f MHz\n", params.freq);
+    printf("Bandwidth:%.2f KHz\n", params.bandwidth);
     printf("TxPower:%u dBm\n", params.power);
-    printf("interval:%u ms\n", params.interval);
-    printf("CR:%u ms\n", params.cr);
-    printf("SF:%u ms\n", params.sf);
+    printf("Interval:%u ms\n", params.interval);
+    printf("CR:%u \n", params.cr);
+    printf("SF:%u \n", params.sf);
     printf("SyncWord:%u \n", params.syncWord);
-    printf("interval:%u ms\n", params.interval);
     printf("Mode: ");
     switch (params.mode) {
     case RADIO_DISABLE:
@@ -221,6 +221,14 @@ void hw_get_radio_rx(radio_rx_params_t &params)
     instance.unlockSPI();
 
 
+    if (last_send_millis + 200 > millis()) {
+        // avoid showing own sent messages
+        params.length = 0;
+        return;
+    }
+
+    params.data[params.length] = '\0';
+
     Serial.print("[RX DATA:]");
     for (int i = 0; i < params.length; ++i) {
         Serial.printf("%02X,", params.data[i]);
@@ -247,6 +255,17 @@ void hw_get_radio_rx(radio_rx_params_t &params)
     }
 #else
     params.length = 0;
+#endif
+}
+
+bool radio_transmit(const uint8_t *data, size_t length)
+{
+#ifdef ARDUINO
+    int state = radio.transmit(data, length);
+    last_send_millis = millis();
+    return (state == RADIOLIB_ERR_NONE);
+#else
+    return true;
 #endif
 }
 

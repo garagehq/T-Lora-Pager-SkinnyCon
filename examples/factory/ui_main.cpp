@@ -653,8 +653,7 @@ void setupGui()
 
     create_app(panel, "Music", &img_music, &ui_audio_main);
     create_app(panel, "LoRa", &img_radio, &ui_radio_main);
-    // TODO:
-    // create_app(panel, "LoRa Chat", &img_msgchat, &ui_msgchat_main);
+    create_app(panel, "LoRa Chat", &img_msgchat, &ui_msgchat_main);
     create_app(panel, "GPS", &img_gps, &ui_gps_main);
     create_app(panel, "Monitor", &img_monitoring, &ui_monitor_main);
     create_app(panel, "Power", &img_power, &ui_power_main);

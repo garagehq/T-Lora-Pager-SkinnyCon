@@ -228,13 +228,17 @@ static bool playMP3(uint8_t *src, size_t src_len)
 #elif defined(USING_AUDIO_CODEC)
             if (!codec_begin) {
                 codec_begin = true;
-                // Serial.printf("Set sample rate:%d bitsPerSample:%d\n", frameInfo.samprate, frameInfo.bitsPerSample);
-                int ret = instance.codec.open(frameInfo.bitsPerSample, frameInfo.nChans, frameInfo.samprate);
-                // Serial.printf("esp_codec_dev_open:0x%X\n", ret);
+                if (HW_CODEC_ONLINE & hw_get_device_online()) {
+                    // Serial.printf("Set sample rate:%d bitsPerSample:%d\n", frameInfo.samprate, frameInfo.bitsPerSample);
+                    int ret = instance.codec.open(frameInfo.bitsPerSample, frameInfo.nChans, frameInfo.samprate);
+                    // Serial.printf("esp_codec_dev_open:0x%X\n", ret);
+                }
             }
-            int ret = instance.codec.write((uint8_t *)outBuf, (size_t)((frameInfo.bitsPerSample / 8) * frameInfo.outputSamps));
-            if (ret != 0) {
-                Serial.printf("esp_codec_dev_write:0x%X\n", ret);
+            if (HW_CODEC_ONLINE & hw_get_device_online()) {
+                int ret = instance.codec.write((uint8_t *)outBuf, (size_t)((frameInfo.bitsPerSample / 8) * frameInfo.outputSamps));
+                if (ret != 0) {
+                    Serial.printf("esp_codec_dev_write:0x%X\n", ret);
+                }
             }
 #endif
         }
@@ -256,7 +260,9 @@ WAIT:
 #if  defined(USING_PCM_AMPLIFIER)
     instance.powerControl(POWER_SPEAK, false);
 #elif defined(USING_AUDIO_CODEC)
-    instance.codec.close();
+    if (HW_CODEC_ONLINE & hw_get_device_online()) {
+        instance.codec.close();
+    }
 #endif
     return true;
 }
@@ -430,7 +436,11 @@ void hw_audio_get_fft_data(FFTData *fft_data)
     int32_t pdm_sample;
     instance.mic.readBytes((char *)i2s_buffer, FFT_SIZE * 2 * sizeof(int16_t));
 #elif defined(USING_AUDIO_CODEC)
-    instance.codec.read((uint8_t *)i2s_buffer, FFT_SIZE * 2 * sizeof(int16_t));
+    if (HW_CODEC_ONLINE & hw_get_device_online()) {
+        instance.codec.read((uint8_t *)i2s_buffer, FFT_SIZE * 2 * sizeof(int16_t));
+    } else {
+        return;
+    }
 #endif
 
     read_count++;
@@ -454,9 +464,13 @@ bool hw_set_mic_start()
     int ret ;
 
 #ifdef USING_AUDIO_CODEC
-    ret = instance.codec.open(16, instance.getCodecInputChannels(), 16000);
-    if (ret < 0) {
-        log_e("Audio codec open failed:0x%X", ret);
+    if (HW_CODEC_ONLINE & hw_get_device_online()) {
+        ret = instance.codec.open(16, instance.getCodecInputChannels(), 16000);
+        if (ret < 0) {
+            log_e("Audio codec open failed:0x%X", ret);
+            return false;
+        }
+    } else {
         return false;
     }
 #endif /*USING_AUDIO_CODEC*/
@@ -478,7 +492,9 @@ void hw_set_mic_stop()
 {
 #ifdef ARDUINO
 #ifdef USING_AUDIO_CODEC
-    instance.codec.close();
+    if (HW_CODEC_ONLINE & hw_get_device_online()) {
+        instance.codec.close();
+    }
 #endif
     dsps_fft2r_deinit_fc32();
 #endif /*ARDUINO*/
@@ -594,8 +610,12 @@ void hw_init()
 
 
 #ifdef USING_AUDIO_CODEC
-    instance.codec.setVolume(100);
-    instance.codec.setGain(mic_gain);
+    if (HW_CODEC_ONLINE & hw_get_device_online()) {
+        instance.codec.setVolume(100);
+        instance.codec.setGain(mic_gain);
+    } else {
+        log_w("Audio codec not online!");
+    }
 #endif //USING_AUDIO_CODEC
 
 #ifdef USING_INPUT_DEV_KEYBOARD
@@ -1017,6 +1037,13 @@ void hw_set_kb_backlight(uint8_t level)
 #endif
 }
 
+void hw_set_led_backlight(uint8_t level)
+{
+#if defined(ARDUINO) && defined(USING_LED_INDICATOR)
+    instance.setLedIndicatorBrightness(level);
+#endif
+}
+
 uint8_t hw_get_kb_backlight()
 {
 #if defined(ARDUINO) && defined(USING_INPUT_DEV_KEYBOARD)
@@ -1263,14 +1290,22 @@ bool hw_player_running()
 void hw_set_volume(uint8_t volume)
 {
 #if defined(ARDUINO) && defined(USING_AUDIO_CODEC)
-    instance.codec.setVolume(volume);
+    if (HW_CODEC_ONLINE & hw_get_device_online()) {
+        instance.codec.setVolume(volume);
+    } else {
+        printf("Audio codec not online!\n");
+    }
 #endif //USING_AUDIO_CODEC
 }
 
 uint8_t hw_get_volume()
 {
 #if defined(ARDUINO) && defined(USING_AUDIO_CODEC)
-    return instance.codec.getVolume();
+    if (HW_CODEC_ONLINE & hw_get_device_online()) {
+        return instance.codec.getVolume();
+    } else {
+        return 0;
+    }
 #else
     return 100;
 #endif //USING_AUDIO_CODEC
@@ -1824,6 +1859,11 @@ void hw_flush_keyboard()
 bool hw_has_keyboard()
 {
     return hw_get_device_online() & HW_KEYBOARD_ONLINE;
+}
+
+bool hw_has_indicator_led()
+{
+    return hw_get_device_online() & HW_LED_INDIC_ONLINE;
 }
 
 bool hw_has_otg_function()

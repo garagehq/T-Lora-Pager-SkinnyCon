@@ -15,6 +15,7 @@
 #include <LilyGoLib.h>
 
 static EventGroupHandle_t radioEvent = NULL;
+static uint32_t last_send_millis = 0;
 
 #define LORA_ISR_FLAG                  _BV(0)
 
@@ -43,14 +44,13 @@ void hw_radio_begin()
 int16_t hw_set_radio_params(radio_params_t &params)
 {
     printf("Set radio params:\n");
-    printf("frequency:%.2f MHz\n", params.freq);
-    printf("bandwidth:%.2f KHz\n", params.bandwidth);
+    printf("Frequency:%.2f MHz\n", params.freq);
+    printf("Bandwidth:%.2f KHz\n", params.bandwidth);
     printf("TxPower:%u dBm\n", params.power);
-    printf("interval:%u ms\n", params.interval);
-    printf("CR:%u ms\n", params.cr);
-    printf("SF:%u ms\n", params.sf);
+    printf("Interval:%u ms\n", params.interval);
+    printf("CR:%u \n", params.cr);
+    printf("SF:%u \n", params.sf);
     printf("SyncWord:%u \n", params.syncWord);
-    printf("interval:%u ms\n", params.interval);
     printf("Mode: ");
     switch (params.mode) {
     case RADIO_DISABLE:
@@ -137,7 +137,7 @@ int16_t hw_set_radio_params(radio_params_t &params)
 
 void hw_get_radio_params(radio_params_t &params)
 {
-    params.bandwidth = 62.5;
+    params.bandwidth = 125.0;
     params.freq = RADIO_DEFAULT_FREQUENCY;
     params.cr = 5;
     params.isRunning = false;
@@ -172,13 +172,16 @@ void hw_set_radio_tx(radio_tx_params_t &params, bool continuous)
         EventBits_t  eventBits = xEventGroupWaitBits(radioEvent,
                                  LORA_ISR_FLAG, pdTRUE, pdTRUE, pdTICKS_TO_MS(2));
         if ((eventBits & LORA_ISR_FLAG) != LORA_ISR_FLAG) {
+            printf("bits : %u\n", eventBits);
             params.state = -1;
             return;
         }
     }
 
+    radio.finishTransmit();
+
     if (!params.data) {
-        printf("tx data buffer is empty");
+        Serial.println("tx data buffer is empty");
         params.state = -1;
         return;
     }
@@ -195,13 +198,6 @@ void hw_set_radio_tx(radio_tx_params_t &params, bool continuous)
     params.state = radio.startTransmit(params.data, params.length);
     instance.unlockSPI();
 
-    if (params.state == RADIOLIB_ERR_NONE) {
-        // packet was successfully sent
-        Serial.println(F("transmission finished!"));
-    } else {
-        Serial.print(F("failed, code "));
-        Serial.println(params.state);
-    }
 #endif
 }
 
@@ -216,7 +212,7 @@ void hw_get_radio_rx(radio_rx_params_t &params)
 
     if (!params.data) {
         params.state = -1;
-        printf("rx data buffer is empty");
+        printf("Rx data buffer is empty\n");
         return;
     }
 
@@ -229,6 +225,13 @@ void hw_get_radio_rx(radio_rx_params_t &params)
     radio.startReceive();
     instance.unlockSPI();
 
+    if (last_send_millis + 200 > millis()) {
+        // avoid showing own sent messages
+        params.length = 0;
+        return;
+    }
+
+    params.data[params.length] = '\0';
 
     Serial.print("[RX DATA:]");
     for (int i = 0; i < params.length; ++i) {
@@ -256,6 +259,17 @@ void hw_get_radio_rx(radio_rx_params_t &params)
     }
 #else
     params.length = 0;
+#endif
+}
+
+bool radio_transmit(const uint8_t *data, size_t length)
+{
+#ifdef ARDUINO
+    int state = radio.transmit(data, length);
+    last_send_millis = millis();
+    return (state == RADIOLIB_ERR_NONE);
+#else
+    return true;
 #endif
 }
 
@@ -302,7 +316,7 @@ float radio_get_freq_from_index(uint8_t index)
 
 const char *radio_get_bandwidth_list(bool high_freq)
 {
-    return "41.7\n""62.5\n""125KHz\n""250KHz\n""500KHz";
+    return "41.7KHz\n""62.5KHz\n""125KHz\n""250KHz\n""500KHz";
 }
 
 float radio_get_bandwidth_from_index(uint8_t index)

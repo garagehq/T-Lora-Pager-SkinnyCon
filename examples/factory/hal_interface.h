@@ -93,6 +93,7 @@ typedef enum {
 #define HW_SI473X_ONLINE         _BV(15)
 #define HW_BME280_ONLINE         _BV(16)
 #define HW_QMC5883P_ONLINE       _BV(17)
+#define HW_LED_INDIC_ONLINE      _BV(18)
 #else
 // If compiling for Arduino, include the WiFi library
 #include <WiFi.h>
@@ -237,6 +238,7 @@ typedef struct {
 typedef struct {
     uint8_t brightness_level;
     uint8_t keyboard_bl_level;
+    uint8_t led_indicator_level;
     uint8_t disp_timeout_second;
     uint16_t charger_current;
     uint8_t charger_enable;
@@ -466,6 +468,13 @@ bool hw_get_disp_is_on();
  * @param level The backlight level to be set.
  */
 void hw_set_kb_backlight(uint8_t level);
+
+/**
+ * @brief Set the indicator LED backlight level.
+ *
+ * @param level The backlight level to be set.
+ */
+void hw_set_led_backlight(uint8_t level);
 
 /**
  * @brief Get the current keyboard backlight level.
@@ -935,6 +944,12 @@ void hw_flush_keyboard();
 bool hw_has_keyboard();
 
 /**
+ * @brief Check if the indicator LED is available.
+ * @retval True if the indicator LED is available, false otherwise.
+ */
+bool hw_has_indicator_led();
+
+/**
  * @brief Check if the OTG function is available.
  *
  * This function checks if the OTG (On-The-Go) function is available.
@@ -1143,6 +1158,17 @@ const char *radio_get_tx_power_list(bool high_freq = false);
  * @return The radio transmission power at the specified index.
  */
 float radio_get_tx_power_from_index(uint8_t index);
+
+/**
+ * @brief Transmit data via radio.
+ *
+ * This function transmits the given data using the radio.
+ *
+ * @param data A pointer to the data to be transmitted.
+ * @param length The length of the data to be transmitted.
+ * @return True if the transmission was successful, false otherwise.
+ */
+bool radio_transmit(const uint8_t *data, size_t length);
 
 /**
  * @brief Get the radio frequency length.
