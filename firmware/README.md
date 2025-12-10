@@ -34,14 +34,16 @@
 >
 > 🤖 USB port keeps appearing intermittently?
 >
-> When writing firmware, please put the device into download mode first in order to download the firmware normally.
+> ⚠️ When writing firmware, please put the device into download mode first in order to download the firmware normally.
 >
 > * [How to put T-Watch-S3 into download mode](../docs/lilygo-t-watch-s3.md#t-watch-s3-enter-download-mode)
 > * [How to put T-Watch-S3-Plus into download mode](../docs/lilygo-t-watch-s3-plus.md#t-watch-s3-plus-enter-download-mode)
 > * [How to put T-Watch-Ultra into download mode](../docs/lilygo-t-watch-ultra.md#t-watch-s3-ultra-enter-download-mode)
 > * [How to put T-LoRa-Pager into download mode](../docs/lilygo-t-lora-pager.md#t-lora-pager-enter-download-mode)
 >
-> After the download is complete, you must press the reset button once; otherwise, the device will remain in download mode.
+> ⚠️ After the download is complete, you must press the reset button once; otherwise, the device will remain in download mode.
+>
+> ⚠️ The write address must be 0, not the default 0x1000.
 >
 
 ## ESP-Launchpad Online
