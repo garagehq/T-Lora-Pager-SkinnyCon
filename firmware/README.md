@@ -45,8 +45,12 @@
 >
 > ⚠️ The write address must be 0, not the default 0x1000.
 >
+> ⚠️Choose one of the following methods that suits you.
+>
 
 ## ESP-Launchpad Online
+
+- [Esp-launchpad](https://espressif.github.io/esp-launchpad/)
 
 ![ESP-Launchpad](../docs/images/web_flasher2.gif)
 
