@@ -32,13 +32,21 @@
 
 > \[!IMPORTANT]
 >
-> 🤖 USB ports keep popping in and out?
+> 🤖 USB port keeps appearing intermittently?
 >
-> * T-Watch-S3 see [here](../docs/lilygo-t-watch-s3.md#t-watch-s3-enter-download-mode)
-> * T-Watch-S3-Plus see  [here](../docs/lilygo-t-watch-s3-plus.md#t-watch-s3-plus-enter-download-mode)
-> * T-Watch-Ultra see [here](../docs/lilygo-t-watch-ultra.md#t-watch-s3-ultra-enter-download-mode)
-> * T-LoRa-Pager see [here](../docs/lilygo-t-lora-pager.md#t-lora-pager-enter-download-mode)
+> When writing firmware, please put the device into download mode first in order to download the firmware normally.
 >
+> * [How to put T-Watch-S3 into download mode](../docs/lilygo-t-watch-s3.md#t-watch-s3-enter-download-mode)
+> * [How to put T-Watch-S3-Plus into download mode](../docs/lilygo-t-watch-s3-plus.md#t-watch-s3-plus-enter-download-mode)
+> * [How to put T-Watch-Ultra into download mode](../docs/lilygo-t-watch-ultra.md#t-watch-s3-ultra-enter-download-mode)
+> * [How to put T-LoRa-Pager into download mode](../docs/lilygo-t-lora-pager.md#t-lora-pager-enter-download-mode)
+>
+> After the download is complete, you must press the reset button once; otherwise, the device will remain in download mode.
+>
+
+## ESP-Launchpad Online
+
+![ESP-Launchpad](../docs/images/web_flasher2.gif)
 
 ### Use ESP Download Tool
 
