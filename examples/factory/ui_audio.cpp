@@ -58,7 +58,7 @@ static void audio_play_event(lv_event_t *e)
             } else {
                 lv_label_set_text(symbol, LV_SYMBOL_PAUSE);
                 last_play_obj = symbol;
-                
+
                 AudioParams_t param = *(AudioParams_t *)lv_obj_get_user_data(obj);
                 hw_set_sd_music_play(param.source_type, param.file_name.c_str());
 
@@ -90,13 +90,33 @@ static void audio_play_event(lv_event_t *e)
 static void volume_slider_event(lv_event_t *e)
 {
     lv_event_code_t code = lv_event_get_code(e);
-    lv_obj_t *obj = (lv_obj_t *)lv_event_get_target(e);
+    lv_obj_t *obj = lv_event_get_target_obj(e);
     if (code == LV_EVENT_VALUE_CHANGED) {
-        int16_t v = lv_slider_get_value(obj);
-        printf("Volume: %d\n", v);
-        hw_set_volume(v);
+        int volume = lv_slider_get_value(obj);
+        printf("Set volume to %d\n", volume);
+        hw_set_volume(volume);
     }
 }
+
+#ifdef HAS_EFFECT_BUTTONS
+void effect_button_event(lv_event_t *e)
+{
+    lv_event_code_t code = lv_event_get_code(e);
+    lv_obj_t *obj = (lv_obj_t *)lv_event_get_target(e);
+    if (code == LV_EVENT_CLICKED) {
+        bool checked = lv_obj_has_state(obj, LV_STATE_CHECKED);
+        lv_obj_t *label = lv_obj_get_child(obj, 0);
+        const char *text = lv_label_get_text(label);
+        if (strcmp(text, "3D") == 0) {
+            // printf("3D Effect: %s\n", checked ? "ON" : "OFF");
+            hw_set_audio_effect_3d(checked);
+        } else if (strcmp(text, "A/B") == 0) {
+            // printf("A/B Effect: %s\n", checked ? "ON" : "OFF");
+            hw_set_audio_effect_ab_class(checked);
+        }
+    }
+}
+#endif /*HAS_EFFECT_BUTTONS*/
 
 void ui_audio_enter(lv_obj_t *parent)
 {
@@ -147,8 +167,9 @@ void ui_audio_enter(lv_obj_t *parent)
     /*Create a list*/
     lv_obj_t *list1 = lv_list_create(main_page);
     lv_obj_set_style_border_width(list1, 0, LV_PART_MAIN);
+
 #ifdef HAS_VOLUME_SLIDER
-    lv_obj_set_size(list1, lv_pct(100), lv_pct(70));
+    lv_obj_set_size(list1, lv_pct(100), lv_pct(80));
 #else
     lv_obj_set_size(list1, lv_pct(100), lv_pct(100));
 #endif
@@ -161,7 +182,7 @@ void ui_audio_enter(lv_obj_t *parent)
         string file_name = file_info.source_type == AUDIO_SOURCE_SDCARD ? "[SD]" : "[FFat]";
         file_name += file_info.file_name;
         obj = lv_list_add_button(list1, LV_SYMBOL_AUDIO, file_name.c_str());
-        printf("Add file: %s source:%d obj:%p\n", file_name.c_str(), file_info.source_type, obj);
+        // printf("Add file: %s source:%d obj:%p\n", file_name.c_str(), file_info.source_type, obj);
         lv_obj_set_user_data(obj, &(music_list[index]));
         index++;
         label = lv_label_create(obj);
@@ -170,19 +191,20 @@ void ui_audio_enter(lv_obj_t *parent)
     }
 
 #ifdef HAS_VOLUME_SLIDER
-
     obj = lv_menu_cont_create(main_page);
     lv_obj_set_style_pad_all(obj, 0, LV_PART_MAIN);
-    lv_obj_set_size(obj, lv_pct(100), lv_pct(30));
-
+    lv_obj_set_size(obj, lv_pct(100), lv_pct(20));
     lv_obj_set_flex_flow(obj, LV_FLEX_FLOW_COLUMN);
-    lv_obj_set_flex_align(obj, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+    lv_obj_set_flex_align(obj, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+    lv_obj_set_style_pad_all(obj, 0, LV_PART_MAIN);
 
     lv_obj_t *sub_cont = lv_obj_create(obj);
     lv_obj_set_size(sub_cont, lv_pct(100), lv_pct(100));
     lv_obj_set_flex_flow(sub_cont, LV_FLEX_FLOW_ROW);
     lv_obj_set_align(sub_cont, LV_ALIGN_TOP_LEFT);
     lv_obj_set_style_border_width(sub_cont, 0, LV_PART_MAIN);
+    lv_obj_set_scrollbar_mode(sub_cont, LV_SCROLLBAR_MODE_OFF);
+    lv_obj_set_scroll_dir(sub_cont, LV_DIR_NONE);
 
     lv_obj_t *label_vol = lv_label_create(sub_cont);
     lv_label_set_text(label_vol, LV_SYMBOL_VOLUME_MAX);
@@ -190,15 +212,45 @@ void ui_audio_enter(lv_obj_t *parent)
     lv_obj_set_style_margin_top(label_vol, -4, LV_PART_MAIN);
 
     lv_obj_t *slider = lv_slider_create(sub_cont);
+#ifdef HAS_EFFECT_BUTTONS
+    lv_obj_set_width(slider, lv_pct(35));
+#else
     lv_obj_set_width(slider, lv_pct(80));
-    lv_obj_set_align(slider, LV_ALIGN_RIGHT_MID);
-    lv_slider_set_value(slider, hw_get_volume(), LV_ANIM_OFF);
-    lv_obj_add_event_cb(slider, volume_slider_event, LV_EVENT_VALUE_CHANGED, NULL);
-
 #endif
+    lv_slider_set_value(slider, hw_get_volume(), LV_ANIM_OFF);
+    lv_slider_set_range(slider, 0, 100);
+    lv_obj_add_event_cb(slider, volume_slider_event, LV_EVENT_VALUE_CHANGED, NULL);
+    lv_obj_set_style_height(slider, 10, LV_PART_MAIN);
+    lv_obj_set_style_height(slider, 10, LV_PART_INDICATOR);
+    lv_obj_set_style_size(slider, 20, 20, LV_PART_KNOB);
+    lv_obj_set_style_radius(slider, LV_RADIUS_CIRCLE, LV_PART_KNOB);
+    lv_obj_set_style_margin_left(slider, -18, LV_PART_MAIN);
+
+#ifdef HAS_EFFECT_BUTTONS
+        lv_obj_t *ab_btn = lv_button_create(sub_cont);
+        lv_obj_set_size(ab_btn, lv_pct(18), lv_pct(100));
+        lv_obj_add_flag(ab_btn, LV_OBJ_FLAG_CHECKABLE);
+        lv_obj_set_align(ab_btn, LV_ALIGN_CENTER);
+        lv_obj_t *ab_label = lv_label_create(ab_btn);
+        lv_label_set_text(ab_label, "3D");
+        lv_obj_center(ab_label);
+        lv_obj_set_style_margin_left(ab_btn, 10, LV_PART_MAIN);
+        lv_obj_set_style_pad_all(ab_btn, 0, LV_PART_MAIN);
+        lv_obj_add_event_cb(ab_btn, effect_button_event, LV_EVENT_CLICKED, NULL);
+
+        lv_obj_t *eff_btn = lv_button_create(sub_cont);
+        lv_obj_set_size(eff_btn, lv_pct(18), lv_pct(100));
+        lv_obj_add_flag(eff_btn, LV_OBJ_FLAG_CHECKABLE);
+        lv_obj_set_align(eff_btn, LV_ALIGN_CENTER);
+        lv_obj_t *eff_label = lv_label_create(eff_btn);
+        lv_label_set_text(eff_label, "A/B");
+        lv_obj_center(eff_label);
+        lv_obj_set_style_pad_all(eff_btn, 0, LV_PART_MAIN);
+        lv_obj_add_event_cb(eff_btn, effect_button_event, LV_EVENT_CLICKED, NULL);
+#endif /*HAS_EFFECT_BUTTONS*/
+#endif /*HAS_VOLUME_SLIDER*/
 
     lv_menu_set_page(menu, main_page);
-
 
 #ifdef USING_TOUCHPAD
     quit_btn  = create_floating_button([](lv_event_t*e) {

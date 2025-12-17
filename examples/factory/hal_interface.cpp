@@ -1539,7 +1539,6 @@ void hw_get_monitor_params(monitor_params_t &params)
             params.timeToFull = 0;
         } else {
             if (batteryStatus.isFullChargeDetected()) {
-                Serial.println("\t- Full charge detected.");
                 params.timeToFull = 0;
                 params.timeToEmpty = 0;
             } else {
@@ -1566,9 +1565,13 @@ void hw_get_imu_params(imu_params_t &params)
 {
 #ifdef ARDUINO
 #if defined(USING_BHI260_SENSOR)
-    params =  imu_params;
+    if (hw_get_device_online() & HW_BHI260AP_ONLINE) {
+        params =  imu_params;
+    }
 #elif defined(USING_BMA423_SENSOR)
-    params.orientation = instance.sensor.direction();
+    if (hw_get_device_online() & HW_BMA423_ONLINE) {
+        params.orientation = instance.sensor.direction();
+    }
 #endif // SENSOR
 #else
     params =  imu_params;
@@ -1590,28 +1593,36 @@ void hw_register_imu_process()
 {
 #if defined(ARDUINO)
 #if defined(USING_BHI260_SENSOR)
-    float sample_rate = 100.0;      /* Read out data measured at 100Hz */
-    uint32_t report_latency_ms = 0; /* Report immediately */
-    // LilyGoLib has already processed it
-    // instance.sensor.setRemapAxes(SensorBHI260AP::BOTTOM_LAYER_TOP_LEFT_CORNER);
-    // Enable Quaternion function
-    instance.sensor.configure(SensorBHI260AP::GAME_ROTATION_VECTOR, sample_rate, report_latency_ms);
-    // Register event callback function
-    instance.sensor.onResultEvent(SensorBHI260AP::GAME_ROTATION_VECTOR, imu_data_process);
+    if (hw_get_device_online() & HW_BHI260AP_ONLINE) {
+        float sample_rate = 100.0;      /* Read out data measured at 100Hz */
+        uint32_t report_latency_ms = 0; /* Report immediately */
+        // LilyGoLib has already processed it
+        // instance.sensor.setRemapAxes(SensorBHI260AP::BOTTOM_LAYER_TOP_LEFT_CORNER);
+        // Enable Quaternion function
+        instance.sensor.configure(SensorBHI260AP::GAME_ROTATION_VECTOR, sample_rate, report_latency_ms);
+        // Register event callback function
+        instance.sensor.onResultEvent(SensorBHI260AP::GAME_ROTATION_VECTOR, imu_data_process);
+    }
 #elif defined(USING_BMA423_SENSOR)
-    instance.sensor.configAccelerometer();
-    instance.sensor.enableAccelerometer();
+    if (hw_get_device_online() & HW_BMA423_ONLINE) {
+        instance.sensor.configAccelerometer();
+        instance.sensor.enableAccelerometer();
+    }
 #endif // SENSOR
 #endif // ARDUINO
 }
 
 void hw_unregister_imu_process()
 {
-#if  defined(ARDUINO)
+#if defined(ARDUINO)
 #if defined(USING_BHI260_SENSOR)
-    instance.sensor.configure(SensorBHI260AP::GAME_ROTATION_VECTOR, 0, 0);
+    if (hw_get_device_online() & HW_BHI260AP_ONLINE) {
+        instance.sensor.configure(SensorBHI260AP::GAME_ROTATION_VECTOR, 0, 0);
+    }
 #elif defined(USING_BMA423_SENSOR)
-    instance.sensor.disableAccelerometer();
+    if (hw_get_device_online() & HW_BMA423_ONLINE) {
+        instance.sensor.disableAccelerometer();
+    }
 #endif // SENSOR
 #endif // ARDUINO
 }
@@ -2090,6 +2101,25 @@ void hw_set_usb_rf_switch(bool to_usb)
 #if defined(HAS_USB_RF_SWITCH)
     instance.setRFSwitch(to_usb);
 #endif
+#endif
+}
+
+
+void hw_set_audio_effect_3d(bool enable)
+{
+#if defined(ARDUINO) && defined(ARDUINO_T_DECK_V2)
+    instance.setAudioEffect3D(enable);
+#endif
+}
+
+void hw_set_audio_effect_ab_class(bool enable)
+{
+#if defined(ARDUINO) && defined(ARDUINO_T_DECK_V2)
+    if (enable) {
+        instance.setAudioMode(AUDIO_CLASS_AB);
+    } else {
+        instance.setAudioMode(AUDIO_CLASS_D);
+    }
 #endif
 }
 

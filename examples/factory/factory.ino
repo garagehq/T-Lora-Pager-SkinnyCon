@@ -65,7 +65,6 @@ void WiFiGotIP(WiFiEvent_t event, WiFiEventInfo_t info)
 
 void setup()
 {
-
     setCpuFrequencyMhz(240);
 
     Serial.begin(115200);
@@ -87,17 +86,13 @@ void setup()
 
     instance.begin(/*NO_HW_LORA|NO_HW_RTC|NO_HW_GPS|NO_HW_LORA*/);
 
-#ifdef USING_INPUT_DEV_KEYBOARD
-    instance.attachKeyboardFeedback(true);
-#endif
-
     beginLvglHelper(instance);
 
     hw_init();
 
     setupGui();
 
-    Serial.println("Stated done. run main loop");
+    Serial.println("Start done. run main loop");
 }
 
 extern void loopNFCReader();

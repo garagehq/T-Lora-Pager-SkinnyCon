@@ -315,16 +315,7 @@ uint32_t LilyGoUltra::begin(uint32_t disable_hw_init)
     }
 
     if (!(disable_hw_init & NO_HW_LORA)) {
-
-        int state = radio.begin();
-        if (state == RADIOLIB_ERR_NONE) {
-            devices_probe |= HW_RADIO_ONLINE;
-            log_i("✅Radio init succeeded, module: %s", USING_RADIO_NAME);
-        } else {
-            log_e("❌Radio init failed, code :%d , Use %s", state, USING_RADIO_NAME);
-        }
-
-        setRFSwitch(false); // Default to Built-in LoRa antenna
+        initLoRa();
     }
 
     if (!(disable_hw_init & NO_HW_SD)) {
@@ -1139,7 +1130,7 @@ bool LilyGoUltra::initSensor()
         log_e("Failed to find BHI260AP!");
     } else {
         log_d("Initializing BHI260AP succeeded");
-        devices_probe |= HW_SENSOR_ONLINE;
+        devices_probe |= HW_BHI260AP_ONLINE;
 
         // sensor.setRemapAxes(SensorBHI260AP::TOP_LAYER_RIGHT_CORNER); // Initial test version
         sensor.setRemapAxes(SensorBHI260AP::TOP_LAYER_BOTTOM_RIGHT_CORNER);
@@ -1215,7 +1206,19 @@ bool LilyGoUltra::initAmplifier()
     return res;
 }
 
-
+bool LilyGoUltra::initLoRa()
+{
+    int state = radio.begin();
+    if (state == RADIOLIB_ERR_NONE) {
+        devices_probe |= HW_RADIO_ONLINE;
+        log_i("✅Radio init succeeded, module: %s", USING_RADIO_NAME);
+        setRFSwitch(false); // Default to Built-in LoRa antenna
+        return true;
+    }
+    devices_probe &= ~HW_RADIO_ONLINE;
+    log_e("❌Radio init failed, code :%d , Use %s", state, USING_RADIO_NAME);
+    return false;
+}
 
 void LilyGoUltra::loop()
 {

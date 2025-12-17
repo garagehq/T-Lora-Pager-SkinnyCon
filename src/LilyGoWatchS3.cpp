@@ -175,14 +175,7 @@ uint32_t LilyGoWatch2022::begin(uint32_t disable_hw_init)
 #endif // USING_PCM_AMPLIFIER
 
     if (!(disable_hw_init & NO_HW_LORA)) {
-
-        int state = radio.begin();
-        if (state == RADIOLIB_ERR_NONE) {
-            devices_probe |= HW_RADIO_ONLINE;
-            log_i("✅Radio init succeeded, module: %s", USING_RADIO_NAME);
-        } else {
-            log_e("❌Radio init failed, code :%d , Use %s", state, USING_RADIO_NAME);
-        }
+        initLoRa();
     }
 
 
@@ -270,7 +263,7 @@ bool LilyGoWatch2022::initSensor()
         log_i("Initializing BMA423 succeeded");
         sensor.setRemapAxes(SensorBMA423::REMAP_BOTTOM_LAYER_TOP_RIGHT_CORNER);
         sensor.setStepCounterWatermark(1);
-        devices_probe |= HW_SENSOR_ONLINE;
+        devices_probe |= HW_BMA423_ONLINE;
     }
     Wire.setClock(400000UL);
 
@@ -993,6 +986,20 @@ void LilyGoWatch2022::vibrator()
         drv.run();
     }
 }
+
+bool LilyGoWatch2022::initLoRa()
+{
+    int state = radio.begin();
+    if (state == RADIOLIB_ERR_NONE) {
+        devices_probe |= HW_RADIO_ONLINE;
+        log_i("✅Radio init succeeded, module: %s", USING_RADIO_NAME);
+        return true;
+    }
+    devices_probe &= ~HW_RADIO_ONLINE;
+    log_e("❌Radio init failed, code :%d , Use %s", state, USING_RADIO_NAME);
+    return false;
+}
+
 
 void LilyGoWatch2022::loop()
 {

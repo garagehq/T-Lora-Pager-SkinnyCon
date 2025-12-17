@@ -37,7 +37,8 @@ static void new_theme_apply_cb(lv_theme_t * th, lv_obj_t * obj)
         lv_style_set_bg_color(&dropdown_focus_key_style, lv_color_black());
         lv_style_set_text_color(&dropdown_focus_key_style, lv_color_white());
 
-        lv_obj_add_style(obj, &dropdown_style, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_add_style(obj, &dropdown_style, LV_PART_MAIN );
+        lv_obj_add_style(obj, &dropdown_style, LV_STATE_DEFAULT);
         lv_obj_add_style(obj, &dropdown_focus_style, LV_PART_MAIN | LV_STATE_FOCUSED);
 
     }

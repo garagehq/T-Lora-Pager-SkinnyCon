@@ -129,6 +129,16 @@ public:
     void loop();
 
     /**
+     * @brief Initialize the LoRa module.
+     * @note  Already called in begin, it is only necessary to call when begin specifies not to initialize this device.
+     * This function attempts to initialize the LoRa module. It returns 'true' if the initialization is successful,
+     * and 'false' otherwise.
+     *
+     * @return bool True if LoRa initialization is successful, false otherwise.
+     */
+    bool initLoRa();
+
+    /**
      * @brief Initialize the driver.
      * @note  Already called in begin, it is only necessary to call when begin specifies not to initialize this device.
      * @return bool True if initialization is successful, false otherwise.

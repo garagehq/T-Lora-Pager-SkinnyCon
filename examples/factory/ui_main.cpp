@@ -80,7 +80,7 @@ void set_low_power_mode_flag(bool enable)
     if (enable) {
         lv_obj_add_flag(main_screen, DEVICE_CAN_SLEEP);
     } else {
-        lv_obj_clear_flag(main_screen, DEVICE_CAN_SLEEP);
+        lv_obj_remove_flag(main_screen, DEVICE_CAN_SLEEP);
     }
 }
 
@@ -93,7 +93,7 @@ bool get_enter_low_power_flag()
 void menu_show()
 {
     set_default_group(menu_g);
-    lv_obj_set_tile_id(main_screen, 0, 0, LV_ANIM_ON);
+    lv_tileview_set_tile_by_index(main_screen, 0, 0, LV_ANIM_ON);
     lv_timer_resume(disp_timer);
     lv_disp_trig_activity(NULL);
     hw_feedback();
@@ -101,7 +101,7 @@ void menu_show()
 
 void menu_hidden()
 {
-    lv_obj_set_tile_id(main_screen, 0, 1, LV_ANIM_ON);
+    lv_tileview_set_tile_by_index(main_screen, 0, 1, LV_ANIM_ON);
     lv_timer_pause(disp_timer);
 }
 
@@ -156,15 +156,15 @@ static void create_app(lv_obj_t *parent, const char *name, const lv_img_dsc_t *i
     lv_obj_set_style_outline_color(btn, lv_color_black(), LV_STATE_FOCUS_KEY);
     lv_obj_set_style_shadow_width(btn, 30, LV_PART_MAIN);
     lv_obj_set_style_shadow_color(btn, lv_color_black(), LV_PART_MAIN);
-    uint32_t phy_hor_res = lv_disp_get_physical_hor_res(NULL);
+    uint32_t phy_hor_res = lv_display_get_physical_horizontal_resolution(NULL);
     if (phy_hor_res < 320) {
         lv_obj_set_style_radius(btn, LV_RADIUS_CIRCLE, 0);
     }
     lv_obj_set_user_data(btn, (void *)name);
 
     if (img != NULL) {
-        lv_obj_t *icon = lv_img_create(btn);
-        lv_img_set_src(icon, img);
+        lv_obj_t *icon = lv_image_create(btn);
+        lv_image_set_src(icon, img);
         lv_obj_center(icon);
     }
     /* Text change event callback */
@@ -213,7 +213,7 @@ void menu_name_label_event_cb(lv_event_t *e)
 static void clock_update_datetime(lv_timer_t *t)
 {
     lv_obj_has_flag(clock_label.seg, LV_OBJ_FLAG_HIDDEN) ?
-    lv_obj_clear_flag(clock_label.seg, LV_OBJ_FLAG_HIDDEN) :
+    lv_obj_remove_flag(clock_label.seg, LV_OBJ_FLAG_HIDDEN) :
     lv_obj_add_flag(clock_label.seg, LV_OBJ_FLAG_HIDDEN);
 
     const char *week[] = {"Sun", "Mon", "Tue", "Wed", "Thur", "Fri", "Sat"};
@@ -236,10 +236,11 @@ lv_obj_t *setupClock()
     const  lv_font_t *font = &font_alibaba_100;
 
     lv_obj_t *page = lv_obj_create(lv_screen_active());
-    lv_obj_set_style_bg_img_src(page, &img_background2, LV_PART_MAIN);
+    lv_obj_set_style_bg_image_src(page, &img_background2, LV_PART_MAIN);
     lv_obj_set_size(page, LV_PCT(100), LV_PCT(100));
-    lv_obj_clear_flag(page, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_remove_flag(page, LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_set_style_border_width(page, 0, 0);
+    lv_obj_set_style_radius(page, 0, 0);
     lv_obj_set_style_bg_opa(page, LV_OPA_TRANSP, LV_PART_MAIN);
 
     lv_coord_t w = LV_PCT(35);
@@ -248,7 +249,7 @@ lv_obj_t *setupClock()
     int x_offset = 35;
     int y_offset = -20;
 
-    uint32_t phy_hor_res = lv_disp_get_physical_hor_res(NULL);
+    uint32_t phy_hor_res = lv_display_get_physical_horizontal_resolution(NULL);
     if (phy_hor_res < 320) {
         font = &font_alibaba_60;
         x_offset = 10;
@@ -257,7 +258,7 @@ lv_obj_t *setupClock()
         h = LV_PCT(48);
     }
 
-    uint32_t phy_ver_res = lv_disp_get_physical_ver_res(NULL);
+    uint32_t phy_ver_res = lv_display_get_physical_vertical_resolution(NULL);
     if (phy_ver_res > 222) {
         h = LV_PCT(45);
     }
@@ -275,14 +276,14 @@ lv_obj_t *setupClock()
     lv_obj_align(hour_cout, LV_ALIGN_LEFT_MID, x_offset, y_offset);
     lv_obj_set_style_bg_opa(hour_cout, LV_OPA_20, LV_PART_MAIN);
     lv_obj_set_style_border_opa(hour_cout, LV_OPA_60, LV_PART_MAIN);
-    lv_obj_clear_flag(hour_cout, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_remove_flag(hour_cout, LV_OBJ_FLAG_SCROLLABLE);
 
     lv_obj_t *min_cout = lv_obj_create(page);
     lv_obj_set_size(min_cout, w, h);
     lv_obj_align(min_cout, LV_ALIGN_RIGHT_MID, -x_offset, y_offset);
     lv_obj_set_style_bg_opa(min_cout, LV_OPA_20, LV_PART_MAIN);
     lv_obj_set_style_border_opa(min_cout, LV_OPA_60, LV_PART_MAIN);
-    lv_obj_clear_flag(min_cout, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_remove_flag(min_cout, LV_OBJ_FLAG_SCROLLABLE);
 
     lv_obj_t *label = lv_label_create(page);
     lv_obj_align(label, LV_ALIGN_CENTER, 0, -10 + y_offset);
@@ -306,7 +307,7 @@ lv_obj_t *setupClock()
     clock_label.minute = label;
 
     int offset = -5;
-    if (lv_disp_get_physical_ver_res(NULL) > 320) {
+    if (lv_display_get_physical_vertical_resolution(NULL) > 320) {
         offset = -45;
     }
 
@@ -318,9 +319,9 @@ lv_obj_t *setupClock()
     clock_label.date = label;
 
 
-    lv_obj_t *img = lv_img_create(page);
-    lv_img_set_src(img, &img_battery);
-    if (lv_disp_get_physical_ver_res(NULL) == 240) {
+    lv_obj_t *img = lv_image_create(page);
+    lv_image_set_src(img, &img_battery);
+    if (lv_display_get_physical_vertical_resolution(NULL) == 240) {
         lv_obj_align_to(img, min_cout, LV_ALIGN_OUT_BOTTOM_RIGHT, -10, 20);
     } else {
         lv_obj_align(img, LV_ALIGN_BOTTOM_RIGHT, -60, offset);
@@ -366,7 +367,7 @@ lv_obj_t *setupClock()
     return page;
 }
 
-#ifdef USING_TOUCHPAD
+#if  defined(USING_TOUCHPAD) || defined(USING_TOUCH_KEYBOARD)
 typedef struct {
     lv_obj_t *obj;
     int id;
@@ -379,7 +380,7 @@ static void scrollbar_change_cb(lv_event_t *e)
     lv_coord_t view_x = lv_obj_get_scroll_x(panel);
     lv_coord_t view_width = lv_obj_get_width(panel);
     int child_count = lv_obj_get_child_count(panel);
-    ChildObject *child_objects = (ChildObject *)lv_mem_alloc(child_count * sizeof(ChildObject));
+    ChildObject *child_objects = (ChildObject *)lv_malloc(child_count * sizeof(ChildObject));
 
     for (int i = 0; i < child_count; i++) {
         lv_obj_t *child = lv_obj_get_child(panel, i);
@@ -415,7 +416,7 @@ static void scrollbar_change_cb(lv_event_t *e)
         }
     }
 
-    lv_mem_free(child_objects);
+    lv_free(child_objects);
 
 }
 #endif
@@ -456,7 +457,7 @@ static void ui_poll_timer_callback(lv_timer_t *t)
 
             keyboard_level = hw_get_kb_backlight();
             hw_set_kb_backlight(0);
-            lv_obj_clear_flag(clock_page, LV_OBJ_FLAG_HIDDEN);
+            lv_obj_remove_flag(clock_page, LV_OBJ_FLAG_HIDDEN);
             lv_timer_resume(clock_timer);
 
             hw_set_cpu_freq(80);
@@ -473,7 +474,7 @@ static void ui_poll_timer_callback(lv_timer_t *t)
             hw_set_cpu_freq(240);
 
             lv_obj_add_flag(clock_page, LV_OBJ_FLAG_HIDDEN);
-            lv_obj_clear_flag(main_screen, LV_OBJ_FLAG_HIDDEN);
+            lv_obj_remove_flag(main_screen, LV_OBJ_FLAG_HIDDEN);
             lv_timer_pause(clock_timer);
 
             hw_set_kb_backlight(keyboard_level);
@@ -501,7 +502,7 @@ static void ui_poll_timer_callback(lv_timer_t *t)
                 printf("Wakeup\n");
 #endif
                 lv_obj_add_flag(clock_page, LV_OBJ_FLAG_HIDDEN);
-                lv_obj_clear_flag(main_screen, LV_OBJ_FLAG_HIDDEN);
+                lv_obj_remove_flag(main_screen, LV_OBJ_FLAG_HIDDEN);
                 lv_timer_pause(clock_timer);
 
                 hw_set_cpu_freq(240);
@@ -520,6 +521,7 @@ static void ui_poll_timer_callback(lv_timer_t *t)
 
 void setupGui()
 {
+
     lv_obj_set_style_bg_color(lv_screen_active(), lv_color_black(), LV_PART_MAIN);
     lv_obj_set_style_radius(lv_screen_active(), 0, 0);
     lv_obj_t *start_logo = lv_label_create(lv_screen_active());
@@ -531,7 +533,6 @@ void setupGui()
     lv_refr_now(NULL);
     lv_delay_ms(5000);
     lv_obj_delete(start_logo);
-
 
     disable_keyboard();
 
@@ -565,7 +566,7 @@ void setupGui()
     lv_tileview_add_tile(main_screen, 0, 1, LV_DIR_HOR);
 
     lv_obj_set_scrollbar_mode(main_screen, LV_SCROLLBAR_MODE_OFF);
-    lv_obj_clear_flag(main_screen, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_remove_flag(main_screen, LV_OBJ_FLAG_SCROLLABLE);
 
     /* Initialize the menu view */
     lv_obj_t *panel = lv_obj_create(menu_panel);
@@ -575,7 +576,7 @@ void setupGui()
     lv_obj_set_flex_flow(panel, LV_FLEX_FLOW_ROW);
     lv_obj_align(panel, LV_ALIGN_TOP_MID, 0, 0);
     lv_obj_add_style(panel, &style_frameless, 0);
-#ifdef USING_TOUCHPAD
+#if  defined(USING_TOUCHPAD) || defined(USING_TOUCH_KEYBOARD)
     lv_obj_add_event_cb(panel, scrollbar_change_cb, LV_EVENT_SCROLL_END, NULL);
 #endif
 
@@ -661,7 +662,7 @@ void setupGui()
     create_app(panel, "IMU", &img_gyroscope, &ui_sensor_main);
 
     int offset = -10;
-    if (lv_disp_get_physical_ver_res(NULL) > 320) {
+    if (lv_display_get_physical_vertical_resolution(NULL) > 320) {
         offset = -45;
     }
     /* Initialize the label */
@@ -670,7 +671,7 @@ void setupGui()
     lv_obj_align(desc_label, LV_ALIGN_BOTTOM_MID, 0, offset);
     lv_obj_set_style_text_align(desc_label, LV_TEXT_ALIGN_CENTER, 0);
 
-    if (lv_disp_get_physical_hor_res(NULL) < 320) {
+    if (lv_display_get_physical_horizontal_resolution(NULL) < 320) {
         lv_obj_set_style_text_font(desc_label, &font_alibaba_24, 0);
         lv_obj_align(desc_label, LV_ALIGN_BOTTOM_MID, 0, -25);
     } else {

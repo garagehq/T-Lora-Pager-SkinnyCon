@@ -75,25 +75,28 @@ typedef enum {
 
 // Hardware online status bit definitions
 // Each bit represents the online status of a specific hardware component
-#define HW_RADIO_ONLINE          _BV(0)
-#define HW_TOUCH_ONLINE          _BV(1)
-#define HW_DRV_ONLINE            _BV(2)
-#define HW_PMU_ONLINE            _BV(3)
-#define HW_RTC_ONLINE            _BV(4)
-#define HW_PSRAM_ONLINE          _BV(5)
-#define HW_GPS_ONLINE            _BV(6)
-#define HW_SD_ONLINE             _BV(7)
-#define HW_NFC_ONLINE            _BV(8)
-#define HW_SENSOR_ONLINE         _BV(9)
-#define HW_KEYBOARD_ONLINE       _BV(10)
-#define HW_GAUGE_ONLINE          _BV(11)
-#define HW_EXPAND_ONLINE         _BV(12)
-#define HW_CODEC_ONLINE          _BV(13)
-#define HW_NRF24_ONLINE          _BV(14)
-#define HW_SI473X_ONLINE         _BV(15)
-#define HW_BME280_ONLINE         _BV(16)
-#define HW_QMC5883P_ONLINE       _BV(17)
-#define HW_LED_INDIC_ONLINE      _BV(18)
+#define HW_RADIO_ONLINE             (_BV(0))
+#define HW_TOUCH_ONLINE             (_BV(1))
+#define HW_DRV_ONLINE               (_BV(2))
+#define HW_PMU_ONLINE               (_BV(3))
+#define HW_RTC_ONLINE               (_BV(4))
+#define HW_PSRAM_ONLINE             (_BV(5))
+#define HW_GPS_ONLINE               (_BV(6))
+#define HW_SD_ONLINE                (_BV(7))
+#define HW_NFC_ONLINE               (_BV(8))
+#define HW_BHI260AP_ONLINE          (_BV(9))
+#define HW_KEYBOARD_ONLINE          (_BV(10))
+#define HW_GAUGE_ONLINE             (_BV(11))
+#define HW_EXPAND_ONLINE            (_BV(12))
+#define HW_CODEC_ONLINE             (_BV(13))
+#define HW_NRF24_ONLINE             (_BV(14))
+#define HW_SI473X_ONLINE            (_BV(15))
+#define HW_BME280_ONLINE            (_BV(16))
+#define HW_QMC5883P_ONLINE          (_BV(17))
+#define HW_LED_INDIC_ONLINE         (_BV(18))
+#define HW_QMI8658_ONLINE           (_BV(19))
+#define HW_BMA423_ONLINE            (_BV(20))
+
 #else
 // If compiling for Arduino, include the WiFi library
 #include <WiFi.h>
@@ -1469,6 +1472,23 @@ const char *hw_get_chip_id_string();
 * * @param to_usb If True, the RF switch is set to a USB LoRa interface; if false, it is set to the built-in LoRa antenna.
 */
 void hw_set_usb_rf_switch(bool to_usb);
+
+/**
+ * @brief  Set the audio 3D effect.
+ * @note   This function enables or disables the 3D audio effect.
+ * @param  enable: True to enable the 3D audio effect, false to disable it.
+ * @retval None
+ */
+void hw_set_audio_effect_3d(bool enable);
+
+/**
+ * @brief  Set the audio effect to AB class.
+ * @note   This function enables or disables the AB class audio effect.
+ * @param  enable: True to enable the AB class audio effect, false to disable it.
+ * @retval None
+ */
+void hw_set_audio_effect_ab_class(bool enable);
+
 
 #if defined(ARDUINO_T_LORA_PAGER)
 #define USING_BLE_KEYBOARD

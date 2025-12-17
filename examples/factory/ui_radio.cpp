@@ -27,6 +27,9 @@ static lv_obj_t *radio_msg_label = NULL;
 radio_params_t radio_params_copy;
 static uint8_t radio_run_mode = RADIO_DISABLE;
 static lv_timer_t *timer = NULL;
+static uint32_t dummy_tx_payload = 0;
+static uint32_t dummy_rx_payload = 0;
+
 static void ui_set_msg_label(const char *msg);
 
 static void radio_timer_task(lv_timer_t *t);
@@ -46,8 +49,10 @@ static void back_event_handler(lv_event_t *e)
 
         lv_obj_clean(menu);
         lv_obj_del(menu);
-
+        _high_freq = false;
         menu_show();
+        dummy_tx_payload = 0;
+        dummy_rx_payload = 0;
     }
 }
 
@@ -59,7 +64,7 @@ static void _ui_radio_obj_event(lv_event_t *e)
     const char *flag = ( const char *)lv_event_get_user_data(e);
     const char *prefix = "RX Mode";
     char buf[64];
-
+    int index = 0;
     if (*flag != 'b') {
         selected =  lv_dropdown_get_selected(obj);
     }
@@ -75,8 +80,8 @@ static void _ui_radio_obj_event(lv_event_t *e)
                 lv_dropdown_set_options(power_level_dd, radio_get_tx_power_list(true));
                 lv_dropdown_set_options(bandwidth_dd, radio_get_bandwidth_list(true));
 
-                radio_params_copy.bandwidth = radio_get_bandwidth_from_index(0);
-                radio_params_copy.power = radio_get_tx_power_from_index(0);
+                radio_params_copy.bandwidth = radio_get_bandwidth_from_index(255); // 255 get default bandwidth
+                radio_params_copy.power = radio_get_tx_power_from_index(255);   //255 Get Max Power level
                 _high_freq = true;
             }
 
@@ -84,11 +89,28 @@ static void _ui_radio_obj_event(lv_event_t *e)
             if (_high_freq) {
                 lv_dropdown_set_options(power_level_dd, radio_get_tx_power_list(false));
                 lv_dropdown_set_options(bandwidth_dd, radio_get_bandwidth_list(false));
-                radio_params_copy.bandwidth = radio_get_bandwidth_from_index(0);
-                radio_params_copy.power = radio_get_tx_power_from_index(0);
+                radio_params_copy.bandwidth = radio_get_bandwidth_from_index(255); // 255 get default bandwidth
+                radio_params_copy.power = radio_get_tx_power_from_index(255);  //255 Get Max Power level
                 _high_freq = false;
             }
         }
+
+        for (int i = 0; i < radio_get_bandwidth_length(); ++i) {
+            if (radio_get_bandwidth_from_index(i) == radio_params_copy.bandwidth) {
+                lv_dropdown_set_selected(bandwidth_dd, index);
+                break;
+            }
+            index++;
+        }
+        index = 0;
+        for (int i = 0; i < radio_get_tx_power_length(); ++i) {
+            if (radio_get_tx_power_from_index(i) == radio_params_copy.power) {
+                lv_dropdown_set_selected(power_level_dd, index);
+                break;
+            }
+            index++;
+        }
+
         break;
     case 'w':   //*bandwidth
         radio_params_copy.bandwidth = radio_get_bandwidth_from_index(selected);
@@ -386,8 +408,7 @@ static void radio_timer_task(lv_timer_t *t)
 {
     static radio_tx_params_t tx_params;
     static radio_rx_params_t rx_params;
-    static uint32_t dummy_tx_payload = 0;
-    static uint32_t dummy_rx_payload = 0;
+
     char msg[128];
 
     int tick = lv_tick_get() / 1000;

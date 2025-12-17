@@ -33,7 +33,7 @@ void setup()
     // T-Watch-S3 , T-Watch-S3-Plus , T-Watch-Ultra brightness level is 0 ~ 255
     instance.setBrightness(DEVICE_MAX_BRIGHTNESS_LEVEL);
 
-    if (!(instance.getDeviceProbe() & HW_SENSOR_ONLINE)) {
+    if (!(instance.getDeviceProbe() & HW_BHI260AP_ONLINE)) {
         lv_label_set_text(label1, "Sensor is not online");
         while (1) {
             lv_task_handler(); delay(5);

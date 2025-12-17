@@ -46,6 +46,8 @@ void hw_radio_begin()
 
 int16_t hw_set_radio_params(radio_params_t &params)
 {
+#ifndef ARDUINO
+    printf("---------------------------------------------\n");
     printf("Set radio params:\n");
     printf("Frequency:%.2f MHz\n", params.freq);
     printf("Bandwidth:%.2f KHz\n", params.bandwidth);
@@ -71,6 +73,8 @@ int16_t hw_set_radio_params(radio_params_t &params)
     default:
         break;
     }
+#endif
+
     if (params.freq > 960.0) {
         _high_freq = true;
     } else {
@@ -79,7 +83,14 @@ int16_t hw_set_radio_params(radio_params_t &params)
 
 #ifdef ARDUINO
     int16_t state = 0;
+
+    // Lock SPI bus
     instance.lockSPI();
+
+    /*
+    *  Re-initialize LoRa
+    * */
+    instance.initLoRa();
 
 #ifdef ARDUINO_T_DECK_V2
     instance.setRFFrequencyBand(params.freq);
@@ -88,55 +99,76 @@ int16_t hw_set_radio_params(radio_params_t &params)
     state = radio.setFrequency(params.freq);
     if (state == RADIOLIB_ERR_INVALID_FREQUENCY) {
         Serial.println(F("Selected frequency is invalid for this module!"));
+    } else {
+        Serial.printf("Set Frequency: %.2f MHz\n", params.freq);
     }
+
     // set bandwidth
     state = radio.setBandwidth(params.bandwidth);
     if (state == RADIOLIB_ERR_INVALID_BANDWIDTH) {
-        Serial.println(F("Selected bandwidth is invalid for this module!"));
+        state = radio.setBandwidth(params.bandwidth, true);
+        if (state == RADIOLIB_ERR_INVALID_BANDWIDTH) {
+            Serial.println(F("Selected bandwidth is invalid for this module!"));
+        }
+    } else {
+        Serial.printf("Set bandwidth: %.2f KHz\n", params.bandwidth);
     }
+
     // set spreading factor
     state = radio.setSpreadingFactor(params.sf);
     if ( state == RADIOLIB_ERR_INVALID_SPREADING_FACTOR) {
         Serial.println(F("Selected spreading factor is invalid for this module!"));
+    } else {
+        Serial.printf("Set spreading factor: %u\n", params.sf);
     }
+
     // set coding rate
     state = radio.setCodingRate(params.cr);
     if (state == RADIOLIB_ERR_INVALID_CODING_RATE) {
         Serial.println(F("Selected coding rate is invalid for this module!"));
+    } else {
+        Serial.printf("Set coding rate: %u\n", params.cr);
     }
+
     // set LoRa sync word
     state = radio.setSyncWord(params.syncWord);
     if (state  != RADIOLIB_ERR_NONE) {
         Serial.println(F("Unable to set sync word!"));
+    } else {
+        Serial.printf("Set sync word : %u\n", params.syncWord);
     }
+
+    bool highFreq = false;
     if (params.freq >= 2400 && params.power > 13) {
         params.power = 13;
+        highFreq = true;
         Serial.println(F("High frequency band, max output power limited to 13dBm"));
     }
+
     // set output power
-    state = radio.setOutputPower(params.power, true);
+    state = radio.setOutputPower(params.power, highFreq);
     if (state  == RADIOLIB_ERR_INVALID_OUTPUT_POWER) {
         Serial.println(F("Selected output power is invalid for this module!"));
     } else {
-        log_d("Set TxPower:%u dBm", params.power);
+        Serial.printf("Set TxPower:%u dBm\n", params.power);
     }
 
-    printf("Mode: ");
+    Serial.print("Mode: ");
     switch (params.mode) {
     case RADIO_DISABLE:
-        printf("RADIO_DISABLE\n");
+        Serial.printf("RADIO_DISABLE\n");
         state =  radio.standby();
         break;
     case RADIO_TX:
-        printf("RADIO_TX\n");
+        Serial.printf("RADIO_TX\n");
         state =  radio.startTransmit("");
         break;
     case RADIO_RX:
-        printf("RADIO_RX\n");
+        Serial.printf("RADIO_RX\n");
         state =  radio.startReceive();
         break;
     case RADIO_CW:
-        printf("RADIO_CW\n");
+        Serial.printf("RADIO_CW\n");
         radio.standby();
         delay(5);
         radio.transmitDirect();
@@ -305,7 +337,7 @@ static const float freq_list[] = {315.0, 433.0, 434.0, 470.0, 842.0, 850, 868.0,
 #endif
 
 static const float bandwidth_list[] = {62.5, 125.0, 250.0, 500.0};
-static const float bandwidth_high_freq_list[] = {203.125, 406.25, 812.5};
+static const float bandwidth_high_freq_list[] = {62.5, 125.0, 203.125, 250.0, 406.25, 500.0, 812.5};
 
 static const float power_level_list[] = {2, 5, 10, 12, 17, 20, 22};
 static const float power_level_high_freq_list[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13};
@@ -354,7 +386,7 @@ const char *radio_get_bandwidth_list(bool high_freq)
 {
     _high_freq = high_freq;
     if (high_freq) {
-        return "203.125KHz\n""406.25KHz\n""812.5KHz";
+        return "62.5KHz\n""125KHz\n""203.125KHz\n""250KHz\n""406.25KHz\n""500KHz\n""812.5KHz";
     } else {
         return "62.5KHz\n""125KHz\n""250KHz\n""500KHz";
     }
@@ -387,12 +419,12 @@ float radio_get_tx_power_from_index(uint8_t index)
 {
     if (_high_freq) {
         if (index > (sizeof(power_level_high_freq_list) / sizeof(power_level_high_freq_list[0]))) {
-            index =  13;
+            return 13.0;
         }
         return power_level_high_freq_list[index];
     }
     if (index > (sizeof(power_level_list) / sizeof(power_level_list[0]))) {
-        index =  6;
+        return 22.0;
     }
     return power_level_list[index];
 }
