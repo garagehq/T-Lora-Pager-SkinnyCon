@@ -40,6 +40,8 @@ jobs:
 
       - name: Generate release notes
         id: notes
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           # Find the previous release tag (if any)
           PREV_TAG=$(git tag --sort=-creatordate | head -1)
@@ -59,12 +61,45 @@ jobs:
           # Get commit log since last release
           COMMITS=$(git log ${RANGE} --pretty=format:'- %s (%h)' 2>/dev/null | head -30)
 
+          # Try to find the merged PR number and pull its body for images
+          PR_NUM=$(git log -1 --pretty=format:'%s' | grep -oP '#\K[0-9]+' | head -1)
+          PR_IMAGES=""
+          if [ -n "$PR_NUM" ]; then
+            # Extract image markdown from PR body
+            PR_IMAGES=$(gh pr view "$PR_NUM" --json body -q '.body' 2>/dev/null \
+              | grep -E '^\!\[' || true)
+          fi
+
+          # Fallback: if no PR images, check for screenshots/ in the repo
+          if [ -z "$PR_IMAGES" ] && [ -d "screenshots" ]; then
+            for img in screenshots/*.png; do
+              [ -f "$img" ] || continue
+              NAME=$(basename "$img" .png | sed 's/factory_//' | sed 's/_/ /g')
+              # Capitalize first letter
+              NAME="$(echo "$NAME" | sed 's/^./\U&/')"
+              PR_IMAGES="${PR_IMAGES}
+          ![${NAME}](https://raw.githubusercontent.com/${{ github.repository }}/master/${img})"
+            done
+          fi
+
+          # Rewrite PR image URLs to point at this commit (stable reference)
+          if [ -n "$PR_IMAGES" ]; then
+            PR_IMAGES=$(echo "$PR_IMAGES" | sed "s|/master/|/${{ github.sha }}/|g; s|/supercon-port/|/${{ github.sha }}/|g")
+          fi
+
           # Build release body
           {
             echo "## ${TITLE}"
             echo ""
             echo "### Changes"
             echo "${COMMITS}"
+
+            if [ -n "$PR_IMAGES" ]; then
+              echo ""
+              echo "### Screenshots"
+              echo "${PR_IMAGES}"
+            fi
+
             echo ""
             echo "### Firmware"
             echo "| File | Description |"
