@@ -1,0 +1,10 @@
+.DS_Store
+build
+make
+script
+.pio
+*.bk
+*.log
+.piopm
+.github
+
