@@ -7,3 +7,4 @@ script
 *.log
 
 screenshot_*.ppm
+*.ppm
