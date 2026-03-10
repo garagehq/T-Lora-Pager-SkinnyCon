@@ -14,9 +14,7 @@ jobs:
       matrix:
         board:
           - tlora_pager
-          - twatch_ultra
-          - twatchs3
-          
+
         radio_examples:
           - radio/LR1121/LR11x0_Receive/LR11x0_Receive.ino
           - radio/LR1121/LR11x0_Transmit/LR11x0_Transmit.ino

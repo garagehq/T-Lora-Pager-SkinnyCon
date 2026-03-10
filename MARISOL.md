@@ -2,14 +2,15 @@
 
 ## Project Overview
 
-**LilyGoLib** is an Arduino library for LilyGo hardware devices, including the T-LoRa-Pager, T-Watch-S3, and T-Watch-Ultra. This repository is the SkinnyCon fork, focused on the **T-LoRa-Pager** variant.
+**LilyGoLib** is an Arduino library for LilyGo hardware devices. This SkinnyCon fork focuses on the **T-LoRa-Pager** — a handheld LoRa messaging device with an ultra-wide display.
 
 - **MCU**: ESP32-S3 (Xtensa dual-core, 240 MHz, PSRAM)
-- **Display**: 480x222 ultra-wide IPS LCD, RGB565 (16-bit color), SPI interface
-- **GUI Framework**: LVGL 9.2 (not v8)
-- **Radio**: LoRa (SX1262/SX1280/CC1101/LR1121/Si4432 variants)
-- **Peripherals**: GPS (TinyGPSPlus), NFC, BHI260AP sensor, DRV2605 haptic, PCF85063 RTC, BQ25896 PMU, BQ27220 fuel gauge, AW9364 backlight driver, rotary encoder, TCA8418 keyboard matrix, SD card, codec audio, PDM microphone
+- **Display**: 480×222 ultra-wide IPS LCD (ST7796U), RGB565, SPI interface
+- **GUI Framework**: LVGL 9.2
+- **Radio**: LoRa via SX1262 (also supports SX1280, CC1101, LR1121, Si4432, nRF24L01)
+- **Peripherals**: GPS (u-blox), NFC (ST25R3911B), BHI260AP 6-axis IMU, DRV2605 haptic, PCF85063 RTC, BQ25896 PMU, BQ27220 fuel gauge, AW9364 backlight (0-16 levels), TCA8418 keyboard matrix, ES8311 audio codec, PDM mic, SD card, rotary encoder
 - **Build System**: Arduino framework via PlatformIO (ESP32 core >= 3.3.0)
+- **Factory App**: 20+ screens including messaging, radio, GPS, audio, NFC, settings, sensors
 
 ## Build & Run
 
@@ -20,8 +21,11 @@ pip install platformio
 # Run native unit tests (no hardware needed)
 pio test -e native -v
 
-# Run LVGL headless simulator tests
+# Run LVGL headless simulator tests (generates PPM screenshots)
 pio test -e native_lvgl -v
+
+# Run all tests
+pio test -e native -e native_lvgl -v
 
 # Compile for ESP32-S3 (build check only, no upload)
 pio run -e tlora_pager
@@ -30,53 +34,89 @@ pio run -e tlora_pager
 pio run -e tlora_pager --target upload
 ```
 
-## Testing Strategy
+## Testing
 
-### 3-Tier Testing Architecture
+### 3-Tier Architecture
 
-| Tier | Environment | What It Tests | Speed |
-|------|-------------|--------------|-------|
-| 1 | `native` | Hardware logic, data structures, constants, parsing | <1s |
-| 2 | `native_lvgl` | LVGL widget rendering, display simulation, screenshots | ~5s |
-| 3 | `tlora_pager` | Full ESP32-S3 compilation (build check, no upload) | ~60s |
+| Tier | Environment | What It Tests | Tests | Speed |
+|------|-------------|--------------|-------|-------|
+| 1 | `native` | Hardware logic, constants, GPS parsing, RGB565 | 32 | <3s |
+| 2 | `native_lvgl` | LVGL widgets, rendering, framebuffer, screenshots | 20 | ~7s |
+| 3 | `tlora_pager` | Full ESP32-S3 compilation (build check) | — | ~60s |
 
 ### Test Files
 
-- `test/test_hardware/test_hardware.c` — 30+ tests: brightness clamping, PowerCtrlChannel enum, RotaryMsg_t, GPS NMEA parsing, RGB565 byte swap, hardware presence masks, keyboard states
-- `test/test_lvgl_render/test_lvgl_render.c` — 20+ tests: display resolution, widget creation (labels, buttons), click handlers, rendering verification, PPM screenshot export, rotation modes
-- `test/simulator/sim_main.c` — Headless LVGL 9.2 simulator (480x222 RGB565 framebuffer, no SDL dependency)
-- `test/mocks/` — Mock headers for Arduino.h, SPI.h, Wire.h, FreeRTOS, ESP-IDF drivers
+- `test/test_hardware/test_hardware.c` — 32 tests: display dimensions, brightness clamping, PowerCtrlChannel enum, RotaryMsg_t, GPS NMEA parsing, RGB565 byte swap, hardware presence masks, keyboard states
+- `test/test_lvgl_render/test_lvgl_render.c` — 20 tests: display init, labels, buttons, click handlers, rendering to framebuffer, PPM export, multi-widget layouts
+- `test/simulator/sim_main.c/h` — Headless LVGL 9.2 simulator (480×222 RGB565 framebuffer)
+- `test/simulator/lv_conf.h` — LVGL config for simulator (LV_STDLIB_CLIB)
+- `test/mocks/` — Mock headers: Arduino.h, SPI.h, Wire.h, FreeRTOS, ESP-IDF GPIO/I2S/SPI
 
-### Screenshot Testing
+### LVGL Simulator
 
-The LVGL simulator exports PPM screenshots after each render test. These are uploaded as CI artifacts for visual regression checking. PPM format was chosen for zero external dependencies.
+The headless simulator renders to a 480×222 RGB565 framebuffer matching the physical display. Screenshots are saved as PPM files and uploaded as CI artifacts for visual regression testing.
 
-## Hardware Details
+Key API:
+- `lvgl_sim_init()` / `lvgl_sim_deinit()` — setup/teardown per test
+- `lvgl_test_run(ms)` — advance LVGL timers
+- `lvgl_test_save_ppm(filename)` — export framebuffer as PPM image
+- `lvgl_sim_get_framebuffer()` — direct framebuffer access for pixel verification
+
+## CI/CD
+
+### Workflows (4 total)
+
+| Workflow | Jobs | Trigger |
+|----------|------|---------|
+| `tests.yml` | Native Tests + LVGL Simulator (PlatformIO) | PR, push to master |
+| `base_examples_ci.yml` | Arduino compile: factory, BLE, peripheral, power, sensor, sleep (31 sketches × tlora_pager) | PR, push |
+| `lvgl_examples_ci.yml` | Arduino compile: 42 LVGL widget examples × tlora_pager | PR, push |
+| `radio_examples_ci.yml` | Arduino compile: 13 radio examples × tlora_pager | PR, push |
+
+**Board matrix**: `tlora_pager` only (twatch_ultra and twatchs3 removed — not targets for this fork)
+
+**Build tool**: arduino-cli on x86_64 CI runners (NOT PlatformIO — arduino-cli is x86-only)
+
+**Note**: Large Arduino repos with many examples take 15-30+ min in CI. Each sketch compiles independently.
+
+## Hardware Specs
 
 | Component | Chip | Interface | Notes |
 |-----------|------|-----------|-------|
-| Display | ST7796 (480x222) | SPI | AW9364 backlight, 0-16 brightness levels |
-| PMU | BQ25896 | I2C | 128-2048mA charge current, 64mA steps |
-| Fuel Gauge | BQ27220 | I2C | Battery capacity tracking |
-| RTC | PCF85063 | I2C | Real-time clock with backup |
-| Haptic | DRV2605 | I2C | Vibration feedback, 0-123 effects |
-| Sensor | BHI260AP | SPI | 6-axis IMU |
-| GPS | u-blox | UART | TinyGPSPlus parser |
-| Radio | SX1262/SX1280/etc | SPI | LoRa, shared SPI bus |
-| Keyboard | TCA8418 | I2C | Matrix keyboard, backlight |
-| NFC | ST25R3911B | SPI | RFAL stack |
-| Rotary | Mechanical | GPIO | Rotary encoder + center button |
-| Audio | ES8311 codec | I2S | Mono mic + speaker |
+| Display | ST7796U (480×222) | SPI | AW9364 backlight, 17 brightness levels (0-16) |
+| PMU | BQ25896 | I2C | 128-2048mA charge, 64mA steps |
+| Fuel Gauge | BQ27220 | I2C | Battery %, voltage, current |
+| RTC | PCF85063 | I2C | Alarm, timer, backup |
+| Haptic | DRV2605 | I2C | 124 waveform effects |
+| IMU | BHI260AP | SPI | 6-axis accel + gyro |
+| GPS | u-blox MIA-M10Q | UART | NMEA via TinyGPSPlus |
+| Radio | SX1262 | SPI | LoRa, RadioLib 7.x |
+| Keyboard | TCA8418 | I2C | Matrix keyboard with backlight |
+| NFC | ST25R3911B | SPI | RFAL stack, WiFi/URL/text tags |
+| Rotary | Mechanical | GPIO | Encoder + center button |
+| Audio | ES8311 | I2S | Mono codec, PDM mic input |
+
+## Factory App Architecture
+
+The factory example (`examples/factory/`) is the reference application with a tileview-based navigation:
+
+- **Main screen** (tile 0,0): App grid with icons
+- **App screens** (tile 0,1): Dynamic per-app content
+- **20+ apps**: Messaging, Radio, nRF24, GPS, Monitor, Power, Audio, Microphone, Sensor, Keyboard, System, Calendar, NFC, BLE, IR Remote, Camera Remote, Tools, Factory Test, Settings
+- **Input**: Rotary encoder, TCA8418 keyboard, touch (optional)
+- **Thread safety**: FreeRTOS mutex for concurrent hardware+GUI access
 
 ## Known Issues
 
-- The library uses `LV_STDLIB_CUSTOM` malloc for the device target but tests use `LV_STDLIB_CLIB` for native compatibility
-- `BrightnessController` is a CRTP template class requiring FreeRTOS timers; tested via extracted logic only
-- ESP32 compilation requires many vendor libraries (XPowersLib, SensorLib, RadioLib, etc.) that are not mocked for native tests
-- The `LilyGoLib.h` header has compile guards that require `ARDUINO_T_LORA_PAGER` to be defined
+- `src/lv_conf.h` uses `LV_STDLIB_CUSTOM`; test simulator uses `LV_STDLIB_CLIB` (build flag override)
+- `BrightnessController` is a CRTP template — tested via extracted logic, not full template
+- ESP32 build requires vendor libs (XPowersLib, SensorLib, RadioLib) not mocked for native
+- `LilyGoLib.h` needs `ARDUINO_T_LORA_PAGER` define to compile
+- arduino-cli is x86_64 only — use PlatformIO for ARM64 sandbox testing
 
 ## Pipeline History
 
 | Date | Phase | Result |
 |------|-------|--------|
-| 2026-03-09 | Initial setup | Created platformio.ini, test infrastructure, LVGL simulator, mock headers, CI workflow |
+| 2026-03-09 | Initial setup | 52 tests (32 hw + 20 LVGL), simulator, CI, mocks |
+| 2026-03-09 | CI fix | Removed twatch_ultra/twatchs3 from board matrix, fixed LVGL linking |

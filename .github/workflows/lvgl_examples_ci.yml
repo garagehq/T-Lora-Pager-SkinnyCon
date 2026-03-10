@@ -14,9 +14,7 @@ jobs:
       matrix:
         board:
           - tlora_pager
-          - twatch_ultra
-          - twatchs3
-          
+
         lvgl_examples:
           - lvgl/benchmark/benchmark.ino
           - lvgl/event/event.ino

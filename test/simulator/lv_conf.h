@@ -1,11 +1,11 @@
 /**
- * @file lv_conf_sim.h
+ * @file lv_conf.h
  * Minimal LVGL 9.2 configuration for headless simulator testing.
  * Matches T-LoRa-Pager: 480x222, RGB565, no OS, no hardware.
  */
 
-#ifndef LV_CONF_SIM_H
-#define LV_CONF_SIM_H
+#ifndef LV_CONF_H
+#define LV_CONF_H
 
 /*====================
    COLOR SETTINGS
@@ -326,4 +326,4 @@
 #define LV_USE_DEMO_SCROLL 0
 #define LV_USE_DEMO_VECTOR_GRAPHIC 0
 
-#endif /*LV_CONF_SIM_H*/
+#endif /*LV_CONF_H*/

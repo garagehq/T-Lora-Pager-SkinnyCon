@@ -6,7 +6,10 @@
  */
 
 #include <unity.h>
-#include "sim_main.h"
+/* Include simulator source directly — PlatformIO compiles each test dir
+ * as an isolated compilation unit. sim_main.c lives in test/simulator/
+ * and provides the headless LVGL 9.2 display driver. */
+#include "../simulator/sim_main.c"
 #include <string.h>
 #include <stdio.h>
 

@@ -19,9 +19,7 @@ jobs:
       matrix:
         board:
           - tlora_pager
-          - twatch_ultra
-          - twatchs3
-          
+
         base_examples:
           - ble/BLEKeyboard/BLEKeyboard.ino
           - ble/BLEMouse/BLEMouse.ino
