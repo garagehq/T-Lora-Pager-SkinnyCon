@@ -74,9 +74,9 @@ pio run -e tlora_pager --target upload
 pio test -e native -e native_lvgl -e native_factory -v
 
 # Run individual test suites
-pio test -e native -v          # Hardware logic tests (32 tests, <3s)
+pio test -e native -v          # Hardware logic tests (24 tests, <3s)
 pio test -e native_lvgl -v     # LVGL widget tests (20 tests, ~7s)
-pio test -e native_factory -v  # Factory app simulation (9 tests, ~7s)
+pio test -e native_factory -v  # Factory app simulation (15 tests, ~7s)
 ```
 
 ## Testing Architecture
@@ -85,12 +85,12 @@ pio test -e native_factory -v  # Factory app simulation (9 tests, ~7s)
 
 | Tier | Environment | Tests | What It Tests | Speed |
 |------|-------------|-------|---------------|-------|
-| 1 - Unit | `native` | 32 | Hardware constants, brightness clamping, GPS NMEA parsing, RGB565 byte swap, power channels, keyboard states | <3s |
-| 2 - Widgets | `native_lvgl` | 20 | LVGL 9.2 display init, labels, buttons, click handlers, rendering to framebuffer, PPM screenshot export | ~7s |
+| 1 - Unit | `native` | 24 | Brightness clamping, GPS NMEA parsing (6 cases), RGB565 byte swap + channel extraction, power channel contiguity, hardware mask bitfields, rotary struct layout | <3s |
+| 2 - Widgets | `native_lvgl` | 20 | LVGL 9.2 display init, labels, buttons, click handlers, flex layouts, sliders, rendering to framebuffer, PPM screenshot export | ~7s |
 | 3 - Factory Sim | `native_factory` | 15 | Real factory app screens with actual Alibaba fonts (12/24/40/100px), 9 app icons, and 6 SkinnyCon screens | ~7s |
 | 4 - Build | `tlora_pager` | — | Full ESP32-S3 compilation against real Arduino SDK and vendor libraries | ~60s |
 
-**Total: 67 tests, all running without hardware.**
+**Total: 59 tests, all running without hardware.**
 
 ### LVGL Headless Simulator
 
@@ -119,7 +119,7 @@ Screenshots are saved as PPM files and uploaded as CI artifacts for visual regre
 
 | File | Tests | Description |
 |------|-------|-------------|
-| `test/test_hardware/test_hardware.c` | 32 | Display dimensions, brightness, power channels, GPS parsing, RGB565 |
+| `test/test_hardware/test_hardware.c` | 24 | Brightness clamping, GPS NMEA parsing, RGB565 byte swap, power channels, hardware masks, rotary input |
 | `test/test_lvgl_render/test_lvgl_render.c` | 20 | LVGL widgets, rendering, framebuffer verification |
 | `test/test_factory_sim/test_factory_sim.c` | 15 | Factory app screens with real fonts, icons, and SkinnyCon screens |
 | `test/simulator/sim_main.c` | — | Headless LVGL 9.2 simulator (480x222 RGB565) |

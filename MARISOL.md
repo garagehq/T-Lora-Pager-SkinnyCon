@@ -77,15 +77,15 @@ This project has **two independent build paths** — understanding this is criti
 
 | Tier | Environment | What It Tests | Tests | Speed |
 |------|-------------|--------------|-------|-------|
-| 1 | `native` | Hardware logic, constants, GPS parsing, RGB565 | 32 | <3s |
-| 2 | `native_lvgl` | LVGL widgets, rendering, framebuffer, screenshots | 20 | ~7s |
+| 1 | `native` | Brightness clamping, GPS NMEA parsing (6 cases), RGB565 byte swap + channels, power channel contiguity, hardware mask bitfields, rotary struct layout | 24 | <3s |
+| 2 | `native_lvgl` | LVGL widgets, rendering, flex layouts, sliders, framebuffer, screenshots | 20 | ~7s |
 | 3 | `native_factory` | Factory app screens with real fonts (Alibaba 12/24/40/100px), 9 icons, 6 SkinnyCon screens | 15 | ~7s |
 | 4 | `tlora_pager` | Full ESP32-S3 compilation (build check) | — | ~120s |
 
 ### Test Files
 
-- `test/test_hardware/test_hardware.c` — 32 tests: display dimensions, brightness clamping, PowerCtrlChannel enum, RotaryMsg_t, GPS NMEA parsing, RGB565 byte swap, hardware presence masks, keyboard states
-- `test/test_lvgl_render/test_lvgl_render.c` — 20 tests: display init, labels, buttons, click handlers, rendering to framebuffer, PPM export, multi-widget layouts
+- `test/test_hardware/test_hardware.c` — 24 tests: brightness clamping (boundary + sweep), GPS NMEA parsing (Dallas, Sao Paulo, equator, Huntsville, antimeridian, null inputs), RGB565 byte swap + channel extraction, PowerCtrlChannel contiguity, hardware presence mask bitfield ops, rotary struct layout
+- `test/test_lvgl_render/test_lvgl_render.c` — 20 tests: display init, labels, buttons, click handlers, rendering to framebuffer, flex layouts, sliders, PPM export, multi-widget layouts
 - `test/test_factory_sim/test_factory_sim.c` — 15 tests: main menu with real icons, clock screen, settings, LoRa chat, logo, monitor, nametag, about, code of conduct, badgeshark, schedule, net tools, font quality, icon grid, screenshot validation
 - `test/simulator/sim_main.c/h` — Headless LVGL 9.2 simulator (480×222 RGB565 framebuffer)
 - `test/simulator/lv_conf.h` — LVGL config for simulator (LV_STDLIB_CLIB)
@@ -178,3 +178,4 @@ Conference-specific apps for SkinnyCon 2026 (May 12-14, Huntsville AL, I2C Inven
 | 2026-03-10 | Factory sim | 61 tests (32 hw + 20 LVGL + 9 factory), real fonts/icons, visual regression |
 | 2026-03-10 | SkinnyCon apps | 67 tests (32 hw + 20 LVGL + 15 factory). 4 new apps + 2 info screens |
 | 2026-03-10 | Build fix | pio_main.cpp: PLATFORMIO guard fixes Arduino IDE duplicate symbols. Moving to src/ breaks non-factory sketches |
+| 2026-03-10 | Test audit | 59 tests (24 hw + 20 LVGL + 15 factory). Removed 8 tautological tests (constant==constant), replaced with real logic tests (GPS edge cases, mask bitfield ops, flex layouts, sliders) |
