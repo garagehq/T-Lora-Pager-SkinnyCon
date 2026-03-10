@@ -6,6 +6,9 @@
  * @date      2025-01-05
  *
  */
+#ifndef UI_DEFINE_H
+#define UI_DEFINE_H
+
 #ifdef ARDUINO
 #include <Arduino.h>
 #include <LilyGoLib.h>
@@ -109,3 +112,5 @@ lv_obj_t *create_radius_button(lv_obj_t *parent, const void *image, lv_event_cb_
 #ifndef M_PI
 #define M_PI		3.14159265358979323846
 #endif
+
+#endif /* UI_DEFINE_H */

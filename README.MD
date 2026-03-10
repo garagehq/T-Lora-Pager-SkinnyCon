@@ -87,10 +87,10 @@ pio test -e native_factory -v  # Factory app simulation (9 tests, ~7s)
 |------|-------------|-------|---------------|-------|
 | 1 - Unit | `native` | 32 | Hardware constants, brightness clamping, GPS NMEA parsing, RGB565 byte swap, power channels, keyboard states | <3s |
 | 2 - Widgets | `native_lvgl` | 20 | LVGL 9.2 display init, labels, buttons, click handlers, rendering to framebuffer, PPM screenshot export | ~7s |
-| 3 - Factory Sim | `native_factory` | 9 | Real factory app screens with actual Alibaba fonts (12/24/40/100px) and 9 app icons, visual regression screenshots | ~7s |
+| 3 - Factory Sim | `native_factory` | 13 | Real factory app screens with actual Alibaba fonts (12/24/40/100px), 9 app icons, and 4 Supercon-inspired screens | ~7s |
 | 4 - Build | `tlora_pager` | — | Full ESP32-S3 compilation against real Arduino SDK and vendor libraries | ~60s |
 
-**Total: 61 tests, all running without hardware.**
+**Total: 65 tests, all running without hardware.**
 
 ### LVGL Headless Simulator
 
@@ -111,7 +111,7 @@ The `native_factory` environment renders actual factory app screens using real a
 
 - **Fonts**: Alibaba PuHuiTi Bold at 12px, 24px, 40px, and 100px (same fonts used on device)
 - **Icons**: 9 app icons (Settings, Radio, Chat, Music, Monitor, Keyboard, Bluetooth, WiFi, Test)
-- **Screens**: Main menu with tileview, clock screen, settings panel, LoRa chat, system monitor
+- **Screens**: Main menu with tileview, clock screen, settings panel, LoRa chat, system monitor, plus 4 Supercon-inspired screens (Nametag, BadgeShark, Schedule, Net Tools)
 
 Screenshots are saved as PPM files and uploaded as CI artifacts for visual regression review.
 
@@ -121,7 +121,7 @@ Screenshots are saved as PPM files and uploaded as CI artifacts for visual regre
 |------|-------|-------------|
 | `test/test_hardware/test_hardware.c` | 32 | Display dimensions, brightness, power channels, GPS parsing, RGB565 |
 | `test/test_lvgl_render/test_lvgl_render.c` | 20 | LVGL widgets, rendering, framebuffer verification |
-| `test/test_factory_sim/test_factory_sim.c` | 9 | Factory app screens with real fonts and icons |
+| `test/test_factory_sim/test_factory_sim.c` | 13 | Factory app screens with real fonts, icons, and Supercon-inspired screens |
 | `test/simulator/sim_main.c` | — | Headless LVGL 9.2 simulator (480x222 RGB565) |
 | `test/simulator/lv_conf.h` | — | LVGL config for simulator |
 | `test/mocks/` | — | Mock headers for Arduino, SPI, Wire, FreeRTOS, ESP-IDF |
@@ -158,6 +158,19 @@ The factory example (`examples/factory/`) is the reference application with 20+ 
 | NFC | NFC | ST25R3911B tag reading (WiFi config, URLs, text) |
 | IR Remote | IR | IR transmit/receive (if hardware present) |
 | Compass | Compass | QMC5883P magnetic heading (if hardware present) |
+| **Nametag** | Chat | Conference nametag with 3 modes: name+subtitle, fullscreen, badge info |
+| **BadgeShark** | Monitor | LoRa packet sniffer — Wireshark-style hex dump with RSSI, auto-scroll |
+| **Schedule** | Settings | Conference schedule browser with talk times, titles, and speakers |
+| **Net Tools** | WiFi | LoRa mesh diagnostics — ping/pong latency, packet loss, peer discovery |
+
+### Supercon-Inspired Apps
+
+Inspired by the [2025 Supercon badge](https://github.com/zx96/2025-supercon-badge), these apps bring conference badge features to the T-LoRa-Pager:
+
+- **Nametag**: Large name display with Hackaday color palette (grey `#1A1A1A`, yellow `#E39810`, sage green `#ABC5A0`). Three display modes cycled via rotary encoder: name+subtitle, fullscreen giant name, badge info screen.
+- **BadgeShark**: LoRa packet sniffer with terminal-style dark theme. Shows packet number, length, RSSI (color-coded red/green by signal strength), and hex dump preview. Auto-scrolling list with max 50 packets, real-time stats bar.
+- **Schedule**: Conference talks browser with scrollable list. Each entry shows time, talk title, and speaker. Keyboard/rotary navigates with visual highlight. Break sessions dimmed. Supports day switching.
+- **Net Tools**: LoRa mesh diagnostic tool with two-panel layout. Left panel shows ping/pong results with round-trip time and color-coded status (green=fast, yellow=slow, red=timeout). Right panel lists discovered peers with RSSI. Stats bar shows sent/recv/loss%/avg RTT.
 
 ### Clock Screen (Low Power Mode)
 

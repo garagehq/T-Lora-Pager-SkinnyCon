@@ -596,6 +596,10 @@ void setupGui()
     extern app_t ui_ble_main;
     extern app_t ui_ble_kb_main;
     extern app_t ui_factory_main;
+    extern app_t ui_nametag_main;
+    extern app_t ui_badgeshark_main;
+    extern app_t ui_schedule_main;
+    extern app_t ui_nettools_main;
 
     /* Add application */
 #if defined(USING_IR_REMOTE)
@@ -660,6 +664,12 @@ void setupGui()
     create_app(panel, "Power", &img_power, &ui_power_main);
     create_app(panel, "Microphone", &img_microphone, &ui_microphone_main);
     create_app(panel, "IMU", &img_gyroscope, &ui_sensor_main);
+
+    /* Supercon-inspired apps */
+    create_app(panel, "Nametag", &img_msgchat, &ui_nametag_main);
+    create_app(panel, "BadgeShark", &img_monitoring, &ui_badgeshark_main);
+    create_app(panel, "Schedule", &img_configuration, &ui_schedule_main);
+    create_app(panel, "Net Tools", &img_wifi, &ui_nettools_main);
 
     int offset = -10;
     if (lv_display_get_physical_vertical_resolution(NULL) > 320) {
