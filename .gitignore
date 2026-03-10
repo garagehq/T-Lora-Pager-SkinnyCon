@@ -3,7 +3,7 @@ build
 make
 script
 .pio
-test
 *.bk
 *.log
 
+screenshot_*.ppm
