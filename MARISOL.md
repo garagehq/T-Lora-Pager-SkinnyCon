@@ -110,7 +110,7 @@ Key API:
 
 ## CI/CD
 
-### Workflows (4 total)
+### Workflows (5 total)
 
 | Workflow | Jobs | Trigger |
 |----------|------|---------|
@@ -118,6 +118,7 @@ Key API:
 | `base_examples_ci.yml` | Arduino compile: factory, BLE, peripheral, power, sensor, sleep (31 sketches × tlora_pager) | PR, push |
 | `lvgl_examples_ci.yml` | Arduino compile: 42 LVGL widget examples × tlora_pager | PR, push |
 | `radio_examples_ci.yml` | Arduino compile: 13 radio examples × tlora_pager | PR, push |
+| `release.yml` | ESP32-S3 firmware build + artifact upload (firmware.bin, bootloader.bin, partitions.bin, firmware.elf) | Push to master, manual |
 
 **Board matrix**: `tlora_pager` only (twatch_ultra and twatchs3 removed — not targets for this fork)
 
@@ -179,3 +180,4 @@ Conference-specific apps for SkinnyCon 2026 (May 12-14, Huntsville AL, I2C Inven
 | 2026-03-10 | SkinnyCon apps | 67 tests (32 hw + 20 LVGL + 15 factory). 4 new apps + 2 info screens |
 | 2026-03-10 | Build fix | pio_main.cpp: PLATFORMIO guard fixes Arduino IDE duplicate symbols. Moving to src/ breaks non-factory sketches |
 | 2026-03-10 | Test audit | 59 tests (24 hw + 20 LVGL + 15 factory). Removed 8 tautological tests (constant==constant), replaced with real logic tests (GPS edge cases, mask bitfield ops, flex layouts, sliders) |
+| 2026-03-10 | Release CI | Added `release.yml` — builds firmware on every merge to master, uploads versioned artifacts (90-day retention) |

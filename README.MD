@@ -187,14 +187,32 @@ After 10 seconds of inactivity, the device enters clock mode:
 
 | Workflow | Jobs | Trigger |
 |----------|------|---------|
-| `tests.yml` | Native Tests + LVGL Simulator + Factory Sim + ESP32 Build | PR, push to main |
+| `tests.yml` | Native Tests + LVGL Simulator + Factory Sim + ESP32 Build | PR, push to master |
 | `base_examples_ci.yml` | Arduino compile: 31 base sketches x tlora_pager | PR, push |
 | `lvgl_examples_ci.yml` | Arduino compile: 42 LVGL widget examples x tlora_pager | PR, push |
 | `radio_examples_ci.yml` | Arduino compile: 13 radio examples x tlora_pager | PR, push |
+| `release.yml` | ESP32-S3 firmware build + artifact upload | Push to master, manual |
 
 **Board matrix**: `tlora_pager` only (this fork focuses exclusively on the T-LoRa-Pager).
 
 **CI artifacts**: PPM screenshots from factory simulation are uploaded for visual review on every PR.
+
+### Firmware Downloads
+
+Every merge to `master` triggers a firmware build. Download the latest artifacts from the [Actions tab](../../actions/workflows/release.yml):
+
+- `tlora-pager-firmware-<sha>.bin` — Main firmware (flash at 0x10000)
+- `tlora-pager-bootloader-<sha>.bin` — Bootloader (flash at 0x0)
+- `tlora-pager-partitions-<sha>.bin` — Partition table (flash at 0x8000)
+
+Artifacts are retained for 90 days. To flash manually:
+
+```bash
+esptool.py --chip esp32s3 --port /dev/ttyUSB0 --baud 921600 \
+  write_flash 0x0 tlora-pager-bootloader-<sha>.bin \
+              0x8000 tlora-pager-partitions-<sha>.bin \
+              0x10000 tlora-pager-firmware-<sha>.bin
+```
 
 ## Project Structure
 
@@ -227,7 +245,7 @@ T-Lora-Pager-SkinnyCon/
 │   └── mocks/                # Arduino/ESP-IDF mock headers
 ├── platformio.ini            # Build configurations (4 environments)
 ├── MARISOL.md                # Pipeline context document
-└── .github/workflows/        # CI workflows (4 total)
+└── .github/workflows/        # CI workflows (5 total)
 ```
 
 ## Display Specifications

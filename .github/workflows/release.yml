@@ -1,0 +1,43 @@
+name: Build Firmware
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+jobs:
+  build-firmware:
+    name: Build ESP32-S3 Firmware
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install PlatformIO
+        run: pip install platformio
+
+      - name: Compile for ESP32-S3
+        run: pio run -e tlora_pager
+
+      - name: Get short SHA
+        id: sha
+        run: echo "short=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Rename artifacts with version
+        run: |
+          mkdir -p release
+          cp .pio/build/tlora_pager/firmware.bin    release/tlora-pager-firmware-${{ steps.sha.outputs.short }}.bin
+          cp .pio/build/tlora_pager/firmware.elf     release/tlora-pager-firmware-${{ steps.sha.outputs.short }}.elf
+          cp .pio/build/tlora_pager/bootloader.bin   release/tlora-pager-bootloader-${{ steps.sha.outputs.short }}.bin
+          cp .pio/build/tlora_pager/partitions.bin   release/tlora-pager-partitions-${{ steps.sha.outputs.short }}.bin
+
+      - name: Upload firmware artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: tlora-pager-firmware-${{ steps.sha.outputs.short }}
+          path: release/
+          retention-days: 90
