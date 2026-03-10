@@ -24,8 +24,11 @@ pio test -e native -v
 # Run LVGL headless simulator tests (generates PPM screenshots)
 pio test -e native_lvgl -v
 
+# Run factory app simulation (real fonts + icons, PPM screenshots)
+pio test -e native_factory -v
+
 # Run all tests
-pio test -e native -e native_lvgl -v
+pio test -e native -e native_lvgl -e native_factory -v
 
 # Compile for ESP32-S3 (build check only, no upload)
 pio run -e tlora_pager
@@ -36,18 +39,20 @@ pio run -e tlora_pager --target upload
 
 ## Testing
 
-### 3-Tier Architecture
+### 4-Tier Architecture
 
 | Tier | Environment | What It Tests | Tests | Speed |
 |------|-------------|--------------|-------|-------|
 | 1 | `native` | Hardware logic, constants, GPS parsing, RGB565 | 32 | <3s |
 | 2 | `native_lvgl` | LVGL widgets, rendering, framebuffer, screenshots | 20 | ~7s |
-| 3 | `tlora_pager` | Full ESP32-S3 compilation (build check) | — | ~60s |
+| 3 | `native_factory` | Factory app screens with real fonts (Alibaba 12/24/40/100px) and 9 icons | 9 | ~7s |
+| 4 | `tlora_pager` | Full ESP32-S3 compilation (build check) | — | ~60s |
 
 ### Test Files
 
 - `test/test_hardware/test_hardware.c` — 32 tests: display dimensions, brightness clamping, PowerCtrlChannel enum, RotaryMsg_t, GPS NMEA parsing, RGB565 byte swap, hardware presence masks, keyboard states
 - `test/test_lvgl_render/test_lvgl_render.c` — 20 tests: display init, labels, buttons, click handlers, rendering to framebuffer, PPM export, multi-widget layouts
+- `test/test_factory_sim/test_factory_sim.c` — 9 tests: main menu with real icons, clock screen, settings panel, LoRa chat, logo, monitor, font quality, icon grid, screenshot validation
 - `test/simulator/sim_main.c/h` — Headless LVGL 9.2 simulator (480×222 RGB565 framebuffer)
 - `test/simulator/lv_conf.h` — LVGL config for simulator (LV_STDLIB_CLIB)
 - `test/mocks/` — Mock headers: Arduino.h, SPI.h, Wire.h, FreeRTOS, ESP-IDF GPIO/I2S/SPI
@@ -120,3 +125,4 @@ The factory example (`examples/factory/`) is the reference application with a ti
 |------|-------|--------|
 | 2026-03-09 | Initial setup | 52 tests (32 hw + 20 LVGL), simulator, CI, mocks |
 | 2026-03-09 | CI fix | Removed twatch_ultra/twatchs3 from board matrix, fixed LVGL linking |
+| 2026-03-10 | Factory sim | 61 tests (32 hw + 20 LVGL + 9 factory), real fonts/icons, visual regression |
