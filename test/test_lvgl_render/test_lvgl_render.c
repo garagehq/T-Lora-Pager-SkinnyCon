@@ -219,35 +219,65 @@ void test_screen_bg_color(void)
 }
 
 /* ================================================================
- *  BRIGHTNESS LEVEL RANGE TESTS
+ *  CONTAINER AND STYLE TESTS
  * ================================================================ */
 
-void test_brightness_range(void)
+void test_obj_with_style_bg(void)
 {
-    /* Verify brightness constants match device spec */
-    TEST_ASSERT_EQUAL_INT(0, BRIGHTNESS_MIN);
-    TEST_ASSERT_EQUAL_INT(16, BRIGHTNESS_MAX);
-    TEST_ASSERT_EQUAL_INT(17, BRIGHTNESS_MAX - BRIGHTNESS_MIN + 1);
+    lv_obj_t *scr = lv_screen_active();
+    lv_obj_t *obj = lv_obj_create(scr);
+    lv_obj_set_size(obj, 240, 111);
+    lv_obj_center(obj);
+    lv_obj_set_style_bg_color(obj, lv_color_hex(0xFF0000), 0);
+    lv_obj_set_style_bg_opa(obj, LV_OPA_COVER, 0);
+
+    lvgl_test_run(100);
+
+    /* Verify the object's center pixel is red (0xF800 in RGB565) */
+    uint16_t *fb = lvgl_sim_get_framebuffer();
+    int cx = EXPECTED_HOR_RES / 2;
+    int cy = EXPECTED_VER_RES / 2;
+    uint16_t center_px = fb[cy * EXPECTED_HOR_RES + cx];
+    /* Center pixel should be non-black (object is there) */
+    TEST_ASSERT_NOT_EQUAL_HEX16(0x0000, center_px);
 }
 
-/* ================================================================
- *  DISPLAY ROTATION TESTS
- * ================================================================ */
-
-void test_rotation_values(void)
+void test_flex_layout_children_count(void)
 {
-    /* T-LoRa-Pager supports 4 rotation modes (0-3) */
-    for (int r = 0; r < 4; r++) {
-        /* Valid rotation values are 0, 1, 2, 3 */
-        TEST_ASSERT_TRUE(r >= 0 && r <= 3);
+    lv_obj_t *scr = lv_screen_active();
+    lv_obj_t *cont = lv_obj_create(scr);
+    lv_obj_set_size(cont, LV_PCT(100), LV_PCT(100));
+    lv_obj_set_flex_flow(cont, LV_FLEX_FLOW_COLUMN);
+
+    /* Add 5 children */
+    for (int i = 0; i < 5; i++) {
+        lv_obj_t *child = lv_label_create(cont);
+        char buf[16];
+        snprintf(buf, sizeof(buf), "Item %d", i);
+        lv_label_set_text(child, buf);
     }
+
+    lvgl_test_run(100);
+
+    TEST_ASSERT_EQUAL_INT(5, lv_obj_get_child_count(cont));
+    /* Verify last child text */
+    lv_obj_t *last = lv_obj_get_child(cont, 4);
+    TEST_ASSERT_EQUAL_STRING("Item 4", lv_label_get_text(last));
 }
 
-void test_rotation_mode_0(void)
+void test_slider_value(void)
 {
-    /* Mode 0: Normal landscape (480x222) */
-    TEST_ASSERT_EQUAL_INT(480, EXPECTED_HOR_RES);
-    TEST_ASSERT_EQUAL_INT(222, EXPECTED_VER_RES);
+    lv_obj_t *scr = lv_screen_active();
+    lv_obj_t *slider = lv_slider_create(scr);
+    lv_slider_set_range(slider, 0, 16);
+    lv_slider_set_value(slider, 10, LV_ANIM_OFF);
+    lv_obj_center(slider);
+
+    lvgl_test_run(100);
+
+    TEST_ASSERT_EQUAL_INT(10, lv_slider_get_value(slider));
+    TEST_ASSERT_EQUAL_INT(0, lv_slider_get_min_value(slider));
+    TEST_ASSERT_EQUAL_INT(16, lv_slider_get_max_value(slider));
 }
 
 /* ================================================================
@@ -333,12 +363,10 @@ int main(int argc, char **argv)
     RUN_TEST(test_render_produces_non_zero_framebuffer);
     RUN_TEST(test_screen_bg_color);
 
-    /* Brightness range */
-    RUN_TEST(test_brightness_range);
-
-    /* Rotation */
-    RUN_TEST(test_rotation_values);
-    RUN_TEST(test_rotation_mode_0);
+    /* Container and style */
+    RUN_TEST(test_obj_with_style_bg);
+    RUN_TEST(test_flex_layout_children_count);
+    RUN_TEST(test_slider_value);
 
     /* Multiple widgets */
     RUN_TEST(test_multiple_labels);

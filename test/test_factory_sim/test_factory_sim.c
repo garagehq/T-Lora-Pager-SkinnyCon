@@ -641,6 +641,555 @@ void test_icon_rendering(void)
 }
 
 /* ================================================================
+ *  TEST: Supercon Nametag screen (standalone C recreation)
+ * ================================================================ */
+
+#define SUPERCON_BG_C       lv_color_hex(0x1A1A1A)
+#define SUPERCON_ACCENT_C   lv_color_hex(0xE39810)
+#define SUPERCON_WHITE_C    lv_color_hex(0xFFFFFF)
+#define SUPERCON_GREEN_C    lv_color_hex(0xABC5A0)
+
+void test_supercon_nametag(void)
+{
+    lv_obj_t *scr = lv_screen_active();
+    lv_obj_set_style_bg_color(scr, SUPERCON_BG_C, LV_PART_MAIN);
+    lv_obj_set_style_bg_opa(scr, LV_OPA_COVER, 0);
+
+    lv_obj_t *cont = lv_obj_create(scr);
+    lv_obj_set_size(cont, LV_PCT(100), LV_PCT(100));
+    lv_obj_set_style_bg_color(cont, SUPERCON_BG_C, 0);
+    lv_obj_set_style_bg_opa(cont, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_width(cont, 0, 0);
+    lv_obj_set_style_radius(cont, 0, 0);
+    lv_obj_set_style_pad_all(cont, 8, 0);
+    lv_obj_set_flex_flow(cont, LV_FLEX_FLOW_COLUMN);
+    lv_obj_set_flex_align(cont, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+
+    /* Top accent bar */
+    lv_obj_t *accent = lv_obj_create(cont);
+    lv_obj_set_size(accent, LV_PCT(100), 4);
+    lv_obj_set_style_bg_color(accent, SUPERCON_ACCENT_C, 0);
+    lv_obj_set_style_bg_opa(accent, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_width(accent, 0, 0);
+    lv_obj_set_style_radius(accent, 0, 0);
+
+    /* Name */
+    lv_obj_t *name = lv_label_create(cont);
+    lv_label_set_text(name, "SkinnyCon");
+    lv_obj_set_style_text_font(name, &font_alibaba_40, 0);
+    lv_obj_set_style_text_color(name, SUPERCON_WHITE_C, 0);
+    lv_obj_set_style_text_align(name, LV_TEXT_ALIGN_CENTER, 0);
+    lv_obj_set_width(name, LV_PCT(100));
+
+    /* Subtitle */
+    lv_obj_t *sub = lv_label_create(cont);
+    lv_label_set_text(sub, "T-LoRa-Pager");
+    lv_obj_set_style_text_font(sub, &font_alibaba_24, 0);
+    lv_obj_set_style_text_color(sub, SUPERCON_GREEN_C, 0);
+    lv_obj_set_style_text_align(sub, LV_TEXT_ALIGN_CENTER, 0);
+    lv_obj_set_width(sub, LV_PCT(100));
+
+    /* Bottom accent bar */
+    lv_obj_t *bottom = lv_obj_create(cont);
+    lv_obj_set_size(bottom, LV_PCT(100), 4);
+    lv_obj_set_style_bg_color(bottom, SUPERCON_ACCENT_C, 0);
+    lv_obj_set_style_bg_opa(bottom, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_width(bottom, 0, 0);
+    lv_obj_set_style_radius(bottom, 0, 0);
+
+    /* Mode hint */
+    lv_obj_t *hint = lv_label_create(cont);
+    lv_label_set_text(hint, LV_SYMBOL_REFRESH " Rotate=mode  " LV_SYMBOL_KEYBOARD " Type=edit name");
+    lv_obj_set_style_text_color(hint, lv_color_hex(0x808080), 0);
+    lv_obj_set_style_text_align(hint, LV_TEXT_ALIGN_CENTER, 0);
+    lv_obj_set_width(hint, LV_PCT(100));
+
+    lvgl_test_run(200);
+
+    uint16_t *fb = lvgl_sim_get_framebuffer();
+    int non_zero = 0;
+    for (int i = 0; i < EXPECTED_HOR_RES * EXPECTED_VER_RES; i++) {
+        if (fb[i] != 0) non_zero++;
+    }
+    TEST_ASSERT_TRUE(non_zero > 1000);
+
+    int result = lvgl_test_save_ppm("factory_nametag.ppm");
+    TEST_ASSERT_EQUAL_INT(0, result);
+}
+
+/* ================================================================
+ *  TEST: About SkinnyCon screen (standalone C recreation)
+ * ================================================================ */
+
+void test_supercon_about(void)
+{
+    lv_obj_t *scr = lv_screen_active();
+    lv_obj_set_style_bg_color(scr, SUPERCON_BG_C, LV_PART_MAIN);
+    lv_obj_set_style_bg_opa(scr, LV_OPA_COVER, 0);
+
+    lv_obj_t *cont = lv_obj_create(scr);
+    lv_obj_set_size(cont, LV_PCT(100), LV_PCT(100));
+    lv_obj_set_style_bg_color(cont, SUPERCON_BG_C, 0);
+    lv_obj_set_style_bg_opa(cont, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_width(cont, 0, 0);
+    lv_obj_set_style_radius(cont, 0, 0);
+    lv_obj_set_style_pad_all(cont, 8, 0);
+    lv_obj_set_flex_flow(cont, LV_FLEX_FLOW_COLUMN);
+    lv_obj_set_flex_align(cont, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+
+    lv_obj_t *title = lv_label_create(cont);
+    lv_label_set_text(title, "SKINNYCON 2026");
+    lv_obj_set_style_text_font(title, &font_alibaba_24, 0);
+    lv_obj_set_style_text_color(title, SUPERCON_ACCENT_C, 0);
+    lv_obj_set_style_text_align(title, LV_TEXT_ALIGN_CENTER, 0);
+    lv_obj_set_width(title, LV_PCT(100));
+
+    lv_obj_t *panel = lv_obj_create(cont);
+    lv_obj_set_size(panel, LV_PCT(95), LV_PCT(100));
+    lv_obj_set_flex_grow(panel, 1);
+    lv_obj_set_style_bg_color(panel, lv_color_hex(0x2A2A2A), 0);
+    lv_obj_set_style_bg_opa(panel, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_color(panel, SUPERCON_ACCENT_C, 0);
+    lv_obj_set_style_border_width(panel, 1, 0);
+    lv_obj_set_style_radius(panel, 6, 0);
+    lv_obj_set_style_pad_all(panel, 8, 0);
+
+    lv_obj_t *info = lv_label_create(panel);
+    lv_label_set_text(info,
+        "May 12-14, 2026\n"
+        "Huntsville, Alabama\n"
+        "I2C Invention to Innovation Center\n"
+        "UAH Campus\n\n"
+        "Hosted by Skinny R&D\n"
+        "Jason Baird, President"
+    );
+    lv_obj_set_style_text_color(info, SUPERCON_WHITE_C, 0);
+    lv_obj_set_width(info, LV_PCT(100));
+
+    lvgl_test_run(200);
+
+    uint16_t *fb = lvgl_sim_get_framebuffer();
+    int non_zero = 0;
+    for (int i = 0; i < EXPECTED_HOR_RES * EXPECTED_VER_RES; i++) {
+        if (fb[i] != 0) non_zero++;
+    }
+    TEST_ASSERT_TRUE(non_zero > 1000);
+
+    int result = lvgl_test_save_ppm("factory_about.ppm");
+    TEST_ASSERT_EQUAL_INT(0, result);
+}
+
+/* ================================================================
+ *  TEST: Code of Conduct screen (standalone C recreation)
+ * ================================================================ */
+
+void test_supercon_coc(void)
+{
+    lv_obj_t *scr = lv_screen_active();
+    lv_obj_set_style_bg_color(scr, SUPERCON_BG_C, LV_PART_MAIN);
+    lv_obj_set_style_bg_opa(scr, LV_OPA_COVER, 0);
+
+    lv_obj_t *cont = lv_obj_create(scr);
+    lv_obj_set_size(cont, LV_PCT(100), LV_PCT(100));
+    lv_obj_set_style_bg_color(cont, SUPERCON_BG_C, 0);
+    lv_obj_set_style_bg_opa(cont, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_width(cont, 0, 0);
+    lv_obj_set_style_radius(cont, 0, 0);
+    lv_obj_set_style_pad_all(cont, 8, 0);
+    lv_obj_set_flex_flow(cont, LV_FLEX_FLOW_COLUMN);
+    lv_obj_set_flex_align(cont, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+
+    lv_obj_t *title = lv_label_create(cont);
+    lv_label_set_text(title, LV_SYMBOL_WARNING " CODE OF CONDUCT");
+    lv_obj_set_style_text_font(title, &font_alibaba_24, 0);
+    lv_obj_set_style_text_color(title, SUPERCON_ACCENT_C, 0);
+    lv_obj_set_style_text_align(title, LV_TEXT_ALIGN_CENTER, 0);
+    lv_obj_set_width(title, LV_PCT(100));
+
+    lv_obj_t *panel = lv_obj_create(cont);
+    lv_obj_set_size(panel, LV_PCT(95), LV_PCT(100));
+    lv_obj_set_flex_grow(panel, 1);
+    lv_obj_set_style_bg_color(panel, lv_color_hex(0x2A2A2A), 0);
+    lv_obj_set_style_bg_opa(panel, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_color(panel, SUPERCON_ACCENT_C, 0);
+    lv_obj_set_style_border_width(panel, 1, 0);
+    lv_obj_set_style_radius(panel, 6, 0);
+    lv_obj_set_style_pad_all(panel, 8, 0);
+
+    lv_obj_t *coc = lv_label_create(panel);
+    lv_label_set_text(coc,
+        "OUR STANDARDS\n"
+        "- Be kind, considerate, respectful\n"
+        "- Behave professionally\n"
+        "- Respect differing viewpoints\n"
+        "- Be mindful of personal space\n\n"
+        "UAH is 100% tobacco free."
+    );
+    lv_obj_set_style_text_color(coc, SUPERCON_WHITE_C, 0);
+    lv_obj_set_width(coc, LV_PCT(100));
+
+    lvgl_test_run(200);
+
+    uint16_t *fb = lvgl_sim_get_framebuffer();
+    int non_zero = 0;
+    for (int i = 0; i < EXPECTED_HOR_RES * EXPECTED_VER_RES; i++) {
+        if (fb[i] != 0) non_zero++;
+    }
+    TEST_ASSERT_TRUE(non_zero > 1000);
+
+    int result = lvgl_test_save_ppm("factory_coc.ppm");
+    TEST_ASSERT_EQUAL_INT(0, result);
+}
+
+/* ================================================================
+ *  TEST: Supercon BadgeShark screen (standalone C recreation)
+ * ================================================================ */
+
+#define SHARK_BG_C          lv_color_hex(0x0D1117)
+#define SHARK_GREEN_C       lv_color_hex(0x39D353)
+#define SHARK_YELLOW_C      lv_color_hex(0xE39810)
+#define SHARK_CYAN_C        lv_color_hex(0x58A6FF)
+#define SHARK_WHITE_C       lv_color_hex(0xE6EDF3)
+
+void test_supercon_badgeshark(void)
+{
+    lv_obj_t *scr = lv_screen_active();
+    lv_obj_set_style_bg_color(scr, SHARK_BG_C, LV_PART_MAIN);
+    lv_obj_set_style_bg_opa(scr, LV_OPA_COVER, 0);
+
+    lv_obj_t *cont = lv_obj_create(scr);
+    lv_obj_set_size(cont, LV_PCT(100), LV_PCT(100));
+    lv_obj_set_style_bg_color(cont, SHARK_BG_C, 0);
+    lv_obj_set_style_bg_opa(cont, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_width(cont, 0, 0);
+    lv_obj_set_style_radius(cont, 0, 0);
+    lv_obj_set_style_pad_all(cont, 0, 0);
+    lv_obj_set_flex_flow(cont, LV_FLEX_FLOW_COLUMN);
+
+    /* Header */
+    lv_obj_t *header = lv_obj_create(cont);
+    lv_obj_set_size(header, LV_PCT(100), 28);
+    lv_obj_set_style_bg_color(header, lv_color_hex(0x21262D), 0);
+    lv_obj_set_style_bg_opa(header, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_width(header, 0, 0);
+    lv_obj_set_style_radius(header, 0, 0);
+    lv_obj_set_style_pad_hor(header, 8, 0);
+
+    lv_obj_t *title = lv_label_create(header);
+    lv_label_set_text(title, LV_SYMBOL_EYE_OPEN " BadgeShark");
+    lv_obj_set_style_text_color(title, SHARK_GREEN_C, 0);
+    lv_obj_set_style_text_font(title, &font_alibaba_12, 0);
+    lv_obj_align(title, LV_ALIGN_LEFT_MID, 0, 0);
+
+    lv_obj_t *stats = lv_label_create(header);
+    lv_label_set_text(stats, "Packets: 5  |  Bytes: 148  |  RSSI: -58 dBm");
+    lv_obj_set_style_text_color(stats, SHARK_WHITE_C, 0);
+    lv_obj_align(stats, LV_ALIGN_RIGHT_MID, 0, 0);
+
+    /* Column headers */
+    lv_obj_t *col_header = lv_obj_create(cont);
+    lv_obj_set_size(col_header, LV_PCT(100), 20);
+    lv_obj_set_style_bg_color(col_header, lv_color_hex(0x30363D), 0);
+    lv_obj_set_style_bg_opa(col_header, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_width(col_header, 0, 0);
+    lv_obj_set_style_radius(col_header, 0, 0);
+    lv_obj_set_style_pad_hor(col_header, 6, 0);
+    lv_obj_set_flex_flow(col_header, LV_FLEX_FLOW_ROW);
+
+    const char *cols[] = {"#", "Len", "RSSI", "Data"};
+    int col_widths[] = {50, 40, 65, 0};
+    for (int i = 0; i < 4; i++) {
+        lv_obj_t *c = lv_label_create(col_header);
+        lv_label_set_text(c, cols[i]);
+        lv_obj_set_style_text_color(c, SHARK_CYAN_C, 0);
+        if (col_widths[i] > 0) lv_obj_set_style_min_width(c, col_widths[i], 0);
+        else lv_obj_set_flex_grow(c, 1);
+    }
+
+    /* Packet list */
+    lv_obj_t *plist = lv_obj_create(cont);
+    lv_obj_set_size(plist, LV_PCT(100), LV_PCT(100));
+    lv_obj_set_flex_grow(plist, 1);
+    lv_obj_set_style_bg_color(plist, SHARK_BG_C, 0);
+    lv_obj_set_style_bg_opa(plist, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_width(plist, 0, 0);
+    lv_obj_set_style_radius(plist, 0, 0);
+    lv_obj_set_style_pad_all(plist, 0, 0);
+    lv_obj_set_flex_flow(plist, LV_FLEX_FLOW_COLUMN);
+
+    /* Demo packet rows */
+    const char *pkt_nums[] = {"#1", "#2", "#3", "#4", "#5"};
+    const char *pkt_lens[] = {"32B", "28B", "16B", "48B", "24B"};
+    const char *pkt_rssi[] = {"-45dBm", "-72dBm", "-95dBm", "-58dBm", "-83dBm"};
+    const char *pkt_data[] = {
+        "07 E9 3A 1F FF FF FF FF 00 01",
+        "07 E9 7B 2E FF FF FF FF 00 04",
+        "07 E9 A1 00 00 01 02 03 00 04",
+        "07 E9 12 44 FF FF FF FF 00 0A",
+        "07 E9 55 67 FF FF FF FF 00 07",
+    };
+
+    for (int i = 0; i < 5; i++) {
+        lv_obj_t *row = lv_obj_create(plist);
+        lv_obj_set_size(row, LV_PCT(100), LV_SIZE_CONTENT);
+        lv_obj_set_style_bg_color(row, (i % 2) ? lv_color_hex(0x161B22) : SHARK_BG_C, 0);
+        lv_obj_set_style_bg_opa(row, LV_OPA_COVER, 0);
+        lv_obj_set_style_border_width(row, 0, 0);
+        lv_obj_set_style_radius(row, 0, 0);
+        lv_obj_set_style_pad_ver(row, 2, 0);
+        lv_obj_set_style_pad_hor(row, 6, 0);
+        lv_obj_set_flex_flow(row, LV_FLEX_FLOW_ROW);
+
+        lv_obj_t *num = lv_label_create(row);
+        lv_label_set_text(num, pkt_nums[i]);
+        lv_obj_set_style_text_color(num, SHARK_CYAN_C, 0);
+        lv_obj_set_style_min_width(num, 50, 0);
+
+        lv_obj_t *len = lv_label_create(row);
+        lv_label_set_text(len, pkt_lens[i]);
+        lv_obj_set_style_text_color(len, SHARK_YELLOW_C, 0);
+        lv_obj_set_style_min_width(len, 40, 0);
+
+        lv_obj_t *rssi = lv_label_create(row);
+        lv_label_set_text(rssi, pkt_rssi[i]);
+        lv_obj_set_style_text_color(rssi, SHARK_GREEN_C, 0);
+        lv_obj_set_style_min_width(rssi, 65, 0);
+
+        lv_obj_t *data = lv_label_create(row);
+        lv_label_set_text(data, pkt_data[i]);
+        lv_obj_set_style_text_color(data, SHARK_WHITE_C, 0);
+        lv_obj_set_flex_grow(data, 1);
+    }
+
+    lvgl_test_run(200);
+
+    uint16_t *fb = lvgl_sim_get_framebuffer();
+    int non_zero = 0;
+    for (int i = 0; i < EXPECTED_HOR_RES * EXPECTED_VER_RES; i++) {
+        if (fb[i] != 0) non_zero++;
+    }
+    TEST_ASSERT_TRUE(non_zero > 1000);
+
+    int result = lvgl_test_save_ppm("factory_badgeshark.ppm");
+    TEST_ASSERT_EQUAL_INT(0, result);
+}
+
+/* ================================================================
+ *  TEST: Supercon Schedule screen (standalone C recreation)
+ * ================================================================ */
+
+void test_supercon_schedule(void)
+{
+    lv_obj_t *scr = lv_screen_active();
+    lv_obj_set_style_bg_color(scr, lv_color_hex(0x1A1A1A), LV_PART_MAIN);
+    lv_obj_set_style_bg_opa(scr, LV_OPA_COVER, 0);
+
+    lv_obj_t *cont = lv_obj_create(scr);
+    lv_obj_set_size(cont, LV_PCT(100), LV_PCT(100));
+    lv_obj_set_style_bg_color(cont, lv_color_hex(0x1A1A1A), 0);
+    lv_obj_set_style_bg_opa(cont, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_width(cont, 0, 0);
+    lv_obj_set_style_radius(cont, 0, 0);
+    lv_obj_set_style_pad_all(cont, 0, 0);
+    lv_obj_set_flex_flow(cont, LV_FLEX_FLOW_COLUMN);
+
+    /* Header */
+    lv_obj_t *header = lv_obj_create(cont);
+    lv_obj_set_size(header, LV_PCT(100), 28);
+    lv_obj_set_style_bg_color(header, lv_color_hex(0x21262D), 0);
+    lv_obj_set_style_bg_opa(header, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_width(header, 0, 0);
+    lv_obj_set_style_radius(header, 0, 0);
+    lv_obj_set_style_pad_hor(header, 8, 0);
+
+    lv_obj_t *htitle = lv_label_create(header);
+    lv_label_set_text(htitle, LV_SYMBOL_LIST " SkinnyCon 2026");
+    lv_obj_set_style_text_color(htitle, SUPERCON_ACCENT_C, 0);
+    lv_obj_set_style_text_font(htitle, &font_alibaba_12, 0);
+    lv_obj_align(htitle, LV_ALIGN_LEFT_MID, 0, 0);
+
+    lv_obj_t *day = lv_label_create(header);
+    lv_label_set_text(day, LV_SYMBOL_LEFT " Tue May 12 " LV_SYMBOL_RIGHT);
+    lv_obj_set_style_text_color(day, SHARK_WHITE_C, 0);
+    lv_obj_align(day, LV_ALIGN_RIGHT_MID, 0, 0);
+
+    /* Talk list */
+    lv_obj_t *list = lv_obj_create(cont);
+    lv_obj_set_size(list, LV_PCT(100), LV_PCT(100));
+    lv_obj_set_flex_grow(list, 1);
+    lv_obj_set_style_bg_color(list, lv_color_hex(0x1A1A1A), 0);
+    lv_obj_set_style_bg_opa(list, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_width(list, 0, 0);
+    lv_obj_set_style_radius(list, 0, 0);
+    lv_obj_set_style_pad_all(list, 0, 0);
+    lv_obj_set_flex_flow(list, LV_FLEX_FLOW_COLUMN);
+    lv_obj_set_scrollbar_mode(list, LV_SCROLLBAR_MODE_AUTO);
+
+    const char *times[] = {"0800", "0900", "0915", "0930", "1030", "1100"};
+    const char *titles[] = {"Check-in / Breakfast", "Welcome", "How to CTF",
+                            "Tech Ops Case Files", "Break", "Intro to Reverse Engineering"};
+    int is_break[] = {1, 0, 0, 0, 1, 0};
+
+    for (int i = 0; i < 6; i++) {
+        lv_obj_t *row = lv_obj_create(list);
+        lv_obj_set_size(row, LV_PCT(100), LV_SIZE_CONTENT);
+        lv_obj_set_style_bg_color(row, (i == 0) ? lv_color_hex(0x30363D) :
+            ((i % 2) ? lv_color_hex(0x161B22) : lv_color_hex(0x1A1A1A)), 0);
+        lv_obj_set_style_bg_opa(row, LV_OPA_COVER, 0);
+        if (i == 0) {
+            lv_obj_set_style_border_side(row, LV_BORDER_SIDE_LEFT, 0);
+            lv_obj_set_style_border_width(row, 3, 0);
+            lv_obj_set_style_border_color(row, SUPERCON_ACCENT_C, 0);
+        } else {
+            lv_obj_set_style_border_width(row, 0, 0);
+        }
+        lv_obj_set_style_radius(row, 0, 0);
+        lv_obj_set_style_pad_ver(row, 3, 0);
+        lv_obj_set_style_pad_hor(row, 8, 0);
+        lv_obj_set_flex_flow(row, LV_FLEX_FLOW_ROW);
+
+        lv_obj_t *t = lv_label_create(row);
+        lv_label_set_text(t, times[i]);
+        lv_obj_set_style_text_color(t, SHARK_CYAN_C, 0);
+        lv_obj_set_style_min_width(t, 45, 0);
+
+        lv_obj_t *tl = lv_label_create(row);
+        lv_label_set_text(tl, titles[i]);
+        lv_obj_set_style_text_color(tl, is_break[i] ? lv_color_hex(0x808080) : SHARK_WHITE_C, 0);
+        lv_obj_set_flex_grow(tl, 1);
+    }
+
+    lvgl_test_run(200);
+
+    uint16_t *fb = lvgl_sim_get_framebuffer();
+    int non_zero = 0;
+    for (int i = 0; i < EXPECTED_HOR_RES * EXPECTED_VER_RES; i++) {
+        if (fb[i] != 0) non_zero++;
+    }
+    TEST_ASSERT_TRUE(non_zero > 1000);
+
+    int result = lvgl_test_save_ppm("factory_schedule.ppm");
+    TEST_ASSERT_EQUAL_INT(0, result);
+}
+
+/* ================================================================
+ *  TEST: Supercon Net Tools screen (standalone C recreation)
+ * ================================================================ */
+
+#define NET_BG_C            lv_color_hex(0x0D1117)
+#define NET_GREEN_C         lv_color_hex(0x39D353)
+#define NET_YELLOW_C        lv_color_hex(0xE39810)
+#define NET_RED_C           lv_color_hex(0xFF6B6B)
+#define NET_PANEL_C         lv_color_hex(0x161B22)
+
+void test_supercon_nettools(void)
+{
+    lv_obj_t *scr = lv_screen_active();
+    lv_obj_set_style_bg_color(scr, NET_BG_C, LV_PART_MAIN);
+    lv_obj_set_style_bg_opa(scr, LV_OPA_COVER, 0);
+
+    lv_obj_t *cont = lv_obj_create(scr);
+    lv_obj_set_size(cont, LV_PCT(100), LV_PCT(100));
+    lv_obj_set_style_bg_color(cont, NET_BG_C, 0);
+    lv_obj_set_style_bg_opa(cont, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_width(cont, 0, 0);
+    lv_obj_set_style_radius(cont, 0, 0);
+    lv_obj_set_style_pad_all(cont, 0, 0);
+    lv_obj_set_flex_flow(cont, LV_FLEX_FLOW_COLUMN);
+
+    /* Header */
+    lv_obj_t *header = lv_obj_create(cont);
+    lv_obj_set_size(header, LV_PCT(100), 28);
+    lv_obj_set_style_bg_color(header, lv_color_hex(0x21262D), 0);
+    lv_obj_set_style_bg_opa(header, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_width(header, 0, 0);
+    lv_obj_set_style_radius(header, 0, 0);
+    lv_obj_set_style_pad_hor(header, 8, 0);
+
+    lv_obj_t *ntitle = lv_label_create(header);
+    lv_label_set_text(ntitle, LV_SYMBOL_WIFI " Net Tools");
+    lv_obj_set_style_text_color(ntitle, NET_GREEN_C, 0);
+    lv_obj_set_style_text_font(ntitle, &font_alibaba_12, 0);
+    lv_obj_align(ntitle, LV_ALIGN_LEFT_MID, 0, 0);
+
+    lv_obj_t *nstats = lv_label_create(header);
+    lv_label_set_text(nstats, "Sent: 8  |  Recv: 6  |  Loss: 25%  |  Avg: 60 ms");
+    lv_obj_set_style_text_color(nstats, SHARK_WHITE_C, 0);
+    lv_obj_align(nstats, LV_ALIGN_RIGHT_MID, 0, 0);
+
+    /* Body: ping log + peers */
+    lv_obj_t *body = lv_obj_create(cont);
+    lv_obj_set_size(body, LV_PCT(100), LV_PCT(100));
+    lv_obj_set_flex_grow(body, 1);
+    lv_obj_set_style_bg_opa(body, LV_OPA_0, 0);
+    lv_obj_set_style_border_width(body, 0, 0);
+    lv_obj_set_style_pad_all(body, 4, 0);
+    lv_obj_set_flex_flow(body, LV_FLEX_FLOW_ROW);
+    lv_obj_set_style_pad_column(body, 4, 0);
+
+    /* Ping log panel */
+    lv_obj_t *ping_panel = lv_obj_create(body);
+    lv_obj_set_flex_grow(ping_panel, 3);
+    lv_obj_set_style_bg_color(ping_panel, NET_PANEL_C, 0);
+    lv_obj_set_style_bg_opa(ping_panel, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_color(ping_panel, lv_color_hex(0x30363D), 0);
+    lv_obj_set_style_border_width(ping_panel, 1, 0);
+    lv_obj_set_style_radius(ping_panel, 4, 0);
+    lv_obj_set_style_pad_all(ping_panel, 4, 0);
+    lv_obj_set_flex_flow(ping_panel, LV_FLEX_FLOW_COLUMN);
+
+    lv_obj_t *pt = lv_label_create(ping_panel);
+    lv_label_set_text(pt, "PING LOG");
+    lv_obj_set_style_text_color(pt, SHARK_CYAN_C, 0);
+
+    const char *pings[] = {"PONG #1  RTT: 45 ms", "PONG #2  RTT: 62 ms",
+                           "PING #3  TIMEOUT", "PONG #4  RTT: 38 ms",
+                           "PONG #5  RTT: 125 ms", "PONG #6  RTT: 52 ms"};
+    lv_color_t pcols[] = {NET_GREEN_C, NET_GREEN_C, NET_RED_C, NET_GREEN_C, NET_YELLOW_C, NET_GREEN_C};
+    for (int i = 0; i < 6; i++) {
+        lv_obj_t *pl = lv_label_create(ping_panel);
+        lv_label_set_text(pl, pings[i]);
+        lv_obj_set_style_text_color(pl, pcols[i], 0);
+    }
+
+    /* Peer panel */
+    lv_obj_t *peer_panel = lv_obj_create(body);
+    lv_obj_set_flex_grow(peer_panel, 2);
+    lv_obj_set_style_bg_color(peer_panel, NET_PANEL_C, 0);
+    lv_obj_set_style_bg_opa(peer_panel, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_color(peer_panel, lv_color_hex(0x30363D), 0);
+    lv_obj_set_style_border_width(peer_panel, 1, 0);
+    lv_obj_set_style_radius(peer_panel, 4, 0);
+    lv_obj_set_style_pad_all(peer_panel, 4, 0);
+    lv_obj_set_flex_flow(peer_panel, LV_FLEX_FLOW_COLUMN);
+
+    lv_obj_t *peert = lv_label_create(peer_panel);
+    lv_label_set_text(peert, "PEERS");
+    lv_obj_set_style_text_color(peert, SHARK_CYAN_C, 0);
+
+    const char *peers[] = {"Badge-0x3A1F\n  -45 dBm", "Badge-0x7B2E\n  -72 dBm",
+                           "Badge-0xA100\n  -95 dBm", "Badge-0x1244\n  -58 dBm"};
+    lv_color_t peer_cols[] = {NET_GREEN_C, NET_GREEN_C, NET_YELLOW_C, NET_GREEN_C};
+    for (int i = 0; i < 4; i++) {
+        lv_obj_t *p = lv_label_create(peer_panel);
+        lv_label_set_text(p, peers[i]);
+        lv_obj_set_style_text_color(p, peer_cols[i], 0);
+    }
+
+    lvgl_test_run(200);
+
+    uint16_t *fb = lvgl_sim_get_framebuffer();
+    int non_zero = 0;
+    for (int i = 0; i < EXPECTED_HOR_RES * EXPECTED_VER_RES; i++) {
+        if (fb[i] != 0) non_zero++;
+    }
+    TEST_ASSERT_TRUE(non_zero > 1000);
+
+    int result = lvgl_test_save_ppm("factory_nettools.ppm");
+    TEST_ASSERT_EQUAL_INT(0, result);
+}
+
+/* ================================================================
  *  TEST: Screenshot file sizes are valid
  * ================================================================ */
 
@@ -688,6 +1237,14 @@ int main(int argc, char **argv)
     RUN_TEST(test_factory_lora_chat_screen);
     RUN_TEST(test_factory_logo_screen);
     RUN_TEST(test_factory_monitor_screen);
+
+    /* Supercon-inspired app screens */
+    RUN_TEST(test_supercon_nametag);
+    RUN_TEST(test_supercon_about);
+    RUN_TEST(test_supercon_coc);
+    RUN_TEST(test_supercon_badgeshark);
+    RUN_TEST(test_supercon_schedule);
+    RUN_TEST(test_supercon_nettools);
 
     /* Asset quality verification */
     RUN_TEST(test_font_rendering_quality);

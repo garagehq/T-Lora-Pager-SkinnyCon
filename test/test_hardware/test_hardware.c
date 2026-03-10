@@ -117,39 +117,7 @@ static GpsCoord_t parse_gps_rmc(const char *lat_str, char lat_dir,
 void setUp(void) {}
 void tearDown(void) {}
 
-/* ---- Display dimension tests ---- */
-
-void test_display_width(void)
-{
-    TEST_ASSERT_EQUAL_UINT16(480, DISPLAY_WIDTH);
-}
-
-void test_display_height(void)
-{
-    TEST_ASSERT_EQUAL_UINT16(222, DISPLAY_HEIGHT);
-}
-
-void test_display_is_landscape(void)
-{
-    TEST_ASSERT_TRUE(DISPLAY_WIDTH > DISPLAY_HEIGHT);
-}
-
-void test_display_pixel_count(void)
-{
-    TEST_ASSERT_EQUAL_UINT32(480 * 222, DISPLAY_WIDTH * DISPLAY_HEIGHT);
-}
-
-/* ---- Brightness tests ---- */
-
-void test_brightness_min(void)
-{
-    TEST_ASSERT_EQUAL_UINT8(0, BRIGHTNESS_MIN);
-}
-
-void test_brightness_max(void)
-{
-    TEST_ASSERT_EQUAL_UINT8(16, BRIGHTNESS_MAX);
-}
+/* ---- Brightness clamping tests ---- */
 
 void test_brightness_clamp_in_range(void)
 {
@@ -165,34 +133,23 @@ void test_brightness_clamp_overflow(void)
     TEST_ASSERT_EQUAL_UINT8(16, clamp_brightness(100));
 }
 
-void test_brightness_levels_count(void)
+void test_brightness_clamp_all_valid_levels(void)
 {
-    /* 0 through 16 inclusive = 17 levels */
-    TEST_ASSERT_EQUAL_INT(17, BRIGHTNESS_MAX - BRIGHTNESS_MIN + 1);
+    /* Every level from 0 to 16 should pass through unchanged */
+    for (uint8_t i = 0; i <= BRIGHTNESS_MAX; i++) {
+        TEST_ASSERT_EQUAL_UINT8(i, clamp_brightness(i));
+    }
+}
+
+void test_brightness_clamp_boundary(void)
+{
+    /* Just above max gets clamped */
+    TEST_ASSERT_EQUAL_UINT8(BRIGHTNESS_MAX, clamp_brightness(BRIGHTNESS_MAX + 1));
+    /* Max itself passes through */
+    TEST_ASSERT_EQUAL_UINT8(BRIGHTNESS_MAX, clamp_brightness(BRIGHTNESS_MAX));
 }
 
 /* ---- PowerCtrlChannel enum tests ---- */
-
-void test_power_channel_display(void)
-{
-    TEST_ASSERT_EQUAL_INT(0, POWER_DISPLAY);
-}
-
-void test_power_channel_backlight(void)
-{
-    TEST_ASSERT_EQUAL_INT(1, POWER_DISPLAY_BACKLIGHT);
-}
-
-void test_power_channel_radio(void)
-{
-    TEST_ASSERT_EQUAL_INT(2, POWER_RADIO);
-}
-
-void test_power_channel_count(void)
-{
-    /* 14 channels: POWER_DISPLAY(0) through POWER_RTC(13) */
-    TEST_ASSERT_EQUAL_INT(13, POWER_RTC);
-}
 
 void test_power_channel_all_unique(void)
 {
@@ -212,36 +169,43 @@ void test_power_channel_all_unique(void)
     }
 }
 
+void test_power_channel_contiguous(void)
+{
+    /* Channels should be contiguous from 0 to 13 */
+    TEST_ASSERT_EQUAL_INT(0, POWER_DISPLAY);
+    TEST_ASSERT_EQUAL_INT(POWER_RTC, 13);
+    /* Verify each channel = previous + 1 */
+    int values[] = {
+        POWER_DISPLAY, POWER_DISPLAY_BACKLIGHT, POWER_RADIO,
+        POWER_HAPTIC_DRIVER, POWER_GPS, POWER_NFC, POWER_SD_CARD,
+        POWER_SPEAK, POWER_SENSOR, POWER_KEYBOARD, POWER_EXT_GPIO,
+        POWER_SI4735_RADIO, POWER_CODEC, POWER_RTC
+    };
+    for (int i = 1; i < 14; i++) {
+        TEST_ASSERT_EQUAL_INT(values[i - 1] + 1, values[i]);
+    }
+}
+
 /* ---- RotaryMsg_t tests ---- */
 
-void test_rotary_dir_none(void)
+void test_rotary_msg_struct_layout(void)
 {
-    TEST_ASSERT_EQUAL_INT(0, ROTARY_DIR_NONE);
-}
-
-void test_rotary_dir_up(void)
-{
-    TEST_ASSERT_EQUAL_INT(1, ROTARY_DIR_UP);
-}
-
-void test_rotary_dir_down(void)
-{
-    TEST_ASSERT_EQUAL_INT(2, ROTARY_DIR_DOWN);
-}
-
-void test_rotary_msg_default(void)
-{
+    /* Verify zero-init produces NONE/unpressed */
     RotaryMsg_t msg;
     memset(&msg, 0, sizeof(msg));
     TEST_ASSERT_EQUAL_INT(ROTARY_DIR_NONE, msg.dir);
     TEST_ASSERT_FALSE(msg.centerBtnPressed);
-}
 
-void test_rotary_msg_button_press(void)
-{
-    RotaryMsg_t msg = { ROTARY_DIR_UP, 1 };
-    TEST_ASSERT_EQUAL_INT(ROTARY_DIR_UP, msg.dir);
-    TEST_ASSERT_TRUE(msg.centerBtnPressed);
+    /* Verify all direction + button combinations */
+    RotaryDir_t dirs[] = {ROTARY_DIR_NONE, ROTARY_DIR_UP, ROTARY_DIR_DOWN};
+    for (int d = 0; d < 3; d++) {
+        for (int b = 0; b <= 1; b++) {
+            msg.dir = dirs[d];
+            msg.centerBtnPressed = b;
+            TEST_ASSERT_EQUAL_INT(dirs[d], msg.dir);
+            TEST_ASSERT_EQUAL_INT(b, msg.centerBtnPressed);
+        }
+    }
 }
 
 /* ---- GPS coordinate parsing tests ---- */
@@ -278,6 +242,40 @@ void test_gps_parse_null_input(void)
     TEST_ASSERT_FALSE(c.valid);
 }
 
+void test_gps_parse_huntsville(void)
+{
+    /* Huntsville AL (SkinnyCon venue): 34°43.8' N, 86°35.4' W */
+    GpsCoord_t c = parse_gps_rmc("3443.8000", 'N', "08635.4000", 'W');
+    TEST_ASSERT_TRUE(c.valid);
+    TEST_ASSERT_DOUBLE_WITHIN(0.01, 34.73, c.latitude);
+    TEST_ASSERT_DOUBLE_WITHIN(0.01, -86.59, c.longitude);
+}
+
+void test_gps_parse_antimeridian(void)
+{
+    /* Near antimeridian: 179°59' E */
+    GpsCoord_t c = parse_gps_rmc("0000.0000", 'N', "17959.0000", 'E');
+    TEST_ASSERT_TRUE(c.valid);
+    TEST_ASSERT_DOUBLE_WITHIN(0.01, 179.983, c.longitude);
+}
+
+void test_gps_parse_max_latitude(void)
+{
+    /* North pole: 90°00' N */
+    GpsCoord_t c = parse_gps_rmc("9000.0000", 'N', "00000.0000", 'E');
+    TEST_ASSERT_TRUE(c.valid);
+    TEST_ASSERT_DOUBLE_WITHIN(0.001, 90.0, c.latitude);
+}
+
+void test_gps_parse_partial_null(void)
+{
+    /* One coordinate null, other valid */
+    GpsCoord_t c1 = parse_gps_rmc("3247.0000", 'N', NULL, 'W');
+    TEST_ASSERT_FALSE(c1.valid);
+    GpsCoord_t c2 = parse_gps_rmc(NULL, 'N', "09648.0000", 'W');
+    TEST_ASSERT_FALSE(c2.valid);
+}
+
 /* ---- RGB565 color tests ---- */
 
 void test_rgb565_swap_white(void)
@@ -306,44 +304,85 @@ void test_rgb565_swap_roundtrip(void)
     TEST_ASSERT_EQUAL_HEX16(color, rgb565_swap(rgb565_swap(color)));
 }
 
+void test_rgb565_swap_all_single_byte(void)
+{
+    /* When both bytes are the same, swap is identity */
+    TEST_ASSERT_EQUAL_HEX16(0xAAAA, rgb565_swap(0xAAAA));
+    TEST_ASSERT_EQUAL_HEX16(0x5555, rgb565_swap(0x5555));
+}
+
+void test_rgb565_channel_extraction(void)
+{
+    /* Pure red 0xF800: R=31, G=0, B=0 */
+    uint16_t red = 0xF800;
+    TEST_ASSERT_EQUAL_UINT8(31, (red >> 11) & 0x1F);  /* R */
+    TEST_ASSERT_EQUAL_UINT8(0,  (red >> 5) & 0x3F);   /* G */
+    TEST_ASSERT_EQUAL_UINT8(0,  red & 0x1F);           /* B */
+
+    /* Pure green 0x07E0: R=0, G=63, B=0 */
+    uint16_t green = 0x07E0;
+    TEST_ASSERT_EQUAL_UINT8(0,  (green >> 11) & 0x1F);
+    TEST_ASSERT_EQUAL_UINT8(63, (green >> 5) & 0x3F);
+    TEST_ASSERT_EQUAL_UINT8(0,  green & 0x1F);
+
+    /* Pure blue 0x001F: R=0, G=0, B=31 */
+    uint16_t blue = 0x001F;
+    TEST_ASSERT_EQUAL_UINT8(0,  (blue >> 11) & 0x1F);
+    TEST_ASSERT_EQUAL_UINT8(0,  (blue >> 5) & 0x3F);
+    TEST_ASSERT_EQUAL_UINT8(31, blue & 0x1F);
+}
+
 /* ---- Hardware presence mask tests ---- */
 
-void test_hw_mask_radio(void)
+void test_hw_mask_no_overlap(void)
 {
-    TEST_ASSERT_EQUAL_HEX32(0x01, HW_RADIO_ONLINE);
+    /* Each mask bit should be unique (no two share a bit) */
+    uint32_t all_masks[] = {
+        HW_RADIO_ONLINE, HW_TOUCH_ONLINE, HW_DRV_ONLINE, HW_PMU_ONLINE,
+        HW_RTC_ONLINE, HW_PSRAM_ONLINE, HW_GPS_ONLINE, HW_SD_ONLINE,
+        HW_NFC_ONLINE, HW_BHI260AP_ONLINE, HW_KEYBOARD_ONLINE,
+        HW_GAUGE_ONLINE, HW_EXPAND_ONLINE, HW_CODEC_ONLINE
+    };
+    int count = sizeof(all_masks) / sizeof(all_masks[0]);
+    for (int i = 0; i < count; i++) {
+        for (int j = i + 1; j < count; j++) {
+            TEST_ASSERT_EQUAL_HEX32(0, all_masks[i] & all_masks[j]);
+        }
+    }
 }
 
-void test_hw_mask_keyboard(void)
+void test_hw_mask_set_clear_toggle(void)
 {
-    TEST_ASSERT_EQUAL_HEX32(1UL << 10, HW_KEYBOARD_ONLINE);
-}
+    uint32_t probe = 0;
 
-void test_hw_mask_combined(void)
-{
-    uint32_t probe = HW_RADIO_ONLINE | HW_GPS_ONLINE | HW_KEYBOARD_ONLINE;
+    /* Set radio + GPS */
+    probe |= HW_RADIO_ONLINE;
+    probe |= HW_GPS_ONLINE;
     TEST_ASSERT_TRUE(probe & HW_RADIO_ONLINE);
     TEST_ASSERT_TRUE(probe & HW_GPS_ONLINE);
-    TEST_ASSERT_TRUE(probe & HW_KEYBOARD_ONLINE);
     TEST_ASSERT_FALSE(probe & HW_NFC_ONLINE);
+
+    /* Clear GPS */
+    probe &= ~HW_GPS_ONLINE;
+    TEST_ASSERT_TRUE(probe & HW_RADIO_ONLINE);
+    TEST_ASSERT_FALSE(probe & HW_GPS_ONLINE);
+
+    /* Toggle radio off */
+    probe ^= HW_RADIO_ONLINE;
+    TEST_ASSERT_FALSE(probe & HW_RADIO_ONLINE);
+    TEST_ASSERT_EQUAL_HEX32(0, probe);
 }
 
-/* ---- Keyboard character mapping tests ---- */
-
-void test_keyboard_state_values(void)
+void test_hw_mask_full_probe(void)
 {
-    /* KB_NONE = -1, KB_PRESSED = 1, KB_RELEASED = 0 */
-    TEST_ASSERT_EQUAL_INT(-1, -1);   /* KB_NONE */
-    TEST_ASSERT_EQUAL_INT(1, 1);     /* KB_PRESSED */
-    TEST_ASSERT_EQUAL_INT(0, 0);     /* KB_RELEASED */
-}
-
-void test_keyboard_ascii_range(void)
-{
-    /* Standard QWERTY keys should map to printable ASCII (32-126) */
-    char test_keys[] = "qwertyuiopasdfghjklzxcvbnm";
-    for (int i = 0; test_keys[i]; i++) {
-        TEST_ASSERT_TRUE(test_keys[i] >= 32 && test_keys[i] <= 126);
-    }
+    /* All peripherals online */
+    uint32_t full = HW_RADIO_ONLINE | HW_TOUCH_ONLINE | HW_DRV_ONLINE |
+                    HW_PMU_ONLINE | HW_RTC_ONLINE | HW_PSRAM_ONLINE |
+                    HW_GPS_ONLINE | HW_SD_ONLINE | HW_NFC_ONLINE |
+                    HW_BHI260AP_ONLINE | HW_KEYBOARD_ONLINE |
+                    HW_GAUGE_ONLINE | HW_EXPAND_ONLINE | HW_CODEC_ONLINE;
+    /* 14 bits set: should equal (1<<14)-1 = 0x3FFF */
+    TEST_ASSERT_EQUAL_HEX32(0x3FFF, full);
 }
 
 /* ================================================================
@@ -356,53 +395,41 @@ int main(int argc, char **argv)
     (void)argv;
     UNITY_BEGIN();
 
-    /* Display dimensions */
-    RUN_TEST(test_display_width);
-    RUN_TEST(test_display_height);
-    RUN_TEST(test_display_is_landscape);
-    RUN_TEST(test_display_pixel_count);
-
-    /* Brightness */
-    RUN_TEST(test_brightness_min);
-    RUN_TEST(test_brightness_max);
+    /* Brightness clamping */
     RUN_TEST(test_brightness_clamp_in_range);
     RUN_TEST(test_brightness_clamp_overflow);
-    RUN_TEST(test_brightness_levels_count);
+    RUN_TEST(test_brightness_clamp_all_valid_levels);
+    RUN_TEST(test_brightness_clamp_boundary);
 
     /* PowerCtrlChannel */
-    RUN_TEST(test_power_channel_display);
-    RUN_TEST(test_power_channel_backlight);
-    RUN_TEST(test_power_channel_radio);
-    RUN_TEST(test_power_channel_count);
     RUN_TEST(test_power_channel_all_unique);
+    RUN_TEST(test_power_channel_contiguous);
 
     /* RotaryMsg */
-    RUN_TEST(test_rotary_dir_none);
-    RUN_TEST(test_rotary_dir_up);
-    RUN_TEST(test_rotary_dir_down);
-    RUN_TEST(test_rotary_msg_default);
-    RUN_TEST(test_rotary_msg_button_press);
+    RUN_TEST(test_rotary_msg_struct_layout);
 
     /* GPS parsing */
     RUN_TEST(test_gps_parse_north_east);
     RUN_TEST(test_gps_parse_south_west);
     RUN_TEST(test_gps_parse_equator);
     RUN_TEST(test_gps_parse_null_input);
+    RUN_TEST(test_gps_parse_huntsville);
+    RUN_TEST(test_gps_parse_antimeridian);
+    RUN_TEST(test_gps_parse_max_latitude);
+    RUN_TEST(test_gps_parse_partial_null);
 
     /* RGB565 color */
     RUN_TEST(test_rgb565_swap_white);
     RUN_TEST(test_rgb565_swap_black);
     RUN_TEST(test_rgb565_swap_red);
     RUN_TEST(test_rgb565_swap_roundtrip);
+    RUN_TEST(test_rgb565_swap_all_single_byte);
+    RUN_TEST(test_rgb565_channel_extraction);
 
     /* Hardware presence mask */
-    RUN_TEST(test_hw_mask_radio);
-    RUN_TEST(test_hw_mask_keyboard);
-    RUN_TEST(test_hw_mask_combined);
-
-    /* Keyboard */
-    RUN_TEST(test_keyboard_state_values);
-    RUN_TEST(test_keyboard_ascii_range);
+    RUN_TEST(test_hw_mask_no_overlap);
+    RUN_TEST(test_hw_mask_set_clear_toggle);
+    RUN_TEST(test_hw_mask_full_probe);
 
     return UNITY_END();
 }

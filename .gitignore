@@ -6,4 +6,4 @@ script
 *.bk
 *.log
 
-screenshot_*.ppm
+*.ppm

@@ -74,9 +74,9 @@ pio run -e tlora_pager --target upload
 pio test -e native -e native_lvgl -e native_factory -v
 
 # Run individual test suites
-pio test -e native -v          # Hardware logic tests (32 tests, <3s)
+pio test -e native -v          # Hardware logic tests (24 tests, <3s)
 pio test -e native_lvgl -v     # LVGL widget tests (20 tests, ~7s)
-pio test -e native_factory -v  # Factory app simulation (9 tests, ~7s)
+pio test -e native_factory -v  # Factory app simulation (15 tests, ~7s)
 ```
 
 ## Testing Architecture
@@ -85,12 +85,12 @@ pio test -e native_factory -v  # Factory app simulation (9 tests, ~7s)
 
 | Tier | Environment | Tests | What It Tests | Speed |
 |------|-------------|-------|---------------|-------|
-| 1 - Unit | `native` | 32 | Hardware constants, brightness clamping, GPS NMEA parsing, RGB565 byte swap, power channels, keyboard states | <3s |
-| 2 - Widgets | `native_lvgl` | 20 | LVGL 9.2 display init, labels, buttons, click handlers, rendering to framebuffer, PPM screenshot export | ~7s |
-| 3 - Factory Sim | `native_factory` | 9 | Real factory app screens with actual Alibaba fonts (12/24/40/100px) and 9 app icons, visual regression screenshots | ~7s |
+| 1 - Unit | `native` | 24 | Brightness clamping, GPS NMEA parsing (6 cases), RGB565 byte swap + channel extraction, power channel contiguity, hardware mask bitfields, rotary struct layout | <3s |
+| 2 - Widgets | `native_lvgl` | 20 | LVGL 9.2 display init, labels, buttons, click handlers, flex layouts, sliders, rendering to framebuffer, PPM screenshot export | ~7s |
+| 3 - Factory Sim | `native_factory` | 15 | Real factory app screens with actual Alibaba fonts (12/24/40/100px), 9 app icons, and 6 SkinnyCon screens | ~7s |
 | 4 - Build | `tlora_pager` | — | Full ESP32-S3 compilation against real Arduino SDK and vendor libraries | ~60s |
 
-**Total: 61 tests, all running without hardware.**
+**Total: 59 tests, all running without hardware.**
 
 ### LVGL Headless Simulator
 
@@ -111,7 +111,7 @@ The `native_factory` environment renders actual factory app screens using real a
 
 - **Fonts**: Alibaba PuHuiTi Bold at 12px, 24px, 40px, and 100px (same fonts used on device)
 - **Icons**: 9 app icons (Settings, Radio, Chat, Music, Monitor, Keyboard, Bluetooth, WiFi, Test)
-- **Screens**: Main menu with tileview, clock screen, settings panel, LoRa chat, system monitor
+- **Screens**: Main menu with tileview, clock screen, settings panel, LoRa chat, system monitor, plus 6 SkinnyCon screens (Nametag, About, Code of Conduct, BadgeShark, Schedule, Net Tools)
 
 Screenshots are saved as PPM files and uploaded as CI artifacts for visual regression review.
 
@@ -119,9 +119,9 @@ Screenshots are saved as PPM files and uploaded as CI artifacts for visual regre
 
 | File | Tests | Description |
 |------|-------|-------------|
-| `test/test_hardware/test_hardware.c` | 32 | Display dimensions, brightness, power channels, GPS parsing, RGB565 |
+| `test/test_hardware/test_hardware.c` | 24 | Brightness clamping, GPS NMEA parsing, RGB565 byte swap, power channels, hardware masks, rotary input |
 | `test/test_lvgl_render/test_lvgl_render.c` | 20 | LVGL widgets, rendering, framebuffer verification |
-| `test/test_factory_sim/test_factory_sim.c` | 9 | Factory app screens with real fonts and icons |
+| `test/test_factory_sim/test_factory_sim.c` | 15 | Factory app screens with real fonts, icons, and SkinnyCon screens |
 | `test/simulator/sim_main.c` | — | Headless LVGL 9.2 simulator (480x222 RGB565) |
 | `test/simulator/lv_conf.h` | — | LVGL config for simulator |
 | `test/mocks/` | — | Mock headers for Arduino, SPI, Wire, FreeRTOS, ESP-IDF |
@@ -158,6 +158,19 @@ The factory example (`examples/factory/`) is the reference application with 20+ 
 | NFC | NFC | ST25R3911B tag reading (WiFi config, URLs, text) |
 | IR Remote | IR | IR transmit/receive (if hardware present) |
 | Compass | Compass | QMC5883P magnetic heading (if hardware present) |
+| **Nametag** | Chat | Editable nametag with 5 modes: name (keyboard editable), fullscreen, about, code of conduct, badge info |
+| **BadgeShark** | Monitor | LoRa packet sniffer — Wireshark-style hex dump with RSSI, auto-scroll |
+| **Schedule** | Settings | SkinnyCon 2026 3-day schedule browser (May 12-14, Huntsville AL) |
+| **Net Tools** | WiFi | LoRa mesh diagnostics — ping/pong latency, packet loss, peer discovery |
+
+### SkinnyCon Apps
+
+Built for [SkinnyCon 2026](https://skinnycon.com) (May 12-14, Huntsville AL), these apps turn the T-LoRa-Pager into a conference badge. Design inspired by the [2025 Supercon badge](https://github.com/zx96/2025-supercon-badge).
+
+- **Nametag**: Editable name badge — type your name on the QWERTY keyboard. 5 display modes cycled via rotary: name+subtitle (editable), fullscreen giant name, About SkinnyCon, Code of Conduct, and badge hardware info. Hackaday color palette (grey `#1A1A1A`, yellow `#E39810`, sage green `#ABC5A0`). Tab switches between name and subtitle editing.
+- **BadgeShark**: LoRa packet sniffer with terminal-style dark theme. Shows packet number, length, RSSI (color-coded red/green by signal strength), and hex dump preview. Auto-scrolling list with max 50 packets, real-time stats bar.
+- **Schedule**: SkinnyCon 2026 3-day schedule browser. Left/Right arrows switch days (Tue/Wed/Thu). Each entry shows time and talk title. Keyboard/rotary Up/Down navigates with visual highlight. Break sessions dimmed.
+- **Net Tools**: LoRa mesh diagnostic tool with two-panel layout. Left panel shows ping/pong results with round-trip time and color-coded status (green=fast, yellow=slow, red=timeout). Right panel lists discovered peers with RSSI. Stats bar shows sent/recv/loss%/avg RTT.
 
 ### Clock Screen (Low Power Mode)
 
@@ -174,14 +187,32 @@ After 10 seconds of inactivity, the device enters clock mode:
 
 | Workflow | Jobs | Trigger |
 |----------|------|---------|
-| `tests.yml` | Native Tests + LVGL Simulator + Factory Sim + ESP32 Build | PR, push to main |
+| `tests.yml` | Native Tests + LVGL Simulator + Factory Sim + ESP32 Build | PR, push to master |
 | `base_examples_ci.yml` | Arduino compile: 31 base sketches x tlora_pager | PR, push |
 | `lvgl_examples_ci.yml` | Arduino compile: 42 LVGL widget examples x tlora_pager | PR, push |
 | `radio_examples_ci.yml` | Arduino compile: 13 radio examples x tlora_pager | PR, push |
+| `release.yml` | ESP32-S3 firmware build + artifact upload | Push to master, manual |
 
 **Board matrix**: `tlora_pager` only (this fork focuses exclusively on the T-LoRa-Pager).
 
 **CI artifacts**: PPM screenshots from factory simulation are uploaded for visual review on every PR.
+
+### Firmware Downloads
+
+Every merge to `master` triggers a firmware build. Download the latest artifacts from the [Actions tab](../../actions/workflows/release.yml):
+
+- `tlora-pager-firmware-<sha>.bin` — Main firmware (flash at 0x10000)
+- `tlora-pager-bootloader-<sha>.bin` — Bootloader (flash at 0x0)
+- `tlora-pager-partitions-<sha>.bin` — Partition table (flash at 0x8000)
+
+Artifacts are retained for 90 days. To flash manually:
+
+```bash
+esptool.py --chip esp32s3 --port /dev/ttyUSB0 --baud 921600 \
+  write_flash 0x0 tlora-pager-bootloader-<sha>.bin \
+              0x8000 tlora-pager-partitions-<sha>.bin \
+              0x10000 tlora-pager-firmware-<sha>.bin
+```
 
 ## Project Structure
 
@@ -189,7 +220,8 @@ After 10 seconds of inactivity, the device enters clock mode:
 T-Lora-Pager-SkinnyCon/
 ├── examples/
 │   ├── factory/              # Main factory application (20+ screens)
-│   │   ├── factory.ino       # Entry point (setup + loop)
+│   │   ├── factory.ino       # Entry point (setup + loop) — Arduino IDE
+│   │   ├── pio_main.cpp      # PlatformIO entry (#ifdef PLATFORMIO guard)
 │   │   ├── ui_main.cpp       # Tileview navigation, menu, clock screen
 │   │   ├── ui_tools.cpp      # Widget builders (slider, switch, button, etc.)
 │   │   ├── ui_define.h       # Public UI API
@@ -213,7 +245,7 @@ T-Lora-Pager-SkinnyCon/
 │   └── mocks/                # Arduino/ESP-IDF mock headers
 ├── platformio.ini            # Build configurations (4 environments)
 ├── MARISOL.md                # Pipeline context document
-└── .github/workflows/        # CI workflows (4 total)
+└── .github/workflows/        # CI workflows (5 total)
 ```
 
 ## Display Specifications
@@ -249,6 +281,19 @@ The default radio is SX1262 (LoRa). Configurable parameters:
 | TX Power | -9 to 22 dBm | 10 dBm |
 | Coding Rate | 4/5 to 4/8 | 4/5 |
 
+## Dual Build System
+
+This project has **two independent build paths** — understanding this is critical:
+
+| Build Tool | Used For | Config |
+|------------|----------|--------|
+| **PlatformIO** | Local dev, unit tests (`native`, `native_lvgl`, `native_factory`), ESP32-S3 compilation (`tlora_pager`) | `platformio.ini` |
+| **Arduino CLI** | GitHub Actions CI for all example sketches (31 base + 42 LVGL + 13 radio = 86 sketches) | `arduino-cli compile --library .` |
+
+**Key difference**: Arduino CLI uses `--library .` which compiles everything in `src/` for ALL sketches. PlatformIO uses `build_src_filter` to selectively include `examples/factory/`. Never put example-specific code in `src/`.
+
+**`pio_main.cpp`**: PlatformIO doesn't auto-process `.ino` files outside `src_dir`, so `examples/factory/pio_main.cpp` wraps `factory.ino` with `#include "factory.ino"`. It's guarded with `#ifdef PLATFORMIO` so Arduino IDE (which compiles all `.cpp` in the sketch directory) sees an empty translation unit — no duplicate `setup()`/`loop()` definitions.
+
 ## Troubleshooting
 
 | Issue | Solution |
@@ -260,6 +305,8 @@ The default radio is SX1262 (LoRa). Configurable parameters:
 | Keyboard unresponsive | Check I2C address (TCA8418), verify `USING_INPUT_DEV_KEYBOARD` defined |
 | Build fails | Ensure ESP32 Arduino Core >= 3.3.0, install all lib_deps |
 | Tests fail | Run `pio test -e native -v` first to verify PlatformIO setup |
+| Arduino CI: duplicate symbols | Check `pio_main.cpp` has `#ifdef PLATFORMIO` guard |
+| Arduino CI: transient 404s | Espressif package server intermittent — re-run failed jobs |
 
 ## Additional Documentation
 
