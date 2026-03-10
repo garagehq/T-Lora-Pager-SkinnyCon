@@ -202,7 +202,8 @@ After 10 seconds of inactivity, the device enters clock mode:
 T-Lora-Pager-SkinnyCon/
 ├── examples/
 │   ├── factory/              # Main factory application (20+ screens)
-│   │   ├── factory.ino       # Entry point (setup + loop)
+│   │   ├── factory.ino       # Entry point (setup + loop) — Arduino IDE
+│   │   ├── pio_main.cpp      # PlatformIO entry (#ifdef PLATFORMIO guard)
 │   │   ├── ui_main.cpp       # Tileview navigation, menu, clock screen
 │   │   ├── ui_tools.cpp      # Widget builders (slider, switch, button, etc.)
 │   │   ├── ui_define.h       # Public UI API
@@ -262,6 +263,19 @@ The default radio is SX1262 (LoRa). Configurable parameters:
 | TX Power | -9 to 22 dBm | 10 dBm |
 | Coding Rate | 4/5 to 4/8 | 4/5 |
 
+## Dual Build System
+
+This project has **two independent build paths** — understanding this is critical:
+
+| Build Tool | Used For | Config |
+|------------|----------|--------|
+| **PlatformIO** | Local dev, unit tests (`native`, `native_lvgl`, `native_factory`), ESP32-S3 compilation (`tlora_pager`) | `platformio.ini` |
+| **Arduino CLI** | GitHub Actions CI for all example sketches (31 base + 42 LVGL + 13 radio = 86 sketches) | `arduino-cli compile --library .` |
+
+**Key difference**: Arduino CLI uses `--library .` which compiles everything in `src/` for ALL sketches. PlatformIO uses `build_src_filter` to selectively include `examples/factory/`. Never put example-specific code in `src/`.
+
+**`pio_main.cpp`**: PlatformIO doesn't auto-process `.ino` files outside `src_dir`, so `examples/factory/pio_main.cpp` wraps `factory.ino` with `#include "factory.ino"`. It's guarded with `#ifdef PLATFORMIO` so Arduino IDE (which compiles all `.cpp` in the sketch directory) sees an empty translation unit — no duplicate `setup()`/`loop()` definitions.
+
 ## Troubleshooting
 
 | Issue | Solution |
@@ -273,6 +287,8 @@ The default radio is SX1262 (LoRa). Configurable parameters:
 | Keyboard unresponsive | Check I2C address (TCA8418), verify `USING_INPUT_DEV_KEYBOARD` defined |
 | Build fails | Ensure ESP32 Arduino Core >= 3.3.0, install all lib_deps |
 | Tests fail | Run `pio test -e native -v` first to verify PlatformIO setup |
+| Arduino CI: duplicate symbols | Check `pio_main.cpp` has `#ifdef PLATFORMIO` guard |
+| Arduino CI: transient 404s | Espressif package server intermittent — re-run failed jobs |
 
 ## Additional Documentation
 
