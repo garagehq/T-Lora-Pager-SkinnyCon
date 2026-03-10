@@ -1,0 +1,75 @@
+name: Tests & Build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  native-unit-tests:
+    name: Native Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install PlatformIO
+        run: pip install platformio
+
+      - name: Run native unit tests
+        run: pio test -e native -v
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-test-results
+          path: .pio/build/native/
+
+  lvgl-simulator-tests:
+    name: LVGL Simulator Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install PlatformIO
+        run: pip install platformio
+
+      - name: Run LVGL simulator tests
+        run: pio test -e native_lvgl -v
+
+      - name: Upload PPM screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lvgl-screenshots
+          path: |
+            *.ppm
+            .pio/build/native_lvgl/
+
+  esp32-build-check:
+    name: ESP32-S3 Build Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install PlatformIO
+        run: pip install platformio
+
+      - name: Compile for ESP32-S3 (no upload)
+        run: pio run -e tlora_pager

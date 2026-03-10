@@ -25,3 +25,39 @@
 ### `4` Unable to flash again
 
 - ⚠️ **[Flash Steps Guide](./firmware/README.md)**
+
+### `5` Testing
+
+![Tests & Build](https://github.com/garagehq/T-Lora-Pager-SkinnyCon/actions/workflows/tests.yml/badge.svg)
+
+This project uses a 3-tier testing strategy with [PlatformIO](https://platformio.org/):
+
+```bash
+# Install PlatformIO
+pip install platformio
+
+# Run native unit tests (no hardware required)
+pio test -e native -v
+
+# Run LVGL headless simulator tests (480x222 display, PPM screenshots)
+pio test -e native_lvgl -v
+
+# ESP32-S3 compilation check (build only, no upload)
+pio run -e tlora_pager
+```
+
+**Test tiers:**
+| Tier | PIO Environment | What It Tests |
+|------|----------------|---------------|
+| 1 - Unit | `native` | Hardware logic, data structures, GPS parsing, RGB565, brightness |
+| 2 - Simulator | `native_lvgl` | LVGL 9.2 widgets, rendering, display properties, screenshots |
+| 3 - Build | `tlora_pager` | Full ESP32-S3 compilation against real SDK |
+
+### `6` Development Setup
+
+1. Install [PlatformIO Core](https://docs.platformio.org/en/latest/core/installation.html)
+2. Clone this repository
+3. Run `pio test -e native -v` to verify your setup
+4. For ESP32-S3 builds: `pio run -e tlora_pager`
+
+**Display specs:** 480x222 ultra-wide IPS, RGB565 (16-bit), SPI interface, 0-16 brightness levels
