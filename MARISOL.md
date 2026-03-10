@@ -45,14 +45,14 @@ pio run -e tlora_pager --target upload
 |------|-------------|--------------|-------|-------|
 | 1 | `native` | Hardware logic, constants, GPS parsing, RGB565 | 32 | <3s |
 | 2 | `native_lvgl` | LVGL widgets, rendering, framebuffer, screenshots | 20 | ~7s |
-| 3 | `native_factory` | Factory app screens with real fonts (Alibaba 12/24/40/100px) and 9 icons | 9 | ~7s |
+| 3 | `native_factory` | Factory app screens with real fonts (Alibaba 12/24/40/100px), 9 icons, 6 SkinnyCon screens | 15 | ~7s |
 | 4 | `tlora_pager` | Full ESP32-S3 compilation (build check) | — | ~60s |
 
 ### Test Files
 
 - `test/test_hardware/test_hardware.c` — 32 tests: display dimensions, brightness clamping, PowerCtrlChannel enum, RotaryMsg_t, GPS NMEA parsing, RGB565 byte swap, hardware presence masks, keyboard states
 - `test/test_lvgl_render/test_lvgl_render.c` — 20 tests: display init, labels, buttons, click handlers, rendering to framebuffer, PPM export, multi-widget layouts
-- `test/test_factory_sim/test_factory_sim.c` — 9 tests: main menu with real icons, clock screen, settings panel, LoRa chat, logo, monitor, font quality, icon grid, screenshot validation
+- `test/test_factory_sim/test_factory_sim.c` — 15 tests: main menu with real icons, clock screen, settings, LoRa chat, logo, monitor, nametag, about, code of conduct, badgeshark, schedule, net tools, font quality, icon grid, screenshot validation
 - `test/simulator/sim_main.c/h` — Headless LVGL 9.2 simulator (480×222 RGB565 framebuffer)
 - `test/simulator/lv_conf.h` — LVGL config for simulator (LV_STDLIB_CLIB)
 - `test/mocks/` — Mock headers: Arduino.h, SPI.h, Wire.h, FreeRTOS, ESP-IDF GPIO/I2S/SPI
@@ -107,8 +107,8 @@ The factory example (`examples/factory/`) is the reference application with a ti
 
 - **Main screen** (tile 0,0): App grid with icons
 - **App screens** (tile 0,1): Dynamic per-app content
-- **20+ apps**: Messaging, Radio, nRF24, GPS, Monitor, Power, Audio, Microphone, Sensor, Keyboard, System, Calendar, NFC, BLE, IR Remote, Camera Remote, Tools, Factory Test, Settings
-- **Input**: Rotary encoder, TCA8418 keyboard, touch (optional)
+- **24+ apps**: Messaging, Radio, nRF24, GPS, Monitor, Power, Audio, Microphone, Sensor, Keyboard, System, Calendar, NFC, BLE, IR Remote, Camera Remote, Tools, Factory Test, Settings, **Nametag**, **BadgeShark**, **Schedule**, **Net Tools**
+- **Input**: Rotary encoder, TCA8418 keyboard (full QWERTY, used for nametag editing), touch (optional)
 - **Thread safety**: FreeRTOS mutex for concurrent hardware+GUI access
 
 ## Known Issues
@@ -126,3 +126,14 @@ The factory example (`examples/factory/`) is the reference application with a ti
 | 2026-03-09 | Initial setup | 52 tests (32 hw + 20 LVGL), simulator, CI, mocks |
 | 2026-03-09 | CI fix | Removed twatch_ultra/twatchs3 from board matrix, fixed LVGL linking |
 | 2026-03-10 | Factory sim | 61 tests (32 hw + 20 LVGL + 9 factory), real fonts/icons, visual regression |
+| 2026-03-10 | SkinnyCon apps | 67 tests (32 hw + 20 LVGL + 15 factory). Nametag (editable, keyboard input, 5 modes), BadgeShark, Schedule (3-day real data), Net Tools, About, Code of Conduct. Fixed pio_main.cpp Arduino build conflict |
+
+## SkinnyCon 2026 Integration
+
+Conference-specific apps for SkinnyCon 2026 (May 12-14, Huntsville AL, I2C Invention to Innovation Center, UAH campus):
+
+- **Nametag** (`ui_nametag.cpp`): 5 display modes — name+subtitle (keyboard editable via TCA8418), fullscreen, About SkinnyCon, Code of Conduct, badge hardware info. `hw_set_keyboard_read_callback()` for real-time text input. Tab switches name/subtitle editing
+- **Schedule** (`ui_schedule.cpp`): 3-day conference schedule with Left/Right day switching. Real talk data (TSCM topics, training sessions, panels). Scrollable with visual highlight
+- **BadgeShark** (`ui_badgeshark.cpp`): LoRa packet sniffer, Wireshark-style hex dump, RSSI color-coding, auto-scroll, max 50 packets
+- **Net Tools** (`ui_nettools.cpp`): LoRa mesh diagnostics — two-panel layout (ping log + peer discovery), stats bar with loss%/avg RTT
+- **pio_main.cpp**: Guarded with `#ifdef PLATFORMIO` to prevent Arduino IDE duplicate symbol errors

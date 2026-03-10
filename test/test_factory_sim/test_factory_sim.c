@@ -699,7 +699,7 @@ void test_supercon_nametag(void)
 
     /* Mode hint */
     lv_obj_t *hint = lv_label_create(cont);
-    lv_label_set_text(hint, LV_SYMBOL_REFRESH " Rotate to switch mode");
+    lv_label_set_text(hint, LV_SYMBOL_REFRESH " Rotate=mode  " LV_SYMBOL_KEYBOARD " Type=edit name");
     lv_obj_set_style_text_color(hint, lv_color_hex(0x808080), 0);
     lv_obj_set_style_text_align(hint, LV_TEXT_ALIGN_CENTER, 0);
     lv_obj_set_width(hint, LV_PCT(100));
@@ -714,6 +714,130 @@ void test_supercon_nametag(void)
     TEST_ASSERT_TRUE(non_zero > 1000);
 
     int result = lvgl_test_save_ppm("factory_nametag.ppm");
+    TEST_ASSERT_EQUAL_INT(0, result);
+}
+
+/* ================================================================
+ *  TEST: About SkinnyCon screen (standalone C recreation)
+ * ================================================================ */
+
+void test_supercon_about(void)
+{
+    lv_obj_t *scr = lv_screen_active();
+    lv_obj_set_style_bg_color(scr, SUPERCON_BG_C, LV_PART_MAIN);
+    lv_obj_set_style_bg_opa(scr, LV_OPA_COVER, 0);
+
+    lv_obj_t *cont = lv_obj_create(scr);
+    lv_obj_set_size(cont, LV_PCT(100), LV_PCT(100));
+    lv_obj_set_style_bg_color(cont, SUPERCON_BG_C, 0);
+    lv_obj_set_style_bg_opa(cont, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_width(cont, 0, 0);
+    lv_obj_set_style_radius(cont, 0, 0);
+    lv_obj_set_style_pad_all(cont, 8, 0);
+    lv_obj_set_flex_flow(cont, LV_FLEX_FLOW_COLUMN);
+    lv_obj_set_flex_align(cont, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+
+    lv_obj_t *title = lv_label_create(cont);
+    lv_label_set_text(title, "SKINNYCON 2026");
+    lv_obj_set_style_text_font(title, &font_alibaba_24, 0);
+    lv_obj_set_style_text_color(title, SUPERCON_ACCENT_C, 0);
+    lv_obj_set_style_text_align(title, LV_TEXT_ALIGN_CENTER, 0);
+    lv_obj_set_width(title, LV_PCT(100));
+
+    lv_obj_t *panel = lv_obj_create(cont);
+    lv_obj_set_size(panel, LV_PCT(95), LV_PCT(100));
+    lv_obj_set_flex_grow(panel, 1);
+    lv_obj_set_style_bg_color(panel, lv_color_hex(0x2A2A2A), 0);
+    lv_obj_set_style_bg_opa(panel, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_color(panel, SUPERCON_ACCENT_C, 0);
+    lv_obj_set_style_border_width(panel, 1, 0);
+    lv_obj_set_style_radius(panel, 6, 0);
+    lv_obj_set_style_pad_all(panel, 8, 0);
+
+    lv_obj_t *info = lv_label_create(panel);
+    lv_label_set_text(info,
+        "May 12-14, 2026\n"
+        "Huntsville, Alabama\n"
+        "I2C Invention to Innovation Center\n"
+        "UAH Campus\n\n"
+        "Hosted by Skinny R&D\n"
+        "Jason Baird, President"
+    );
+    lv_obj_set_style_text_color(info, SUPERCON_WHITE_C, 0);
+    lv_obj_set_width(info, LV_PCT(100));
+
+    lvgl_test_run(200);
+
+    uint16_t *fb = lvgl_sim_get_framebuffer();
+    int non_zero = 0;
+    for (int i = 0; i < EXPECTED_HOR_RES * EXPECTED_VER_RES; i++) {
+        if (fb[i] != 0) non_zero++;
+    }
+    TEST_ASSERT_TRUE(non_zero > 1000);
+
+    int result = lvgl_test_save_ppm("factory_about.ppm");
+    TEST_ASSERT_EQUAL_INT(0, result);
+}
+
+/* ================================================================
+ *  TEST: Code of Conduct screen (standalone C recreation)
+ * ================================================================ */
+
+void test_supercon_coc(void)
+{
+    lv_obj_t *scr = lv_screen_active();
+    lv_obj_set_style_bg_color(scr, SUPERCON_BG_C, LV_PART_MAIN);
+    lv_obj_set_style_bg_opa(scr, LV_OPA_COVER, 0);
+
+    lv_obj_t *cont = lv_obj_create(scr);
+    lv_obj_set_size(cont, LV_PCT(100), LV_PCT(100));
+    lv_obj_set_style_bg_color(cont, SUPERCON_BG_C, 0);
+    lv_obj_set_style_bg_opa(cont, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_width(cont, 0, 0);
+    lv_obj_set_style_radius(cont, 0, 0);
+    lv_obj_set_style_pad_all(cont, 8, 0);
+    lv_obj_set_flex_flow(cont, LV_FLEX_FLOW_COLUMN);
+    lv_obj_set_flex_align(cont, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+
+    lv_obj_t *title = lv_label_create(cont);
+    lv_label_set_text(title, LV_SYMBOL_WARNING " CODE OF CONDUCT");
+    lv_obj_set_style_text_font(title, &font_alibaba_24, 0);
+    lv_obj_set_style_text_color(title, SUPERCON_ACCENT_C, 0);
+    lv_obj_set_style_text_align(title, LV_TEXT_ALIGN_CENTER, 0);
+    lv_obj_set_width(title, LV_PCT(100));
+
+    lv_obj_t *panel = lv_obj_create(cont);
+    lv_obj_set_size(panel, LV_PCT(95), LV_PCT(100));
+    lv_obj_set_flex_grow(panel, 1);
+    lv_obj_set_style_bg_color(panel, lv_color_hex(0x2A2A2A), 0);
+    lv_obj_set_style_bg_opa(panel, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_color(panel, SUPERCON_ACCENT_C, 0);
+    lv_obj_set_style_border_width(panel, 1, 0);
+    lv_obj_set_style_radius(panel, 6, 0);
+    lv_obj_set_style_pad_all(panel, 8, 0);
+
+    lv_obj_t *coc = lv_label_create(panel);
+    lv_label_set_text(coc,
+        "OUR STANDARDS\n"
+        "- Be kind, considerate, respectful\n"
+        "- Behave professionally\n"
+        "- Respect differing viewpoints\n"
+        "- Be mindful of personal space\n\n"
+        "UAH is 100% tobacco free."
+    );
+    lv_obj_set_style_text_color(coc, SUPERCON_WHITE_C, 0);
+    lv_obj_set_width(coc, LV_PCT(100));
+
+    lvgl_test_run(200);
+
+    uint16_t *fb = lvgl_sim_get_framebuffer();
+    int non_zero = 0;
+    for (int i = 0; i < EXPECTED_HOR_RES * EXPECTED_VER_RES; i++) {
+        if (fb[i] != 0) non_zero++;
+    }
+    TEST_ASSERT_TRUE(non_zero > 1000);
+
+    int result = lvgl_test_save_ppm("factory_coc.ppm");
     TEST_ASSERT_EQUAL_INT(0, result);
 }
 
@@ -879,13 +1003,13 @@ void test_supercon_schedule(void)
     lv_obj_set_style_pad_hor(header, 8, 0);
 
     lv_obj_t *htitle = lv_label_create(header);
-    lv_label_set_text(htitle, LV_SYMBOL_LIST " Schedule");
+    lv_label_set_text(htitle, LV_SYMBOL_LIST " SkinnyCon 2026");
     lv_obj_set_style_text_color(htitle, SUPERCON_ACCENT_C, 0);
     lv_obj_set_style_text_font(htitle, &font_alibaba_12, 0);
     lv_obj_align(htitle, LV_ALIGN_LEFT_MID, 0, 0);
 
     lv_obj_t *day = lv_label_create(header);
-    lv_label_set_text(day, "Day 1 - Saturday");
+    lv_label_set_text(day, LV_SYMBOL_LEFT " Tue May 12 " LV_SYMBOL_RIGHT);
     lv_obj_set_style_text_color(day, SHARK_WHITE_C, 0);
     lv_obj_align(day, LV_ALIGN_RIGHT_MID, 0, 0);
 
@@ -901,12 +1025,10 @@ void test_supercon_schedule(void)
     lv_obj_set_flex_flow(list, LV_FLEX_FLOW_COLUMN);
     lv_obj_set_scrollbar_mode(list, LV_SCROLLBAR_MODE_AUTO);
 
-    const char *times[] = {"09:00", "09:30", "10:00", "10:30", "11:00", "11:30"};
-    const char *titles[] = {"Opening Ceremony", "Badge Hacking 101", "LoRa Mesh Networks",
-                            "Coffee Break", "Reverse Engineering SoCs", "FPGA Badge Design"};
-    const char *speakers[] = {"Organizers", "Sprite_tm", "Travis Goodspeed",
-                              "", "Bunnie Huang", "esden"};
-    int is_break[] = {0, 0, 0, 1, 0, 0};
+    const char *times[] = {"0800", "0900", "0915", "0930", "1030", "1100"};
+    const char *titles[] = {"Check-in / Breakfast", "Welcome", "How to CTF",
+                            "Tech Ops Case Files", "Break", "Intro to Reverse Engineering"};
+    int is_break[] = {1, 0, 0, 0, 1, 0};
 
     for (int i = 0; i < 6; i++) {
         lv_obj_t *row = lv_obj_create(list);
@@ -935,13 +1057,6 @@ void test_supercon_schedule(void)
         lv_label_set_text(tl, titles[i]);
         lv_obj_set_style_text_color(tl, is_break[i] ? lv_color_hex(0x808080) : SHARK_WHITE_C, 0);
         lv_obj_set_flex_grow(tl, 1);
-
-        if (speakers[i][0] != '\0') {
-            lv_obj_t *sp = lv_label_create(row);
-            lv_label_set_text(sp, speakers[i]);
-            lv_obj_set_style_text_color(sp, SUPERCON_GREEN_C, 0);
-            lv_obj_set_style_min_width(sp, 100, 0);
-        }
     }
 
     lvgl_test_run(200);
@@ -1125,6 +1240,8 @@ int main(int argc, char **argv)
 
     /* Supercon-inspired app screens */
     RUN_TEST(test_supercon_nametag);
+    RUN_TEST(test_supercon_about);
+    RUN_TEST(test_supercon_coc);
     RUN_TEST(test_supercon_badgeshark);
     RUN_TEST(test_supercon_schedule);
     RUN_TEST(test_supercon_nettools);

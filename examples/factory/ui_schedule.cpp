@@ -1,9 +1,9 @@
 /**
  * @file      ui_schedule.cpp
- * @brief     Conference Schedule — inspired by Supercon 2025 badge
- * @details   Browse conference talks and events. Scrollable list with
+ * @brief     SkinnyCon 2026 Schedule — May 12-14, Huntsville AL
+ * @details   Browse the 3-day conference schedule. Scrollable list with
  *            time, title, and speaker. Rotary/keyboard navigates items.
- *            Ported from Supercon 2025 badge schedule browser concept.
+ *            Left/Right arrows switch between days.
  */
 #include "ui_define.h"
 
@@ -13,13 +13,15 @@
 #define SCHED_GREEN       lv_color_hex(0xABC5A0)  /* Sage green */
 #define SCHED_CYAN        lv_color_hex(0x58A6FF)
 #define SCHED_DIM         lv_color_hex(0x808080)
-#define MAX_TALKS         20
 
 LV_FONT_DECLARE(font_alibaba_12);
 LV_FONT_DECLARE(font_alibaba_24);
 
 static lv_obj_t *sched_cont = NULL;
+static lv_obj_t *sched_list = NULL;
+static lv_obj_t *day_label = NULL;
 static int selected_talk = 0;
+static int current_day = 0;  /* 0=Tue, 1=Wed, 2=Thu */
 
 typedef struct {
     const char *time;
@@ -28,27 +30,68 @@ typedef struct {
     bool is_break;
 } talk_t;
 
-/* Sample schedule — can be replaced with OTA data */
-static const talk_t talks[] = {
-    {"09:00", "Opening Ceremony",          "Organizers",       false},
-    {"09:30", "Badge Hacking 101",         "Sprite_tm",        false},
-    {"10:00", "LoRa Mesh Networks",        "Travis Goodspeed", false},
-    {"10:30", "Coffee Break",              "",                 true},
-    {"11:00", "Reverse Engineering SoCs",  "Bunnie Huang",     false},
-    {"11:30", "FPGA Badge Design",         "esden",            false},
-    {"12:00", "Lunch",                     "",                 true},
-    {"13:30", "Soldering Workshop",        "Badge Team",       false},
-    {"14:00", "RF Hacking with SDR",       "Mike Ossmann",     false},
-    {"14:30", "Lightning Talks",           "Community",        false},
-    {"15:00", "Badge Assembly Contest",    "Everyone",         false},
-    {"15:30", "Closing & Awards",          "Organizers",       false},
+/* SkinnyCon 2026 — Tuesday, May 12 */
+static const talk_t day1_talks[] = {
+    {"0800", "Check-in / Breakfast / Vendor Setup",     "",                 true},
+    {"0900", "Welcome",                                  "",                 false},
+    {"0915", "How to CTF",                               "",                 false},
+    {"0930", "Tech Ops Case Files: Real Stories",        "",                 false},
+    {"1030", "Break",                                    "",                 true},
+    {"1100", "Intro to Reverse Engineering",             "",                 false},
+    {"1150", "Lunch",                                    "",                 true},
+    {"1300", "Training 1: SDR + GNU Radio",              "",                 false},
+    {"1500", "Training 2: RF Situational Awareness",     "",                 false},
+    {"1500", "Spectral Ops with SDRs",                   "",                 false},
 };
-static const int num_talks = sizeof(talks) / sizeof(talks[0]);
 
-static void sched_update_highlight(lv_obj_t *list)
+/* SkinnyCon 2026 — Wednesday, May 13 */
+static const talk_t day2_talks[] = {
+    {"0800", "Check-in / Breakfast / Vendor Setup",     "",                 true},
+    {"0900", "Welcome",                                  "",                 false},
+    {"0910", "Ultrasonic + Magnetic Sensor",             "",                 false},
+    {"0940", "Electronic Sniffing K-9s",                 "",                 false},
+    {"1030", "Break",                                    "",                 true},
+    {"1100", "Reverse Engineering Medical Devices",      "",                 false},
+    {"1150", "Lunch",                                    "",                 true},
+    {"1335", "BYOD Upgrades and Updates",                "",                 false},
+    {"1405", "Training 3: Portable X-Ray",               "",                 false},
+    {"1600", "TSCM Workforce Survey",                    "",                 false},
+};
+
+/* SkinnyCon 2026 — Thursday, May 14 */
+static const talk_t day3_talks[] = {
+    {"0800", "Check-in / Breakfast / Vendor Chats",     "",                 true},
+    {"0900", "Welcome",                                  "",                 false},
+    {"0910", "Supertooth",                               "",                 false},
+    {"0945", "State of TSCM Education",                  "",                 false},
+    {"1035", "Break",                                    "",                 true},
+    {"1100", "TBD",                                      "",                 false},
+    {"1150", "Lunch",                                    "",                 true},
+    {"1300", "Commercial TSCM Panel",                    "",                 false},
+    {"1350", "Break",                                    "",                 true},
+    {"1420", "Converge and Cringe",                      "",                 false},
+    {"1520", "Closing Remarks",                          "",                 false},
+};
+
+static const talk_t *days[] = { day1_talks, day2_talks, day3_talks };
+static const int day_counts[] = {
+    sizeof(day1_talks) / sizeof(day1_talks[0]),
+    sizeof(day2_talks) / sizeof(day2_talks[0]),
+    sizeof(day3_talks) / sizeof(day3_talks[0]),
+};
+static const char *day_names[] = {
+    "Tue May 12",
+    "Wed May 13",
+    "Thu May 14",
+};
+
+static void sched_build_list(void);
+
+static void sched_update_highlight(void)
 {
-    for (int i = 0; i < (int)lv_obj_get_child_count(list) && i < num_talks; i++) {
-        lv_obj_t *row = lv_obj_get_child(list, i);
+    const int n = day_counts[current_day];
+    for (int i = 0; i < (int)lv_obj_get_child_count(sched_list) && i < n; i++) {
+        lv_obj_t *row = lv_obj_get_child(sched_list, i);
         if (i == selected_talk) {
             lv_obj_set_style_bg_color(row, lv_color_hex(0x30363D), 0);
             lv_obj_set_style_border_side(row, LV_BORDER_SIDE_LEFT, 0);
@@ -64,27 +107,81 @@ static void sched_update_highlight(lv_obj_t *list)
 static void sched_event_cb(lv_event_t *e)
 {
     lv_event_code_t code = lv_event_get_code(e);
-    if (code == LV_EVENT_KEY) {
-        uint32_t key = lv_event_get_key(e);
-        lv_obj_t *list = (lv_obj_t *)lv_event_get_user_data(e);
-        if (key == LV_KEY_DOWN || key == LV_KEY_RIGHT) {
-            selected_talk = (selected_talk + 1) % num_talks;
-            sched_update_highlight(list);
-            /* Scroll to keep selection visible */
-            lv_obj_t *sel = lv_obj_get_child(list, selected_talk);
-            if (sel) lv_obj_scroll_to_view(sel, LV_ANIM_ON);
-        } else if (key == LV_KEY_UP || key == LV_KEY_LEFT) {
-            selected_talk = (selected_talk + num_talks - 1) % num_talks;
-            sched_update_highlight(list);
-            lv_obj_t *sel = lv_obj_get_child(list, selected_talk);
-            if (sel) lv_obj_scroll_to_view(sel, LV_ANIM_ON);
-        }
+    if (code != LV_EVENT_KEY) return;
+
+    uint32_t key = lv_event_get_key(e);
+    const int n = day_counts[current_day];
+
+    if (key == LV_KEY_DOWN) {
+        selected_talk = (selected_talk + 1) % n;
+        sched_update_highlight();
+        lv_obj_t *sel = lv_obj_get_child(sched_list, selected_talk);
+        if (sel) lv_obj_scroll_to_view(sel, LV_ANIM_ON);
+    } else if (key == LV_KEY_UP) {
+        selected_talk = (selected_talk + n - 1) % n;
+        sched_update_highlight();
+        lv_obj_t *sel = lv_obj_get_child(sched_list, selected_talk);
+        if (sel) lv_obj_scroll_to_view(sel, LV_ANIM_ON);
+    } else if (key == LV_KEY_RIGHT) {
+        /* Next day */
+        current_day = (current_day + 1) % 3;
+        selected_talk = 0;
+        sched_build_list();
+    } else if (key == LV_KEY_LEFT) {
+        /* Previous day */
+        current_day = (current_day + 2) % 3;
+        selected_talk = 0;
+        sched_build_list();
     }
+}
+
+static void sched_build_list(void)
+{
+    if (day_label) {
+        lv_label_set_text_fmt(day_label, LV_SYMBOL_LEFT " %s " LV_SYMBOL_RIGHT, day_names[current_day]);
+    }
+
+    if (!sched_list) return;
+    lv_obj_clean(sched_list);
+
+    const talk_t *talks = days[current_day];
+    const int n = day_counts[current_day];
+
+    for (int i = 0; i < n; i++) {
+        lv_obj_t *row = lv_obj_create(sched_list);
+        lv_obj_set_size(row, LV_PCT(100), LV_SIZE_CONTENT);
+        lv_obj_set_style_bg_opa(row, LV_OPA_COVER, 0);
+        lv_obj_set_style_border_width(row, 0, 0);
+        lv_obj_set_style_radius(row, 0, 0);
+        lv_obj_set_style_pad_ver(row, 3, 0);
+        lv_obj_set_style_pad_hor(row, 8, 0);
+        lv_obj_set_flex_flow(row, LV_FLEX_FLOW_ROW);
+
+        /* Time */
+        lv_obj_t *time_lbl = lv_label_create(row);
+        lv_label_set_text(time_lbl, talks[i].time);
+        lv_obj_set_style_text_color(time_lbl, SCHED_CYAN, 0);
+        lv_obj_set_style_min_width(time_lbl, 40, 0);
+
+        /* Title */
+        lv_obj_t *title_lbl = lv_label_create(row);
+        lv_label_set_text(title_lbl, talks[i].title);
+        if (talks[i].is_break) {
+            lv_obj_set_style_text_color(title_lbl, SCHED_DIM, 0);
+        } else {
+            lv_obj_set_style_text_color(title_lbl, SCHED_WHITE, 0);
+        }
+        lv_obj_set_flex_grow(title_lbl, 1);
+        lv_label_set_long_mode(title_lbl, LV_LABEL_LONG_CLIP);
+    }
+
+    sched_update_highlight();
 }
 
 static void sched_setup(lv_obj_t *parent)
 {
     selected_talk = 0;
+    current_day = 0;
 
     sched_cont = lv_obj_create(parent);
     lv_obj_set_size(sched_cont, LV_PCT(100), LV_PCT(100));
@@ -105,70 +202,32 @@ static void sched_setup(lv_obj_t *parent)
     lv_obj_set_style_pad_hor(header, 8, 0);
 
     lv_obj_t *title = lv_label_create(header);
-    lv_label_set_text(title, LV_SYMBOL_LIST " Schedule");
+    lv_label_set_text(title, LV_SYMBOL_LIST " SkinnyCon 2026");
     lv_obj_set_style_text_color(title, SCHED_ACCENT, 0);
     lv_obj_set_style_text_font(title, &font_alibaba_12, 0);
     lv_obj_align(title, LV_ALIGN_LEFT_MID, 0, 0);
 
-    lv_obj_t *day_lbl = lv_label_create(header);
-    lv_label_set_text(day_lbl, "Day 1 - Saturday");
-    lv_obj_set_style_text_color(day_lbl, SCHED_WHITE, 0);
-    lv_obj_align(day_lbl, LV_ALIGN_RIGHT_MID, 0, 0);
+    day_label = lv_label_create(header);
+    lv_obj_set_style_text_color(day_label, SCHED_WHITE, 0);
+    lv_obj_align(day_label, LV_ALIGN_RIGHT_MID, 0, 0);
 
     /* Talk list */
-    lv_obj_t *list = lv_obj_create(sched_cont);
-    lv_obj_set_size(list, LV_PCT(100), LV_PCT(100));
-    lv_obj_set_flex_grow(list, 1);
-    lv_obj_set_style_bg_color(list, SCHED_BG, 0);
-    lv_obj_set_style_bg_opa(list, LV_OPA_COVER, 0);
-    lv_obj_set_style_border_width(list, 0, 0);
-    lv_obj_set_style_radius(list, 0, 0);
-    lv_obj_set_style_pad_all(list, 0, 0);
-    lv_obj_set_flex_flow(list, LV_FLEX_FLOW_COLUMN);
-    lv_obj_set_scrollbar_mode(list, LV_SCROLLBAR_MODE_AUTO);
-    lv_obj_set_scroll_dir(list, LV_DIR_VER);
+    sched_list = lv_obj_create(sched_cont);
+    lv_obj_set_size(sched_list, LV_PCT(100), LV_PCT(100));
+    lv_obj_set_flex_grow(sched_list, 1);
+    lv_obj_set_style_bg_color(sched_list, SCHED_BG, 0);
+    lv_obj_set_style_bg_opa(sched_list, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_width(sched_list, 0, 0);
+    lv_obj_set_style_radius(sched_list, 0, 0);
+    lv_obj_set_style_pad_all(sched_list, 0, 0);
+    lv_obj_set_flex_flow(sched_list, LV_FLEX_FLOW_COLUMN);
+    lv_obj_set_scrollbar_mode(sched_list, LV_SCROLLBAR_MODE_AUTO);
+    lv_obj_set_scroll_dir(sched_list, LV_DIR_VER);
 
-    for (int i = 0; i < num_talks; i++) {
-        lv_obj_t *row = lv_obj_create(list);
-        lv_obj_set_size(row, LV_PCT(100), LV_SIZE_CONTENT);
-        lv_obj_set_style_bg_opa(row, LV_OPA_COVER, 0);
-        lv_obj_set_style_border_width(row, 0, 0);
-        lv_obj_set_style_radius(row, 0, 0);
-        lv_obj_set_style_pad_ver(row, 3, 0);
-        lv_obj_set_style_pad_hor(row, 8, 0);
-        lv_obj_set_flex_flow(row, LV_FLEX_FLOW_ROW);
-
-        /* Time */
-        lv_obj_t *time_lbl = lv_label_create(row);
-        lv_label_set_text(time_lbl, talks[i].time);
-        lv_obj_set_style_text_color(time_lbl, SCHED_CYAN, 0);
-        lv_obj_set_style_min_width(time_lbl, 45, 0);
-
-        /* Title */
-        lv_obj_t *title_lbl = lv_label_create(row);
-        lv_label_set_text(title_lbl, talks[i].title);
-        if (talks[i].is_break) {
-            lv_obj_set_style_text_color(title_lbl, SCHED_DIM, 0);
-        } else {
-            lv_obj_set_style_text_color(title_lbl, SCHED_WHITE, 0);
-        }
-        lv_obj_set_flex_grow(title_lbl, 1);
-        lv_label_set_long_mode(title_lbl, LV_LABEL_LONG_CLIP);
-
-        /* Speaker */
-        if (talks[i].speaker[0] != '\0') {
-            lv_obj_t *spk_lbl = lv_label_create(row);
-            lv_label_set_text(spk_lbl, talks[i].speaker);
-            lv_obj_set_style_text_color(spk_lbl, SCHED_GREEN, 0);
-            lv_obj_set_style_min_width(spk_lbl, 100, 0);
-            lv_obj_set_style_text_align(spk_lbl, LV_TEXT_ALIGN_RIGHT, 0);
-        }
-    }
-
-    sched_update_highlight(list);
+    sched_build_list();
 
     /* Register input */
-    lv_obj_add_event_cb(sched_cont, sched_event_cb, LV_EVENT_KEY, list);
+    lv_obj_add_event_cb(sched_cont, sched_event_cb, LV_EVENT_KEY, NULL);
     lv_group_t *g = lv_group_get_default();
     if (g) lv_group_add_obj(g, sched_cont);
 }
@@ -179,6 +238,8 @@ static void sched_exit(lv_obj_t *parent)
         lv_obj_del(sched_cont);
         sched_cont = NULL;
     }
+    sched_list = NULL;
+    day_label = NULL;
 }
 
 app_t ui_schedule_main = {sched_setup, sched_exit, NULL};
