@@ -57,6 +57,31 @@ jobs:
             *.ppm
             .pio/build/native_lvgl/
 
+  factory-simulation-tests:
+    name: Factory App Simulation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install PlatformIO
+        run: pip install platformio
+
+      - name: Run factory simulation tests
+        run: pio test -e native_factory -v
+
+      - name: Upload factory screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: factory-screenshots
+          path: |
+            factory_*.ppm
+
   esp32-build-check:
     name: ESP32-S3 Build Check
     runs-on: ubuntu-latest
