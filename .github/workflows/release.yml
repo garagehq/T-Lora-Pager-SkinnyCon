@@ -5,12 +5,17 @@ on:
     branches: [master]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build-firmware:
     name: Build ESP32-S3 Firmware
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -23,21 +28,78 @@ jobs:
       - name: Compile for ESP32-S3
         run: pio run -e tlora_pager
 
-      - name: Get short SHA
-        id: sha
-        run: echo "short=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
+      - name: Get version info
+        id: info
+        run: |
+          SHORT_SHA=$(git rev-parse --short HEAD)
+          DATE=$(date -u +%Y-%m-%d)
+          TAG="v${DATE}-${SHORT_SHA}"
+          echo "short_sha=${SHORT_SHA}" >> "$GITHUB_OUTPUT"
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+          echo "date=${DATE}" >> "$GITHUB_OUTPUT"
 
-      - name: Rename artifacts with version
+      - name: Generate release notes
+        id: notes
+        run: |
+          # Find the previous release tag (if any)
+          PREV_TAG=$(git tag --sort=-creatordate | head -1)
+
+          if [ -n "$PREV_TAG" ]; then
+            RANGE="${PREV_TAG}..HEAD"
+            COMPARE_URL="https://github.com/${{ github.repository }}/compare/${PREV_TAG}...${{ steps.info.outputs.tag }}"
+          else
+            # First release — use all commits on master (last 50 max)
+            RANGE="HEAD~50..HEAD 2>/dev/null || HEAD"
+            COMPARE_URL=""
+          fi
+
+          # Get the merge commit message (usually the PR title for squash merges)
+          TITLE=$(git log -1 --pretty=format:'%s')
+
+          # Get commit log since last release
+          COMMITS=$(git log ${RANGE} --pretty=format:'- %s (%h)' 2>/dev/null | head -30)
+
+          # Build release body
+          {
+            echo "## ${TITLE}"
+            echo ""
+            echo "### Changes"
+            echo "${COMMITS}"
+            echo ""
+            echo "### Firmware"
+            echo "| File | Description |"
+            echo "|------|-------------|"
+            echo "| \`tlora-pager-firmware-${{ steps.info.outputs.short_sha }}.bin\` | Main firmware (flash at 0x10000) |"
+            echo "| \`tlora-pager-bootloader-${{ steps.info.outputs.short_sha }}.bin\` | Bootloader (flash at 0x0) |"
+            echo "| \`tlora-pager-partitions-${{ steps.info.outputs.short_sha }}.bin\` | Partition table (flash at 0x8000) |"
+            echo "| \`tlora-pager-firmware-${{ steps.info.outputs.short_sha }}.elf\` | ELF with debug symbols |"
+            echo ""
+            echo "### Flash"
+            echo "\`\`\`bash"
+            echo "esptool.py --chip esp32s3 --port /dev/ttyUSB0 --baud 921600 \\"
+            echo "  write_flash 0x0 tlora-pager-bootloader-${{ steps.info.outputs.short_sha }}.bin \\"
+            echo "              0x8000 tlora-pager-partitions-${{ steps.info.outputs.short_sha }}.bin \\"
+            echo "              0x10000 tlora-pager-firmware-${{ steps.info.outputs.short_sha }}.bin"
+            echo "\`\`\`"
+            if [ -n "$COMPARE_URL" ]; then
+              echo ""
+              echo "**Full diff**: ${COMPARE_URL}"
+            fi
+          } > /tmp/release_body.md
+
+      - name: Rename artifacts
         run: |
           mkdir -p release
-          cp .pio/build/tlora_pager/firmware.bin    release/tlora-pager-firmware-${{ steps.sha.outputs.short }}.bin
-          cp .pio/build/tlora_pager/firmware.elf     release/tlora-pager-firmware-${{ steps.sha.outputs.short }}.elf
-          cp .pio/build/tlora_pager/bootloader.bin   release/tlora-pager-bootloader-${{ steps.sha.outputs.short }}.bin
-          cp .pio/build/tlora_pager/partitions.bin   release/tlora-pager-partitions-${{ steps.sha.outputs.short }}.bin
+          cp .pio/build/tlora_pager/firmware.bin    release/tlora-pager-firmware-${{ steps.info.outputs.short_sha }}.bin
+          cp .pio/build/tlora_pager/firmware.elf     release/tlora-pager-firmware-${{ steps.info.outputs.short_sha }}.elf
+          cp .pio/build/tlora_pager/bootloader.bin   release/tlora-pager-bootloader-${{ steps.info.outputs.short_sha }}.bin
+          cp .pio/build/tlora_pager/partitions.bin   release/tlora-pager-partitions-${{ steps.info.outputs.short_sha }}.bin
 
-      - name: Upload firmware artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: tlora-pager-firmware-${{ steps.sha.outputs.short }}
-          path: release/
-          retention-days: 90
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ steps.info.outputs.tag }}" \
+            --title "Firmware ${{ steps.info.outputs.date }} (${{ steps.info.outputs.short_sha }})" \
+            --notes-file /tmp/release_body.md \
+            release/*
