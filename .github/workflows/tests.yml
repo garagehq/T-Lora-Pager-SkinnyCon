@@ -88,13 +88,24 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
+      - name: Install arduino-cli
+        run: |
+          wget https://downloads.arduino.cc/arduino-cli/arduino-cli_latest_Linux_64bit.tar.gz -O arduino-cli.tar.gz
+          sudo tar xf arduino-cli.tar.gz -C /usr/local/bin arduino-cli
+          arduino-cli config init
+          arduino-cli config add board_manager.additional_urls https://espressif.github.io/arduino-esp32/package_esp32_dev_index.json
+          arduino-cli core update-index
+          arduino-cli core install esp32:esp32
 
-      - name: Install PlatformIO
-        run: pip install platformio
+      - name: Install ThirdParty libraries
+        run: |
+          mkdir -p $HOME/Arduino/libraries
+          cd $HOME/Arduino/libraries
+          git clone https://github.com/Xinyuan-LilyGO/LilyGoLib-ThirdParty.git $HOME/Arduino/libraries
 
-      - name: Compile for ESP32-S3 (no upload)
-        run: pio run -e tlora_pager
+      - name: Compile factory app for ESP32-S3
+        run: |
+          arduino-cli compile \
+            -b esp32:esp32:tlora_pager:UploadSpeed=921600,USBMode=hwcdc,CDCOnBoot=cdc,MSCOnBoot=default,DFUOnBoot=default,UploadMode=default,CPUFreq=240,PartitionScheme=app3M_fat9M_16MB,DebugLevel=none,LoopCore=1,EventsCore=1,EraseFlash=none,JTAGAdapter=default \
+            --library . \
+            $PWD/examples/factory/factory.ino
