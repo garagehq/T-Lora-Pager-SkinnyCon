@@ -12,6 +12,8 @@
  */
 #include "ui_define.h"
 #include <string.h>
+#include "lvgl.h"
+#include "ui_icons_v9.h"
 
 /* Supercon-inspired color palette */
 #define SUPERCON_BG       lv_color_hex(0x1A1A1A)  /* Hackaday grey */
@@ -33,6 +35,7 @@ static lv_obj_t *nametag_cont = NULL;
 static lv_obj_t *name_label = NULL;
 static lv_obj_t *subtitle_label = NULL;
 static lv_obj_t *mode_label = NULL;
+static lv_obj_t *back_button = NULL;
 static uint8_t display_mode = 0;
 
 /* Editable name storage */
@@ -101,6 +104,35 @@ static void nametag_build_name_mode(void)
     }
     lv_obj_set_style_text_align(mode_label, LV_TEXT_ALIGN_CENTER, 0);
     lv_obj_set_width(mode_label, LV_PCT(100));
+}
+
+/* ── Back button ────────────────────────────────────────────────── */
+static void back_button_cb(lv_event_t *e)
+{
+    (void)e;
+    nametag_exit(NULL);
+    ui_main_show();
+}
+
+static void create_back_button(void)
+{
+    back_button = lv_btn_create(nametag_cont);
+    lv_obj_set_size(back_button, 40, 40);
+    lv_obj_set_style_bg_color(back_button, lv_color_hex(0x333333), 0);
+    lv_obj_set_style_bg_opa(back_button, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_width(back_button, 1, 0);
+    lv_obj_set_style_border_color(back_button, SUPERCON_ACCENT, 0);
+    lv_obj_set_style_radius(back_button, 8, 0);
+    lv_obj_add_flag(back_button, LV_OBJ_FLAG_CHECKABLE);
+    lv_obj_add_flag(back_button, LV_OBJ_FLAG_CLICKABLE);
+    lv_obj_set_style_pad_all(back_button, 5, 0);
+    
+    lv_obj_t *icon = lv_img_create(back_button);
+    lv_img_set_src(icon, &img_arrow_left_v9);
+    lv_obj_center(icon);
+    
+    lv_obj_add_event_cb(back_button, back_button_cb, LV_EVENT_CLICKED, NULL);
+    lv_obj_align(back_button, LV_ALIGN_TOP_LEFT, 8, 8);
 }
 
 /* ── Mode 1: Fullscreen giant name ─────────────────────────────── */
@@ -374,6 +406,8 @@ static void nametag_setup(lv_obj_t *parent)
     editing_name = false;
     editing_subtitle = false;
     nametag_build_name_mode();
+
+    create_back_button();
 
 #ifdef ARDUINO
     hw_set_keyboard_read_callback(nametag_kb_callback);
