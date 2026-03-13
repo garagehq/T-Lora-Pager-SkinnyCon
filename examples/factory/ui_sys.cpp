@@ -339,37 +339,55 @@ static lv_obj_t *create_subpage_info(lv_obj_t *menu, lv_obj_t *main_page)
     return cont;
 }
 
-static lv_obj_t *create_device_probe(lv_obj_t *menu, lv_obj_t *main_page)
+static lv_obj_t *create_subpage_monitor(lv_obj_t *menu, lv_obj_t *main_page)
 {
     lv_obj_t *cont = lv_menu_cont_create(main_page);
     lv_obj_t *label = lv_label_create(cont);
-    lv_label_set_text(label, LV_SYMBOL_SETTINGS" Devices status");
+    lv_label_set_text(label, LV_SYMBOL_POWER" Monitor");
     lv_obj_t *sub_page = lv_menu_page_create(menu, NULL);
 
     /*Create a list*/
     lv_obj_t *list1 = lv_list_create(sub_page);
     lv_obj_set_size(list1, lv_pct(100), lv_pct(100));
     lv_obj_center(list1);
-    uint8_t devices = hw_get_devices_nums();
-    uint32_t devices_mask = hw_get_device_online();
-    for (int i = 0; i < devices; ++i) {
-        const char *device_name = hw_get_devices_name(i);
-        if (lv_strcmp(device_name, "") != 0) {
-            lv_obj_t *obj =   lv_list_add_btn(list1, LV_SYMBOL_OK, device_name);
-            label = lv_label_create(obj);
-            if (devices_mask & 0x01) {
-                lv_label_set_text(label, "Online");
-                lv_obj_set_style_text_color(label, lv_color_make(0, 255, 0), LV_PART_MAIN);
-            } else {
-                lv_label_set_text(label, "Offline");
-                lv_obj_set_style_text_color(label, lv_color_make(255, 0, 0), LV_PART_MAIN);
-            }
-        }
-        devices_mask >>= 1;
-    }
+
+    // Battery info
+    int16_t vol = hw_get_battery_voltage();
+    uint8_t batt_pct = hw_get_battery_percent();
+    btn = lv_list_add_btn(list1, LV_SYMBOL_BATTERY_FULL, "Battery");
+    label = lv_label_create(btn);
+    lv_label_set_text_fmt(label, "%d mV (%u%%)", vol, batt_pct);
+
+    // Temperature
+    float temp = hw_get_temperature();
+    btn = lv_list_add_btn(list1, LV_SYMBOL_THERMOMETER, "Temperature");
+    label = lv_label_create(btn);
+    lv_label_set_text_fmt(label, "%.1f °C", temp);
+
+    // Memory info
+    uint32_t free_heap = hw_get_free_heap();
+    uint32_t min_free = hw_get_minimum_free_heap();
+    btn = lv_list_add_btn(list1, LV_SYMBOL_INTERNAL_MEM, "Memory");
+    label = lv_label_create(btn);
+    lv_label_set_text_fmt(label, "Free: %u KB, Min: %u KB", free_heap / 1024, min_free / 1024);
+
+    // Flash info
+    uint32_t flash_size = hw_get_flash_size();
+    uint32_t free_space = hw_get_free_flash();
+    btn = lv_list_add_btn(list1, LV_SYMBOL_SD_CARD, "Flash");
+    label = lv_label_create(btn);
+    lv_label_set_text_fmt(label, "%u KB / %u KB", free_space / 1024, flash_size / 1024);
+
     lv_menu_set_load_page_event(menu, cont, sub_page);
     return cont;
 }
+
+static lv_obj_t *create_device_probe(lv_obj_t *menu, lv_obj_t *main_page)
+{
+    lv_obj_t *cont = lv_menu_cont_create(main_page);
+    lv_obj_t *label = lv_label_create(cont);
+    lv_label_set_text(label, LV_SYMBOL_SETTINGS" Devices status");
+    lv_obj_t *sub_page = lv_menu_page_create(menu, NULL);
 
 
 void ui_sys_enter(lv_obj_t *parent)
@@ -392,6 +410,10 @@ void ui_sys_enter(lv_obj_t *parent)
 
     // //! SYSTEM INFO
     cont = create_subpage_info(menu, main_page);
+    lv_group_add_obj(menu_g, cont);
+
+    // Monitor subpage (moved from standalone Monitor app)
+    cont = create_subpage_monitor(menu, main_page);
     lv_group_add_obj(menu_g, cont);
 
     cont = create_device_probe(menu, main_page);

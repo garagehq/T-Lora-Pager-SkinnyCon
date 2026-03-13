@@ -585,7 +585,7 @@ void setupGui()
     extern app_t ui_audio_main ;
     extern app_t ui_wireless_main ;
     extern app_t ui_gps_main ;
-    extern app_t ui_monitor_main ;
+
     extern app_t ui_power_main ;
     extern app_t ui_calendar_main;
     extern app_t ui_info_main;
@@ -660,7 +660,7 @@ void setupGui()
     create_app(panel, "LoRa", &img_radio, &ui_radio_main);
     create_app(panel, "LoRa Chat", &img_msgchat, &ui_msgchat_main);
     create_app(panel, "GPS", &img_gps, &ui_gps_main);
-    create_app(panel, "Monitor", &img_monitoring, &ui_monitor_main);
+
     create_app(panel, "Power", &img_power, &ui_power_main);
     create_app(panel, "Microphone", &img_microphone, &ui_microphone_main);
     create_app(panel, "IMU", &img_gyroscope, &ui_sensor_main);
