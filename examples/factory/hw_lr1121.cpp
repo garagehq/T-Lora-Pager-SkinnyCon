@@ -375,9 +375,9 @@ const char *radio_get_freq_list()
 
 float radio_get_freq_from_index(uint8_t index)
 {
-    if (index > radio_get_freq_length()) {
+    if (index >= radio_get_freq_length() || index == 0) {
         _high_freq = false;
-        return RADIO_DEFAULT_FREQUENCY;
+        return 915.0f;  // Default to 915MHz (US ISM band)
     }
     return freq_list[index];
 }
