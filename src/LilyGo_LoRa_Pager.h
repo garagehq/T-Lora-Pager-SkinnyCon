@@ -429,8 +429,8 @@ public:
      * This function puts the device into sleep mode. The 'wakeup_src' parameter specifies the wake-up sources
      * that can wake the device from sleep.
      *
-     * Set to wake up by boot button, deep sleep is about 860 uA , see examples/sleep/WakeUpFromBootButton
-     * Set to wake up by boot button and rotary center button, deep sleep is about 860 uA , see examples/sleep/WakeUpFromBootButton
+     * Set to wake up by boot button, deep sleep is about 860 uA , see application/sleep/WakeUpFromBootButton
+     * Set to wake up by boot button and rotary center button, deep sleep is about 860 uA , see application/sleep/WakeUpFromBootButton
      *
      * @param wakeup_src The wake-up sources (default: boot button).
      * @param off_rtc_backup_domain Reserved parameter, no effect.
