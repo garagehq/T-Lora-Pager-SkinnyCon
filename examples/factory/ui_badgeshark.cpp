@@ -6,13 +6,14 @@
  *            Ported from Supercon 2025 badge BadgeShark app concept.
  */
 #include "ui_define.h"
+#include "ui_skinnycon_theme.h"
 
-#define SHARK_BG          lv_color_hex(0x0D1117)  /* Dark terminal bg */
-#define SHARK_GREEN       lv_color_hex(0x39D353)  /* Matrix green */
-#define SHARK_YELLOW      lv_color_hex(0xE39810)  /* Hackaday yellow */
-#define SHARK_CYAN        lv_color_hex(0x58A6FF)  /* Info blue */
-#define SHARK_WHITE       lv_color_hex(0xE6EDF3)
-#define SHARK_DARK_PANEL  lv_color_hex(0x161B22)
+#define SHARK_BG          SC_BG_DARK     /* Terminal-style dark bg */
+#define SHARK_GREEN       SC_GREEN_BRIGHT
+#define SHARK_YELLOW      SC_ACCENT
+#define SHARK_CYAN        SC_CYAN
+#define SHARK_WHITE       SC_TEXT
+#define SHARK_DARK_PANEL  SC_PANEL_ALT
 #define MAX_PACKETS       50
 
 LV_FONT_DECLARE(font_alibaba_12);
@@ -61,7 +62,7 @@ static void shark_add_packet(const char *hex_preview, int len, float rssi, float
     /* RSSI */
     lv_obj_t *rssi_lbl = lv_label_create(row);
     lv_label_set_text_fmt(rssi_lbl, "%.0fdBm", rssi);
-    lv_obj_set_style_text_color(rssi_lbl, (rssi > -80) ? SHARK_GREEN : lv_color_hex(0xFF6B6B), 0);
+    lv_obj_set_style_text_color(rssi_lbl, (rssi > -80) ? SHARK_GREEN : SC_RED, 0);
     lv_obj_set_style_min_width(rssi_lbl, 65, 0);
 
     /* Hex preview */
@@ -130,7 +131,7 @@ static void shark_setup(lv_obj_t *parent)
     /* Header bar — Supercon-style infobar */
     lv_obj_t *header = lv_obj_create(shark_cont);
     lv_obj_set_size(header, LV_PCT(100), 28);
-    lv_obj_set_style_bg_color(header, lv_color_hex(0x21262D), 0);
+    lv_obj_set_style_bg_color(header, SC_HEADER, 0);
     lv_obj_set_style_bg_opa(header, LV_OPA_COVER, 0);
     lv_obj_set_style_border_width(header, 0, 0);
     lv_obj_set_style_radius(header, 0, 0);
@@ -152,7 +153,7 @@ static void shark_setup(lv_obj_t *parent)
     /* Column headers */
     lv_obj_t *col_header = lv_obj_create(shark_cont);
     lv_obj_set_size(col_header, LV_PCT(100), 20);
-    lv_obj_set_style_bg_color(col_header, lv_color_hex(0x30363D), 0);
+    lv_obj_set_style_bg_color(col_header, SC_BORDER, 0);
     lv_obj_set_style_bg_opa(col_header, LV_OPA_COVER, 0);
     lv_obj_set_style_border_width(col_header, 0, 0);
     lv_obj_set_style_radius(col_header, 0, 0);

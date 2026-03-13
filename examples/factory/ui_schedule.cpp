@@ -6,13 +6,14 @@
  *            Left/Right arrows switch between days.
  */
 #include "ui_define.h"
+#include "ui_skinnycon_theme.h"
 
-#define SCHED_BG          lv_color_hex(0x1A1A1A)  /* Hackaday grey */
-#define SCHED_ACCENT      lv_color_hex(0xE39810)  /* Hackaday yellow */
-#define SCHED_WHITE       lv_color_hex(0xE6EDF3)
-#define SCHED_GREEN       lv_color_hex(0xABC5A0)  /* Sage green */
-#define SCHED_CYAN        lv_color_hex(0x58A6FF)
-#define SCHED_DIM         lv_color_hex(0x808080)
+#define SCHED_BG          SC_BG
+#define SCHED_ACCENT      SC_ACCENT
+#define SCHED_WHITE       SC_TEXT
+#define SCHED_GREEN       SC_GREEN
+#define SCHED_CYAN        SC_CYAN
+#define SCHED_DIM         SC_TEXT_DIM
 
 LV_FONT_DECLARE(font_alibaba_12);
 LV_FONT_DECLARE(font_alibaba_24);
@@ -93,12 +94,12 @@ static void sched_update_highlight(void)
     for (int i = 0; i < (int)lv_obj_get_child_count(sched_list) && i < n; i++) {
         lv_obj_t *row = lv_obj_get_child(sched_list, i);
         if (i == selected_talk) {
-            lv_obj_set_style_bg_color(row, lv_color_hex(0x30363D), 0);
+            lv_obj_set_style_bg_color(row, SC_BORDER, 0);
             lv_obj_set_style_border_side(row, LV_BORDER_SIDE_LEFT, 0);
             lv_obj_set_style_border_width(row, 3, 0);
             lv_obj_set_style_border_color(row, SCHED_ACCENT, 0);
         } else {
-            lv_obj_set_style_bg_color(row, (i % 2) ? lv_color_hex(0x161B22) : SCHED_BG, 0);
+            lv_obj_set_style_bg_color(row, (i % 2) ? SC_PANEL_ALT : SCHED_BG, 0);
             lv_obj_set_style_border_width(row, 0, 0);
         }
     }
@@ -195,7 +196,7 @@ static void sched_setup(lv_obj_t *parent)
     /* Header */
     lv_obj_t *header = lv_obj_create(sched_cont);
     lv_obj_set_size(header, LV_PCT(100), 28);
-    lv_obj_set_style_bg_color(header, lv_color_hex(0x21262D), 0);
+    lv_obj_set_style_bg_color(header, SC_HEADER, 0);
     lv_obj_set_style_bg_opa(header, LV_OPA_COVER, 0);
     lv_obj_set_style_border_width(header, 0, 0);
     lv_obj_set_style_radius(header, 0, 0);

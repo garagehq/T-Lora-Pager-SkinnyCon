@@ -12,13 +12,14 @@
  */
 #include "ui_define.h"
 #include <string.h>
+#include "ui_skinnycon_theme.h"
 
-/* Supercon-inspired color palette */
-#define SUPERCON_BG       lv_color_hex(0x1A1A1A)  /* Hackaday grey */
-#define SUPERCON_ACCENT   lv_color_hex(0xE39810)  /* Hackaday yellow */
-#define SUPERCON_WHITE    lv_color_hex(0xFFFFFF)
-#define SUPERCON_GREEN    lv_color_hex(0xABC5A0)  /* Sage green */
-#define SUPERCON_PANEL    lv_color_hex(0x2A2A2A)
+/* Map old names to shared palette */
+#define SUPERCON_BG       SC_BG
+#define SUPERCON_ACCENT   SC_ACCENT
+#define SUPERCON_WHITE    SC_TEXT_WHITE
+#define SUPERCON_GREEN    SC_GREEN
+#define SUPERCON_PANEL    SC_PANEL
 
 #define NAME_MAX_LEN      24
 #define SUBTITLE_MAX_LEN  32
@@ -97,7 +98,7 @@ static void nametag_build_name_mode(void)
         lv_label_set_text(subtitle_label, buf);
     } else {
         lv_label_set_text(mode_label, LV_SYMBOL_REFRESH " Rotate=mode  " LV_SYMBOL_KEYBOARD " Type=edit name");
-        lv_obj_set_style_text_color(mode_label, lv_color_hex(0x808080), 0);
+        lv_obj_set_style_text_color(mode_label, SC_TEXT_DIM, 0);
     }
     lv_obj_set_style_text_align(mode_label, LV_TEXT_ALIGN_CENTER, 0);
     lv_obj_set_width(mode_label, LV_PCT(100));
@@ -156,7 +157,7 @@ static void nametag_build_about_mode(void)
 
     mode_label = lv_label_create(nametag_cont);
     lv_label_set_text(mode_label, LV_SYMBOL_REFRESH " Rotate to switch mode");
-    lv_obj_set_style_text_color(mode_label, lv_color_hex(0x808080), 0);
+    lv_obj_set_style_text_color(mode_label, SC_TEXT_DIM, 0);
     lv_obj_set_style_text_align(mode_label, LV_TEXT_ALIGN_CENTER, 0);
     lv_obj_set_width(mode_label, LV_PCT(100));
 }
@@ -207,7 +208,7 @@ static void nametag_build_coc_mode(void)
 
     mode_label = lv_label_create(nametag_cont);
     lv_label_set_text(mode_label, LV_SYMBOL_REFRESH " Rotate to switch mode");
-    lv_obj_set_style_text_color(mode_label, lv_color_hex(0x808080), 0);
+    lv_obj_set_style_text_color(mode_label, SC_TEXT_DIM, 0);
     lv_obj_set_style_text_align(mode_label, LV_TEXT_ALIGN_CENTER, 0);
     lv_obj_set_width(mode_label, LV_PCT(100));
 }
@@ -247,7 +248,7 @@ static void nametag_build_badge_info_mode(void)
 
     mode_label = lv_label_create(nametag_cont);
     lv_label_set_text(mode_label, LV_SYMBOL_REFRESH " Rotate to switch mode");
-    lv_obj_set_style_text_color(mode_label, lv_color_hex(0x808080), 0);
+    lv_obj_set_style_text_color(mode_label, SC_TEXT_DIM, 0);
     lv_obj_set_style_text_align(mode_label, LV_TEXT_ALIGN_CENTER, 0);
     lv_obj_set_width(mode_label, LV_PCT(100));
 }
