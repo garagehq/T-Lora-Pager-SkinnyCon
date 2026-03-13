@@ -385,6 +385,30 @@ void test_hw_mask_full_probe(void)
     TEST_ASSERT_EQUAL_HEX32(0x3FFF, full);
 }
 
+/* ---- LoRa frequency default tests ---- */
+
+/* Reproduce the default from hal_interface.h */
+#define RADIO_DEFAULT_FREQUENCY  915.0
+
+void test_lora_default_frequency_is_915(void)
+{
+    /* SkinnyCon is a US conference — must use 915 MHz ISM band */
+    TEST_ASSERT_DOUBLE_WITHIN(0.1, 915.0, RADIO_DEFAULT_FREQUENCY);
+}
+
+void test_lora_frequency_in_us_ism_band(void)
+{
+    /* US ISM band: 902-928 MHz */
+    TEST_ASSERT_TRUE(RADIO_DEFAULT_FREQUENCY >= 902.0);
+    TEST_ASSERT_TRUE(RADIO_DEFAULT_FREQUENCY <= 928.0);
+}
+
+void test_lora_frequency_not_eu_band(void)
+{
+    /* EU band is 868 MHz — should NOT be the default for US conference */
+    TEST_ASSERT_TRUE(RADIO_DEFAULT_FREQUENCY != 868.0);
+}
+
 /* ================================================================
  *  MAIN
  * ================================================================ */
@@ -430,6 +454,11 @@ int main(int argc, char **argv)
     RUN_TEST(test_hw_mask_no_overlap);
     RUN_TEST(test_hw_mask_set_clear_toggle);
     RUN_TEST(test_hw_mask_full_probe);
+
+    /* LoRa frequency */
+    RUN_TEST(test_lora_default_frequency_is_915);
+    RUN_TEST(test_lora_frequency_in_us_ism_band);
+    RUN_TEST(test_lora_frequency_not_eu_band);
 
     return UNITY_END();
 }

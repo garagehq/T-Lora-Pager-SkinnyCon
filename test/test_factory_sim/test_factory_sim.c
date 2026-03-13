@@ -393,7 +393,7 @@ void test_factory_lora_chat_screen(void)
     const char *msgs[] = {
         "TX: Hello from Pager 1",
         "RX: Copy that, signal strong",
-        "TX: Testing 868 MHz link",
+        "TX: Testing 915 MHz link",
         "RX: Received, RSSI -42 dBm",
     };
     lv_color_t colors[] = {
