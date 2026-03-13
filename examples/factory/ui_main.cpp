@@ -643,6 +643,13 @@ void setupGui()
 
     create_app(panel, "Screen Test", &img_test, &ui_factory_main);
     create_app(panel, "Setting", &img_configuration, &ui_sys_main);
+    
+    /* Supercon-inspired apps - moved to top for priority */
+    create_app(panel, "Nametag", &img_msgchat, &ui_nametag_main);
+    create_app(panel, "Schedule", &img_configuration, &ui_schedule_main);
+    create_app(panel, "BadgeShark", &img_monitoring, &ui_badgeshark_main);
+    create_app(panel, "Net Tools", &img_wifi, &ui_nettools_main);
+    
     create_app(panel, "Wireless", &img_wifi, &ui_wireless_main);
 
 #if defined(USING_UART_BLE)
@@ -664,12 +671,6 @@ void setupGui()
     create_app(panel, "Power", &img_power, &ui_power_main);
     create_app(panel, "Microphone", &img_microphone, &ui_microphone_main);
     create_app(panel, "IMU", &img_gyroscope, &ui_sensor_main);
-
-    /* Supercon-inspired apps */
-    create_app(panel, "Nametag", &img_msgchat, &ui_nametag_main);
-    create_app(panel, "BadgeShark", &img_monitoring, &ui_badgeshark_main);
-    create_app(panel, "Schedule", &img_configuration, &ui_schedule_main);
-    create_app(panel, "Net Tools", &img_wifi, &ui_nettools_main);
 
     int offset = -10;
     if (lv_display_get_physical_vertical_resolution(NULL) > 320) {
