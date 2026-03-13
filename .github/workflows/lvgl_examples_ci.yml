@@ -4,7 +4,7 @@ on:
   pull_request:
   push:
     paths:
-      - "examples/lvgl/**"
+      - "application/lvgl/**"
       - "src/**"
       - ".github/scripts/check_ci_json.py"
 jobs:
@@ -81,7 +81,7 @@ jobs:
         id: check_json
         run: |
           python .github/scripts/check_ci_json.py \
-            --dir-path "$PWD/examples/$(dirname "$SKETCH")" \
+            --dir-path "$PWD/application/$(dirname "$SKETCH")" \
             --board "$LILYGO_BOARD_TYPE"
       
       - name: Install ThirdParty
@@ -95,7 +95,7 @@ jobs:
         if: steps.check_json.outputs.should_build == 'true'
         run: |
           cd $GITHUB_WORKSPACE
-          DIR_PATH=$(dirname "$PWD/examples/$SKETCH")
+          DIR_PATH=$(dirname "$PWD/application/$SKETCH")
           echo "RUN EXAMPLE PATH:"$DIR_PATH
           echo "ACTIVE RADIO: ${{ steps.check_json.outputs.active_radio }}"
           echo "SHOULD BUILD: ${{ steps.check_json.outputs.should_build }}"
@@ -104,7 +104,7 @@ jobs:
             arduino-cli compile \
             -besp32:esp32:$LILYGO_BOARD_TYPE:UploadSpeed=921600,USBMode=hwcdc,CDCOnBoot=cdc,MSCOnBoot=default,DFUOnBoot=default,UploadMode=default,CPUFreq=240,PartitionScheme=app3M_fat9M_16MB,DebugLevel=none,LoopCore=1,EventsCore=1,EraseFlash=none,JTAGAdapter=default,Revision=${{ steps.check_json.outputs.active_radio }} \
               --library . \
-              $PWD/examples/$SKETCH
+              $PWD/application/$SKETCH
           else
             echo "Skip the compilation step according to the ci.json configuration"
             exit 0

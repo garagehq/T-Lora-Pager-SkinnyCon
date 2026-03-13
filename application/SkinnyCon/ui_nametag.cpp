@@ -336,15 +336,25 @@ static void nametag_kb_callback(int state, char &c)
 }
 #endif
 
+static void nametag_exit(lv_obj_t *parent);  /* forward decl for ESC handler */
+
 static void nametag_event_cb(lv_event_t *e)
 {
     lv_event_code_t code = lv_event_get_code(e);
     if (code != LV_EVENT_KEY) return;
 
+    uint32_t key = lv_event_get_key(e);
+
+    /* ESC exits even while editing */
+    if (key == LV_KEY_ESC) {
+        nametag_exit(NULL);
+        menu_show();
+        return;
+    }
+
     /* Don't switch modes while editing */
     if (editing_name || editing_subtitle) return;
 
-    uint32_t key = lv_event_get_key(e);
     if (key == LV_KEY_RIGHT || key == LV_KEY_DOWN) {
         display_mode = (display_mode + 1) % NUM_MODES;
         nametag_rebuild();

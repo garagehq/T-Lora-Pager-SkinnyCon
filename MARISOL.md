@@ -44,23 +44,23 @@ This project has **two independent build paths** — understanding this is criti
 ### PlatformIO (local dev + tests.yml CI)
 - Used for unit tests (`native`, `native_lvgl`, `native_factory`) and ESP32-S3 compilation (`tlora_pager`)
 - Config: `platformio.ini` with 4 environments
-- The `tlora_pager` env uses `build_src_filter = +<*> +<../examples/factory/>` to compile factory app files
+- The `tlora_pager` env uses `build_src_filter = +<*> +<../application/SkinnyCon/>` to compile factory app files
 - PlatformIO does NOT auto-process `.ino` files outside `src_dir` — needs `pio_main.cpp` wrapper that `#include "factory.ino"`
 - PlatformIO defines the `PLATFORMIO` macro automatically
 
 ### Arduino CLI (base/lvgl/radio_examples_ci.yml)
 - Used by GitHub Actions CI to compile all example sketches (31 base + 42 LVGL + 13 radio = 86 sketches)
 - Uses `arduino-cli compile` with `--library .` flag — this includes `src/` as a library for ALL sketches
-- Arduino IDE compiles ALL `.c`/`.cpp` files in a sketch directory (e.g., `examples/factory/`)
+- Arduino IDE compiles ALL `.c`/`.cpp` files in a sketch directory (e.g., `application/SkinnyCon/`)
 - Arduino IDE does NOT define the `PLATFORMIO` macro
 
 ### The pio_main.cpp Problem (and fix)
 
-**Problem**: `examples/factory/pio_main.cpp` wraps `factory.ino` for PlatformIO. But Arduino IDE also compiles it alongside `factory.ino`, causing duplicate `setup()`/`loop()` definitions.
+**Problem**: `application/SkinnyCon/pio_main.cpp` wraps `factory.ino` for PlatformIO. But Arduino IDE also compiles it alongside `factory.ino`, causing duplicate `setup()`/`loop()` definitions.
 
 **Failed fix**: Moving `pio_main.cpp` to `src/` broke all non-factory Arduino sketches because `src/` is included as a library (via `--library .`) for every sketch, and `factory.ino` doesn't exist in their include path → `fatal error: factory.ino: No such file or directory`.
 
-**Correct fix**: Keep `pio_main.cpp` in `examples/factory/` but wrap with `#ifdef PLATFORMIO`. PlatformIO defines this macro; Arduino IDE does not. Arduino IDE sees an empty translation unit — no duplicate symbols, no missing files.
+**Correct fix**: Keep `pio_main.cpp` in `application/SkinnyCon/` but wrap with `#ifdef PLATFORMIO`. PlatformIO defines this macro; Arduino IDE does not. Arduino IDE sees an empty translation unit — no duplicate symbols, no missing files.
 
 ```cpp
 #ifdef PLATFORMIO
@@ -135,7 +135,7 @@ Key API:
 
 ## Factory App Architecture
 
-The factory example (`examples/factory/`) is the reference application with a tileview-based navigation:
+The factory example (`application/SkinnyCon/`) is the reference application with a tileview-based navigation:
 
 - **Main screen** (tile 0,0): App grid with icons (horizontal scroll)
 - **App screens** (tile 0,1): Dynamic per-app content
@@ -145,7 +145,7 @@ The factory example (`examples/factory/`) is the reference application with a ti
 
 ### Adding a New App
 
-1. Create `examples/factory/ui_newapp.cpp` with `static void app_setup(lv_obj_t *parent)`, `static void app_exit(lv_obj_t *parent)`, and `app_t ui_newapp_main = {app_setup, app_exit, NULL};`
+1. Create `application/SkinnyCon/ui_newapp.cpp` with `static void app_setup(lv_obj_t *parent)`, `static void app_exit(lv_obj_t *parent)`, and `app_t ui_newapp_main = {app_setup, app_exit, NULL};`
 2. In `ui_main.cpp`: add `extern app_t ui_newapp_main;` and `create_app(panel, "App Name", &img_icon, &ui_newapp_main);`
 3. Use `#ifndef ARDUINO` blocks for demo/simulation data, `#ifdef ARDUINO` for real hardware calls
 4. For keyboard input: `hw_set_keyboard_read_callback(callback)` in setup, `hw_set_keyboard_read_callback(NULL)` in exit

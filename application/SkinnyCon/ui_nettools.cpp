@@ -81,6 +81,17 @@ static void net_ping_task(lv_timer_t *t)
 #endif
 }
 
+static void net_exit(lv_obj_t *parent);  /* forward decl for ESC handler */
+
+static void net_event_cb(lv_event_t *e)
+{
+    if (lv_event_get_code(e) != LV_EVENT_KEY) return;
+    if (lv_event_get_key(e) == LV_KEY_ESC) {
+        net_exit(NULL);
+        menu_show();
+    }
+}
+
 static void net_setup(lv_obj_t *parent)
 {
     pings_sent = 0;
@@ -170,6 +181,11 @@ static void net_setup(lv_obj_t *parent)
     lv_obj_t *peer_title = lv_label_create(peer_panel);
     lv_label_set_text(peer_title, "PEERS");
     lv_obj_set_style_text_color(peer_title, NET_CYAN, 0);
+
+    /* Register input for back button */
+    lv_obj_add_event_cb(net_cont, net_event_cb, LV_EVENT_KEY, NULL);
+    lv_group_t *g = lv_group_get_default();
+    if (g) lv_group_add_obj(g, net_cont);
 
 #ifndef ARDUINO
     /* Demo data for simulation */

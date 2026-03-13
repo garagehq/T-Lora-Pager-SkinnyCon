@@ -105,6 +105,8 @@ static void sched_update_highlight(void)
     }
 }
 
+static void sched_exit(lv_obj_t *parent);  /* forward decl for ESC handler */
+
 static void sched_event_cb(lv_event_t *e)
 {
     lv_event_code_t code = lv_event_get_code(e);
@@ -113,7 +115,11 @@ static void sched_event_cb(lv_event_t *e)
     uint32_t key = lv_event_get_key(e);
     const int n = day_counts[current_day];
 
-    if (key == LV_KEY_DOWN) {
+    if (key == LV_KEY_ESC) {
+        sched_exit(NULL);
+        menu_show();
+        return;
+    } else if (key == LV_KEY_DOWN) {
         selected_talk = (selected_talk + 1) % n;
         sched_update_highlight();
         lv_obj_t *sel = lv_obj_get_child(sched_list, selected_talk);

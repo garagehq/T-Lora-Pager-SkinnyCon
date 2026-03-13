@@ -114,6 +114,17 @@ static void shark_rx_task(lv_timer_t *t)
 #endif
 }
 
+static void shark_exit(lv_obj_t *parent);  /* forward decl for ESC handler */
+
+static void shark_event_cb(lv_event_t *e)
+{
+    if (lv_event_get_code(e) != LV_EVENT_KEY) return;
+    if (lv_event_get_key(e) == LV_KEY_ESC) {
+        shark_exit(NULL);
+        menu_show();
+    }
+}
+
 static void shark_setup(lv_obj_t *parent)
 {
     total_packets = 0;
@@ -186,6 +197,11 @@ static void shark_setup(lv_obj_t *parent)
     lv_obj_set_flex_flow(packet_list, LV_FLEX_FLOW_COLUMN);
     lv_obj_set_scrollbar_mode(packet_list, LV_SCROLLBAR_MODE_AUTO);
     lv_obj_set_scroll_dir(packet_list, LV_DIR_VER);
+
+    /* Register input for back button */
+    lv_obj_add_event_cb(shark_cont, shark_event_cb, LV_EVENT_KEY, NULL);
+    lv_group_t *g = lv_group_get_default();
+    if (g) lv_group_add_obj(g, shark_cont);
 
     /* Start listening */
 #ifdef ARDUINO
