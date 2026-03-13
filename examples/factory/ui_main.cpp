@@ -601,7 +601,17 @@ void setupGui()
     extern app_t ui_schedule_main;
     extern app_t ui_nettools_main;
 
-    /* Add application */
+    /* SkinnyCon primary apps — first in menu */
+    create_app(panel, "Nametag", &img_msgchat, &ui_nametag_main);
+    create_app(panel, "Schedule", &img_configuration, &ui_schedule_main);
+    create_app(panel, "BadgeShark", &img_monitoring, &ui_badgeshark_main);
+    create_app(panel, "Net Tools", &img_wifi, &ui_nettools_main);
+
+    /* Radio & messaging */
+    create_app(panel, "LoRa", &img_radio, &ui_radio_main);
+    create_app(panel, "LoRa Chat", &img_msgchat, &ui_msgchat_main);
+
+    /* Other apps */
 #if defined(USING_IR_REMOTE)
     extern app_t ui_ir_remote_main;
     create_app(panel, "IR Remote", &img_ir_remote, &ui_ir_remote_main);
@@ -641,7 +651,7 @@ void setupGui()
     // create_app(panel, "Recorder", &img_track, &ui_recorder_main);
     // #endif
 
-    create_app(panel, "Screen Test", &img_test, &ui_factory_main);
+    // Removed: Screen Test app (development-only, not needed for SkinnyCon)
     create_app(panel, "Setting", &img_configuration, &ui_sys_main);
     create_app(panel, "Wireless", &img_wifi, &ui_wireless_main);
 
@@ -651,25 +661,17 @@ void setupGui()
 
 #if defined(USING_INPUT_DEV_KEYBOARD)
     if (hw_has_keyboard()) {
-        create_app(panel, "BLE Keyboard", &img_bluetooth, &ui_ble_kb_main);
+        // Removed: BLE Keyboard app (not needed for SkinnyCon)
         create_app(panel, "Keyboard", &img_keyboard, &ui_keyboard_main);
     }
 #endif
 
     create_app(panel, "Music", &img_music, &ui_audio_main);
-    create_app(panel, "LoRa", &img_radio, &ui_radio_main);
-    create_app(panel, "LoRa Chat", &img_msgchat, &ui_msgchat_main);
     create_app(panel, "GPS", &img_gps, &ui_gps_main);
-    create_app(panel, "Monitor", &img_monitoring, &ui_monitor_main);
+    // Removed: Monitor app (battery info already on clock face, detailed stats are dev-only)
     create_app(panel, "Power", &img_power, &ui_power_main);
     create_app(panel, "Microphone", &img_microphone, &ui_microphone_main);
     create_app(panel, "IMU", &img_gyroscope, &ui_sensor_main);
-
-    /* Supercon-inspired apps */
-    create_app(panel, "Nametag", &img_msgchat, &ui_nametag_main);
-    create_app(panel, "BadgeShark", &img_monitoring, &ui_badgeshark_main);
-    create_app(panel, "Schedule", &img_configuration, &ui_schedule_main);
-    create_app(panel, "Net Tools", &img_wifi, &ui_nettools_main);
 
     int offset = -10;
     if (lv_display_get_physical_vertical_resolution(NULL) > 320) {

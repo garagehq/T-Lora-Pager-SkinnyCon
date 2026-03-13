@@ -34,7 +34,7 @@ typedef enum {
 /* Radio frequency constants */
 // #define RADIO_FIXED_FREQUENCY  920.0
 // #define RADIO_FIXED_FREQUENCY_STRING "920MHZ"
-#define RADIO_DEFAULT_FREQUENCY  868.0
+#define RADIO_DEFAULT_FREQUENCY  915.0
 
 // Check if not compiling for Arduino environment
 // If not, define the wl_status_t enumeration

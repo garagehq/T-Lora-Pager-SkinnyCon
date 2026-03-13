@@ -239,7 +239,7 @@ static void nametag_build_badge_info_mode(void)
         "MCU: ESP32-S3 240MHz\n"
         "Display: 480x222 IPS\n"
         "Radio: SX1262 LoRa\n"
-        "Freq: 868 MHz\n"
+        "Freq: 915 MHz\n"
         "GPS: u-blox MIA-M10Q\n"
         "NFC: ST25R3911B"
     );
