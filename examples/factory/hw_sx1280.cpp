@@ -271,7 +271,18 @@ bool radio_transmit(const uint8_t *data, size_t length)
 
 static const float bandwidth_list[] = {203.125, 406.25, 812.5, 1625.0};
 static const float power_level_list[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13};
-static const float freq_list[] = {2400.0,
+static const float freq_list[] = {915.0,
+                                  915.5,
+                                  916.0,
+                                  916.5,
+                                  917.0,
+                                  917.5,
+                                  918.0,
+                                  918.5,
+                                  919.0,
+                                  919.5,
+                                  920.0,
+                                  2400.0,
                                   2412.0,
                                   2422.0,
                                   2432.0,
@@ -301,7 +312,18 @@ uint16_t radio_get_tx_power_length()
 
 const char *radio_get_freq_list()
 {
-    return "2400MHz\n"
+    return "915MHz\n"
+           "915.5MHz\n"
+           "916MHz\n"
+           "916.5MHz\n"
+           "917MHz\n"
+           "917.5MHz\n"
+           "918MHz\n"
+           "918.5MHz\n"
+           "919MHz\n"
+           "919.5MHz\n"
+           "920MHz\n"
+           "2400MHz\n"
            "2412MHz\n"
            "2422MHz\n"
            "2432MHz\n"
@@ -311,15 +333,14 @@ const char *radio_get_freq_list()
            "2472MHz\n"
            "2482MHz\n"
            "2492MHz\n"
-           "2498MHz\n"
            "2500MHz";
 }
 
 float radio_get_freq_from_index(uint8_t index)
 {
 
-    if (index > radio_get_freq_length()) {
-        return 2400.0;
+    if (index >= radio_get_freq_length()) {
+        return 915.0;
     }
     return freq_list[index];
 }
