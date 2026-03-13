@@ -114,6 +114,8 @@ static void shark_rx_task(lv_timer_t *t)
 #endif
 }
 
+static void shark_exit(lv_obj_t *parent);  /* forward decl for ESC handler */
+
 static void shark_event_cb(lv_event_t *e)
 {
     if (lv_event_get_code(e) != LV_EVENT_KEY) return;

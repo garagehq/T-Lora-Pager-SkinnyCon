@@ -81,6 +81,8 @@ static void net_ping_task(lv_timer_t *t)
 #endif
 }
 
+static void net_exit(lv_obj_t *parent);  /* forward decl for ESC handler */
+
 static void net_event_cb(lv_event_t *e)
 {
     if (lv_event_get_code(e) != LV_EVENT_KEY) return;

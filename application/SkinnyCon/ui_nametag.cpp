@@ -336,6 +336,8 @@ static void nametag_kb_callback(int state, char &c)
 }
 #endif
 
+static void nametag_exit(lv_obj_t *parent);  /* forward decl for ESC handler */
+
 static void nametag_event_cb(lv_event_t *e)
 {
     lv_event_code_t code = lv_event_get_code(e);

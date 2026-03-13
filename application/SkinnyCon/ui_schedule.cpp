@@ -105,6 +105,8 @@ static void sched_update_highlight(void)
     }
 }
 
+static void sched_exit(lv_obj_t *parent);  /* forward decl for ESC handler */
+
 static void sched_event_cb(lv_event_t *e)
 {
     lv_event_code_t code = lv_event_get_code(e);
