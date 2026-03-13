@@ -7,5 +7,5 @@
  * PlatformIO defines PLATFORMIO automatically. Arduino IDE does not. */
 #ifdef PLATFORMIO
 #include "Arduino.h"
-#include "factory.ino"
+#include "SkinnyCon.ino"
 #endif

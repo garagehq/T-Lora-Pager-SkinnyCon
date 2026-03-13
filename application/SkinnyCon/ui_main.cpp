@@ -7,6 +7,7 @@
  *
  */
 #include "ui_define.h"
+#include "ui_skinnycon_theme.h"
 
 LV_IMG_DECLARE(img_microphone);
 LV_IMG_DECLARE(img_ir_remote);
@@ -212,154 +213,95 @@ void menu_name_label_event_cb(lv_event_t *e)
 
 static void clock_update_datetime(lv_timer_t *t)
 {
-    lv_obj_has_flag(clock_label.seg, LV_OBJ_FLAG_HIDDEN) ?
-    lv_obj_remove_flag(clock_label.seg, LV_OBJ_FLAG_HIDDEN) :
-    lv_obj_add_flag(clock_label.seg, LV_OBJ_FLAG_HIDDEN);
-
     const char *week[] = {"Sun", "Mon", "Tue", "Wed", "Thur", "Fri", "Sat"};
     struct tm timeinfo;
     hw_get_date_time(timeinfo);
 
     uint8_t week_index = timeinfo.tm_wday > 6 ? 6 : timeinfo.tm_wday;
-    lv_label_set_text_fmt(clock_label.hour, "%02d", timeinfo.tm_hour);
-    lv_label_set_text_fmt(clock_label.minute, "%02d", timeinfo.tm_min);
+    lv_label_set_text_fmt(clock_label.hour, "%02d:%02d", timeinfo.tm_hour, timeinfo.tm_min);
     lv_label_set_text_fmt(clock_label.date, "%02d-%02d %s", timeinfo.tm_mon + 1, timeinfo.tm_mday, week[week_index]);
     monitor_params_t params;
     hw_get_monitor_params(params);
-    lv_bar_set_value(clock_label.battery_bar, params.battery_percent, LV_ANIM_OFF);
     lv_label_set_text_fmt(clock_label.battery_label, "%d%%", params.battery_percent);
 }
 
 lv_obj_t *setupClock()
 {
-
-    const  lv_font_t *font = &font_alibaba_100;
-
+    /* SkinnyCon badge idle screen — replaces the default clock face.
+     * Shows conference name prominently with time/battery in footer. */
     lv_obj_t *page = lv_obj_create(lv_screen_active());
-    lv_obj_set_style_bg_image_src(page, &img_background2, LV_PART_MAIN);
     lv_obj_set_size(page, LV_PCT(100), LV_PCT(100));
     lv_obj_remove_flag(page, LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_set_style_border_width(page, 0, 0);
     lv_obj_set_style_radius(page, 0, 0);
-    lv_obj_set_style_bg_opa(page, LV_OPA_TRANSP, LV_PART_MAIN);
+    lv_obj_set_style_bg_color(page, SC_BG, LV_PART_MAIN);
+    lv_obj_set_style_bg_opa(page, LV_OPA_COVER, LV_PART_MAIN);
 
-    lv_coord_t w = LV_PCT(35);
-    lv_coord_t h = LV_PCT(70);
+    /* Top accent bar */
+    lv_obj_t *bar_top = lv_obj_create(page);
+    lv_obj_set_size(bar_top, LV_PCT(100), 4);
+    lv_obj_align(bar_top, LV_ALIGN_TOP_MID, 0, 0);
+    lv_obj_set_style_bg_color(bar_top, SC_ACCENT, 0);
+    lv_obj_set_style_bg_opa(bar_top, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_width(bar_top, 0, 0);
+    lv_obj_set_style_radius(bar_top, 0, 0);
+    lv_obj_set_style_pad_all(bar_top, 0, 0);
 
-    int x_offset = 35;
-    int y_offset = -20;
+    /* Conference name (large) */
+    lv_obj_t *conf_label = lv_label_create(page);
+    lv_label_set_text(conf_label, "SKINNYCON");
+    lv_obj_set_style_text_font(conf_label, &font_alibaba_60, LV_PART_MAIN);
+    lv_obj_set_style_text_color(conf_label, SC_ACCENT, LV_PART_MAIN);
+    lv_obj_align(conf_label, LV_ALIGN_CENTER, 0, -25);
 
-    uint32_t phy_hor_res = lv_display_get_physical_horizontal_resolution(NULL);
-    if (phy_hor_res < 320) {
-        font = &font_alibaba_60;
-        x_offset = 10;
-        y_offset = -20;
-        w = LV_PCT(40);
-        h = LV_PCT(48);
-    }
+    /* Year subtitle */
+    lv_obj_t *year_label = lv_label_create(page);
+    lv_label_set_text(year_label, "2026  " LV_SYMBOL_WIFI "  Huntsville, AL");
+    lv_obj_set_style_text_font(year_label, &font_alibaba_24, LV_PART_MAIN);
+    lv_obj_set_style_text_color(year_label, SC_GREEN, LV_PART_MAIN);
+    lv_obj_align(year_label, LV_ALIGN_CENTER, 0, 20);
 
-    uint32_t phy_ver_res = lv_display_get_physical_vertical_resolution(NULL);
-    if (phy_ver_res > 222) {
-        h = LV_PCT(45);
-    }
+    /* Bottom bar with time + battery */
+    lv_obj_t *footer = lv_obj_create(page);
+    lv_obj_set_size(footer, LV_PCT(100), 30);
+    lv_obj_align(footer, LV_ALIGN_BOTTOM_MID, 0, 0);
+    lv_obj_set_style_bg_color(footer, SC_PANEL, 0);
+    lv_obj_set_style_bg_opa(footer, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_width(footer, 0, 0);
+    lv_obj_set_style_radius(footer, 0, 0);
+    lv_obj_set_style_pad_hor(footer, 10, 0);
 
-    if (phy_hor_res == 320 && phy_ver_res == 240) {
-        font = &font_alibaba_60;
-        x_offset = 10;
-        y_offset = -20;
-        w = LV_PCT(40);
-        h = LV_PCT(48);
-    }
+    /* Time (left side of footer) */
+    lv_obj_t *time_label = lv_label_create(footer);
+    lv_obj_set_style_text_font(time_label, &font_alibaba_12, LV_PART_MAIN);
+    lv_label_set_text(time_label, "12:34");
+    lv_obj_set_style_text_color(time_label, SC_TEXT, LV_PART_MAIN);
+    lv_obj_align(time_label, LV_ALIGN_LEFT_MID, 0, 0);
+    clock_label.hour = time_label;  /* Reuse for time updates */
 
-    lv_obj_t *hour_cout = lv_obj_create(page);
-    lv_obj_set_size(hour_cout, w, h);
-    lv_obj_align(hour_cout, LV_ALIGN_LEFT_MID, x_offset, y_offset);
-    lv_obj_set_style_bg_opa(hour_cout, LV_OPA_20, LV_PART_MAIN);
-    lv_obj_set_style_border_opa(hour_cout, LV_OPA_60, LV_PART_MAIN);
-    lv_obj_remove_flag(hour_cout, LV_OBJ_FLAG_SCROLLABLE);
+    /* Date (center of footer) */
+    lv_obj_t *date_label = lv_label_create(footer);
+    lv_obj_set_style_text_font(date_label, &font_alibaba_12, LV_PART_MAIN);
+    lv_label_set_text(date_label, "03-24 Mon");
+    lv_obj_set_style_text_color(date_label, SC_TEXT_DIM, LV_PART_MAIN);
+    lv_obj_align(date_label, LV_ALIGN_CENTER, 0, 0);
+    clock_label.date = date_label;
 
-    lv_obj_t *min_cout = lv_obj_create(page);
-    lv_obj_set_size(min_cout, w, h);
-    lv_obj_align(min_cout, LV_ALIGN_RIGHT_MID, -x_offset, y_offset);
-    lv_obj_set_style_bg_opa(min_cout, LV_OPA_20, LV_PART_MAIN);
-    lv_obj_set_style_border_opa(min_cout, LV_OPA_60, LV_PART_MAIN);
-    lv_obj_remove_flag(min_cout, LV_OBJ_FLAG_SCROLLABLE);
+    /* Battery (right side of footer) */
+    lv_obj_t *batt_label = lv_label_create(footer);
+    lv_obj_set_style_text_font(batt_label, &font_alibaba_12, LV_PART_MAIN);
+    lv_label_set_text(batt_label, "100%");
+    lv_obj_set_style_text_color(batt_label, SC_GREEN, LV_PART_MAIN);
+    lv_obj_align(batt_label, LV_ALIGN_RIGHT_MID, 0, 0);
+    clock_label.battery_label = batt_label;
 
-    lv_obj_t *label = lv_label_create(page);
-    lv_obj_align(label, LV_ALIGN_CENTER, 0, -10 + y_offset);
-    lv_obj_set_style_text_font(label, font, LV_PART_MAIN);
-    lv_label_set_text(label, ":");
-    lv_obj_set_style_text_color(label, lv_color_white(), LV_PART_MAIN);
-    clock_label.seg = label;
-
-    label = lv_label_create(hour_cout);
-    lv_obj_set_style_text_font(label, font, LV_PART_MAIN);
-    lv_label_set_text(label, "12");
-    lv_obj_set_style_text_color(label, lv_color_white(), LV_PART_MAIN);
-    lv_obj_center(label);
-    clock_label.hour = label;
-
-    label = lv_label_create(min_cout);
-    lv_obj_set_style_text_font(label, font, LV_PART_MAIN);
-    lv_label_set_text(label, "34");
-    lv_obj_set_style_text_color(label, lv_color_white(), LV_PART_MAIN);
-    lv_obj_center(label);
-    clock_label.minute = label;
-
-    int offset = -5;
-    if (lv_display_get_physical_vertical_resolution(NULL) > 320) {
-        offset = -45;
-    }
-
-    label = lv_label_create(page);
-    lv_obj_set_style_text_font(label, &font_alibaba_24, LV_PART_MAIN);
-    lv_label_set_text(label, "03-24 Mon");
-    lv_obj_set_style_text_color(label, lv_color_white(), LV_PART_MAIN);
-    lv_obj_align(label, LV_ALIGN_BOTTOM_MID, 0, offset);
-    clock_label.date = label;
-
-
-    lv_obj_t *img = lv_image_create(page);
-    lv_image_set_src(img, &img_battery);
-    if (lv_display_get_physical_vertical_resolution(NULL) == 240) {
-        lv_obj_align_to(img, min_cout, LV_ALIGN_OUT_BOTTOM_RIGHT, -10, 20);
-    } else {
-        lv_obj_align(img, LV_ALIGN_BOTTOM_RIGHT, -60, offset);
-    }
-
-    lv_obj_t *bar = lv_bar_create(img);
-    lv_obj_set_size(bar, img_battery.header.w - 8, img_battery.header.h - 12);
-    lv_bar_set_value(bar, 100, LV_ANIM_OFF);
-    lv_obj_set_style_radius(bar, 0, LV_PART_MAIN);
-    lv_obj_set_style_radius(bar, 0, LV_PART_INDICATOR);
-    lv_obj_set_style_bg_color(bar, lv_color_make(0, 255, 0), LV_PART_INDICATOR);
-    lv_obj_align(bar, LV_ALIGN_CENTER, -1, 0);
-    clock_label.battery_bar = bar;
-
-
-    label = lv_label_create(page);
-    lv_obj_set_style_text_font(label, &font_alibaba_12, LV_PART_MAIN);
-    lv_label_set_text(label, "100%");
-    lv_obj_set_style_text_color(label, lv_color_white(), LV_PART_MAIN);
-    lv_obj_align_to(label, img, LV_ALIGN_OUT_LEFT_MID, -5, 0);
-    clock_label.battery_label = label;
-
-    static lv_style_t style_line;
-    lv_style_init(&style_line);
-    lv_style_set_line_width(&style_line, 4);
-    lv_style_set_line_color(&style_line, lv_color_white());
-
-    lv_obj_t *line1;
-    line1 = lv_line_create(page);
-    static lv_point_t line_points[] = {
-        {0, 0},
-        {150, 0}
-    };
-    lv_line_set_points(line1, line_points, 2);
-    lv_obj_add_style(line1, &style_line, 0);
-    lv_obj_align(line1, LV_ALIGN_BOTTOM_MID, 0, 15);
-    lv_obj_set_style_line_opa(line1, LV_OPA_60, LV_PART_MAIN);
-
+    /* Hidden labels not used in nametag mode (keep struct happy) */
+    clock_label.seg = lv_label_create(page);
+    lv_obj_add_flag(clock_label.seg, LV_OBJ_FLAG_HIDDEN);
+    clock_label.minute = lv_label_create(page);
+    lv_obj_add_flag(clock_label.minute, LV_OBJ_FLAG_HIDDEN);
+    clock_label.battery_bar = lv_bar_create(page);
+    lv_obj_add_flag(clock_label.battery_bar, LV_OBJ_FLAG_HIDDEN);
 
     clock_timer = lv_timer_create(clock_update_datetime, 1000, NULL);
     lv_timer_pause(clock_timer);
@@ -601,11 +543,11 @@ void setupGui()
     extern app_t ui_schedule_main;
     extern app_t ui_nettools_main;
 
-    /* SkinnyCon primary apps — first in menu */
-    create_app(panel, "Nametag", &img_msgchat, &ui_nametag_main);
-    create_app(panel, "Schedule", &img_configuration, &ui_schedule_main);
+    /* SkinnyCon primary apps — first in menu (unique icons per app) */
+    create_app(panel, "Nametag", &img_sports, &ui_nametag_main);
+    create_app(panel, "Schedule", &img_calendar, &ui_schedule_main);
     create_app(panel, "BadgeShark", &img_monitoring, &ui_badgeshark_main);
-    create_app(panel, "Net Tools", &img_wifi, &ui_nettools_main);
+    create_app(panel, "Net Tools", &img_test, &ui_nettools_main);
 
     /* Radio & messaging */
     create_app(panel, "LoRa", &img_radio, &ui_radio_main);

@@ -64,7 +64,7 @@ pio run -e tlora_pager --target upload
 # 2. Install esp32 board package
 # 3. Select board: ESP32S3 Dev Module
 # 4. Set: USB Mode=Hardware CDC, Upload Speed=921600, Partition=app3M_fat9M_16MB
-# 5. Open examples/factory/factory.ino and upload
+# 5. Open application/SkinnyCon/SkinnyCon.ino and upload
 ```
 
 ### Run Tests
@@ -85,12 +85,12 @@ pio test -e native_factory -v  # Factory app simulation (15 tests, ~7s)
 
 | Tier | Environment | Tests | What It Tests | Speed |
 |------|-------------|-------|---------------|-------|
-| 1 - Unit | `native` | 24 | Brightness clamping, GPS NMEA parsing (6 cases), RGB565 byte swap + channel extraction, power channel contiguity, hardware mask bitfields, rotary struct layout | <3s |
+| 1 - Unit | `native` | 27 | Brightness clamping, GPS NMEA parsing (6 cases), RGB565 byte swap + channel extraction, power channel contiguity, hardware mask bitfields, rotary struct layout, LoRa frequency validation | <3s |
 | 2 - Widgets | `native_lvgl` | 20 | LVGL 9.2 display init, labels, buttons, click handlers, flex layouts, sliders, rendering to framebuffer, PPM screenshot export | ~7s |
 | 3 - Factory Sim | `native_factory` | 15 | Real factory app screens with actual Alibaba fonts (12/24/40/100px), 9 app icons, and 6 SkinnyCon screens | ~7s |
 | 4 - Build | `tlora_pager` | — | Full ESP32-S3 compilation against real Arduino SDK and vendor libraries | ~60s |
 
-**Total: 59 tests, all running without hardware.**
+**Total: 62 tests, all running without hardware.**
 
 ### LVGL Headless Simulator
 
@@ -107,7 +107,7 @@ lvgl_sim_deinit();                      // Cleanup
 
 ### Factory App Simulation
 
-The `native_factory` environment renders actual factory app screens using real assets from `examples/factory/src/`:
+The `native_factory` environment renders actual factory app screens using real assets from `application/SkinnyCon/src/`:
 
 - **Fonts**: Alibaba PuHuiTi Bold at 12px, 24px, 40px, and 100px (same fonts used on device)
 - **Icons**: 9 app icons (Settings, Radio, Chat, Music, Monitor, Keyboard, Bluetooth, WiFi, Test)
@@ -119,16 +119,16 @@ Screenshots are saved as PPM files and uploaded as CI artifacts for visual regre
 
 | File | Tests | Description |
 |------|-------|-------------|
-| `test/test_hardware/test_hardware.c` | 24 | Brightness clamping, GPS NMEA parsing, RGB565 byte swap, power channels, hardware masks, rotary input |
+| `test/test_hardware/test_hardware.c` | 27 | Brightness clamping, GPS NMEA parsing, RGB565 byte swap, power channels, hardware masks, rotary input, LoRa frequency |
 | `test/test_lvgl_render/test_lvgl_render.c` | 20 | LVGL widgets, rendering, framebuffer verification |
 | `test/test_factory_sim/test_factory_sim.c` | 15 | Factory app screens with real fonts, icons, and SkinnyCon screens |
 | `test/simulator/sim_main.c` | — | Headless LVGL 9.2 simulator (480x222 RGB565) |
 | `test/simulator/lv_conf.h` | — | LVGL config for simulator |
 | `test/mocks/` | — | Mock headers for Arduino, SPI, Wire, FreeRTOS, ESP-IDF |
 
-## Factory App
+## SkinnyCon Badge App
 
-The factory example (`examples/factory/`) is the reference application with 20+ screens:
+The main application (`application/SkinnyCon/`) is the SkinnyCon conference badge with 20+ screens:
 
 ### Navigation
 
@@ -141,27 +141,24 @@ The factory example (`examples/factory/`) is the reference application with 20+ 
 
 | App | Icon | Description |
 |-----|------|-------------|
+| **Nametag** | Person | Editable nametag with 5 modes: name (keyboard editable), fullscreen, about, code of conduct, badge info. ESC to return to menu |
+| **Schedule** | Calendar | SkinnyCon 2026 3-day schedule browser (May 12-14, Huntsville AL). ESC to return to menu |
+| **BadgeShark** | Monitor | LoRa packet sniffer — Wireshark-style hex dump with RSSI, auto-scroll. ESC to return to menu |
+| **Net Tools** | Diagnostic | LoRa mesh diagnostics — ping/pong latency, packet loss, peer discovery. ESC to return to menu |
+| LoRa | Radio | SX1262 radio TX/RX with configurable frequency, bandwidth, power, SF |
+| LoRa Chat | Chat | Text messaging over LoRa with RSSI display |
 | Setting | Gear | Brightness, keyboard backlight, charge current, WiFi, display timeout |
 | Wireless | WiFi | WiFi scan, connect, status, IP address |
 | Music | Note | SD card music player with FFT visualizer |
-| LoRa | Radio | SX1262 radio TX/RX with configurable frequency, bandwidth, power, SF |
-| LoRa Chat | Chat | Text messaging over LoRa with RSSI display |
 | GPS | Globe | Satellite tracking, coordinates, speed, NMEA debug |
-| Monitor | Chart | Battery voltage, USB power, charge state, temperature, capacity |
 | Power | Battery | Charger control, OTG toggle, current settings |
 | Microphone | Mic | Audio input with FFT frequency bands visualization |
 | IMU | Gyro | BHI260AP 6-axis orientation, roll/pitch/heading |
-| Keyboard | Keys | Keyboard test and BLE keyboard mode |
+| Keyboard | Keys | Keyboard test mode |
 | Bluetooth | BT | BLE serial communication |
-| Calendar | Cal | Date/time display from RTC |
-| Screen Test | Test | Display test patterns |
 | NFC | NFC | ST25R3911B tag reading (WiFi config, URLs, text) |
 | IR Remote | IR | IR transmit/receive (if hardware present) |
 | Compass | Compass | QMC5883P magnetic heading (if hardware present) |
-| **Nametag** | Chat | Editable nametag with 5 modes: name (keyboard editable), fullscreen, about, code of conduct, badge info |
-| **BadgeShark** | Monitor | LoRa packet sniffer — Wireshark-style hex dump with RSSI, auto-scroll |
-| **Schedule** | Settings | SkinnyCon 2026 3-day schedule browser (May 12-14, Huntsville AL) |
-| **Net Tools** | WiFi | LoRa mesh diagnostics — ping/pong latency, packet loss, peer discovery |
 
 ### SkinnyCon Apps
 
@@ -172,12 +169,12 @@ Built for [SkinnyCon 2026](https://skinnycon.com) (May 12-14, Huntsville AL), th
 - **Schedule**: SkinnyCon 2026 3-day schedule browser. Left/Right arrows switch days (Tue/Wed/Thu). Each entry shows time and talk title. Keyboard/rotary Up/Down navigates with visual highlight. Break sessions dimmed.
 - **Net Tools**: LoRa mesh diagnostic tool with two-panel layout. Left panel shows ping/pong results with round-trip time and color-coded status (green=fast, yellow=slow, red=timeout). Right panel lists discovered peers with RSSI. Stats bar shows sent/recv/loss%/avg RTT.
 
-### Clock Screen (Low Power Mode)
+### Idle Screen (Low Power Mode)
 
-After 10 seconds of inactivity, the device enters clock mode:
-- Large Alibaba 100px numerals for hours/minutes
-- Date and day-of-week in 24px font
-- Battery indicator with percentage
+After 10 seconds of inactivity, the device shows the SkinnyCon badge screen:
+- Large "SKINNYCON" conference name in accent yellow
+- "2026  Huntsville, AL" subtitle in green
+- Footer bar with time, date, and battery percentage
 - CPU downclocked to 80 MHz for power savings
 - Any input wakes back to app menu at 240 MHz
 
@@ -218,11 +215,11 @@ esptool.py --chip esp32s3 --port /dev/ttyUSB0 --baud 921600 \
 
 ```
 T-Lora-Pager-SkinnyCon/
-├── examples/
-│   ├── factory/              # Main factory application (20+ screens)
-│   │   ├── factory.ino       # Entry point (setup + loop) — Arduino IDE
+├── application/
+│   ├── SkinnyCon/            # Main SkinnyCon badge application (20+ screens)
+│   │   ├── SkinnyCon.ino     # Entry point (setup + loop) — Arduino IDE
 │   │   ├── pio_main.cpp      # PlatformIO entry (#ifdef PLATFORMIO guard)
-│   │   ├── ui_main.cpp       # Tileview navigation, menu, clock screen
+│   │   ├── ui_main.cpp       # Tileview navigation, menu, idle screen
 │   │   ├── ui_tools.cpp      # Widget builders (slider, switch, button, etc.)
 │   │   ├── ui_define.h       # Public UI API
 │   │   ├── hal_interface.h   # Hardware abstraction layer (50+ functions)
@@ -275,7 +272,7 @@ The default radio is SX1262 (LoRa). Configurable parameters:
 
 | Parameter | Range | Default |
 |-----------|-------|---------|
-| Frequency | 410-525 MHz, 862-1020 MHz | 868.0 MHz |
+| Frequency | 410-525 MHz, 862-1020 MHz | 915.0 MHz (US ISM band) |
 | Bandwidth | 7.8-500 kHz | 125 kHz |
 | Spreading Factor | 5-12 | 9 |
 | TX Power | -9 to 22 dBm | 10 dBm |
@@ -290,9 +287,9 @@ This project has **two independent build paths** — understanding this is criti
 | **PlatformIO** | Local dev, unit tests (`native`, `native_lvgl`, `native_factory`), ESP32-S3 compilation (`tlora_pager`) | `platformio.ini` |
 | **Arduino CLI** | GitHub Actions CI for all example sketches (31 base + 42 LVGL + 13 radio = 86 sketches) | `arduino-cli compile --library .` |
 
-**Key difference**: Arduino CLI uses `--library .` which compiles everything in `src/` for ALL sketches. PlatformIO uses `build_src_filter` to selectively include `examples/factory/`. Never put example-specific code in `src/`.
+**Key difference**: Arduino CLI uses `--library .` which compiles everything in `src/` for ALL sketches. PlatformIO uses `build_src_filter` to selectively include `application/SkinnyCon/`. Never put example-specific code in `src/`.
 
-**`pio_main.cpp`**: PlatformIO doesn't auto-process `.ino` files outside `src_dir`, so `examples/factory/pio_main.cpp` wraps `factory.ino` with `#include "factory.ino"`. It's guarded with `#ifdef PLATFORMIO` so Arduino IDE (which compiles all `.cpp` in the sketch directory) sees an empty translation unit — no duplicate `setup()`/`loop()` definitions.
+**`pio_main.cpp`**: PlatformIO doesn't auto-process `.ino` files outside `src_dir`, so `application/SkinnyCon/pio_main.cpp` wraps `SkinnyCon.ino` with `#include "SkinnyCon.ino"`. It's guarded with `#ifdef PLATFORMIO` so Arduino IDE (which compiles all `.cpp` in the sketch directory) sees an empty translation unit — no duplicate `setup()`/`loop()` definitions.
 
 ## Troubleshooting
 

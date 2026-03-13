@@ -32,15 +32,15 @@ LV_FONT_DECLARE(font_alibaba_40);
 LV_FONT_DECLARE(font_alibaba_100);
 
 /* Icons - v9 variants (RGB565A8, 70x70) */
-#include "../../examples/factory/src/img_configuration_v9.c"
-#include "../../examples/factory/src/img_radio_v9.c"
-#include "../../examples/factory/src/img_msgchat_v9.c"
-#include "../../examples/factory/src/img_music_v9.c"
-#include "../../examples/factory/src/img_monitoring_v9.c"
-#include "../../examples/factory/src/img_keyboard_v9.c"
-#include "../../examples/factory/src/img_bluetooth_v9.c"
-#include "../../examples/factory/src/img_wifi_v9.c"
-#include "../../examples/factory/src/img_test_v9.c"
+#include "../../application/SkinnyCon/src/img_configuration_v9.c"
+#include "../../application/SkinnyCon/src/img_radio_v9.c"
+#include "../../application/SkinnyCon/src/img_msgchat_v9.c"
+#include "../../application/SkinnyCon/src/img_music_v9.c"
+#include "../../application/SkinnyCon/src/img_monitoring_v9.c"
+#include "../../application/SkinnyCon/src/img_keyboard_v9.c"
+#include "../../application/SkinnyCon/src/img_bluetooth_v9.c"
+#include "../../application/SkinnyCon/src/img_wifi_v9.c"
+#include "../../application/SkinnyCon/src/img_test_v9.c"
 
 /* ---- Test setup/teardown ---- */
 
