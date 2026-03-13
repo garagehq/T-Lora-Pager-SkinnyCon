@@ -129,7 +129,7 @@ int16_t hw_set_radio_params(radio_params_t &params)
 void hw_get_radio_params(radio_params_t &params)
 {
     params.bandwidth = 203.125;
-    params.freq = 2400.0;
+    params.freq = 915.0;
     params.cr = 5;
     params.isRunning = false;
     params.mode = RADIO_DISABLE;
