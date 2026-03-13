@@ -4,7 +4,7 @@ on:
   pull_request:
   push:
     paths:
-      - "examples/lvgl/**"
+      - "application/lvgl/**"
       - "src/**"
       - ".github/scripts/check_ci_json.py"
 jobs:

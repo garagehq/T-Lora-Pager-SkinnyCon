@@ -57,8 +57,8 @@ jobs:
             *.ppm
             .pio/build/native_lvgl/
 
-  factory-simulation-tests:
-    name: Factory App Simulation
+  skinnycon-simulation-tests:
+    name: SkinnyCon App Simulation
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -71,16 +71,16 @@ jobs:
       - name: Install PlatformIO
         run: pip install platformio
 
-      - name: Run factory simulation tests
-        run: pio test -e native_factory -v
+      - name: Run SkinnyCon simulation tests
+        run: pio test -e native_skinnycon -v
 
-      - name: Upload factory screenshots
+      - name: Upload SkinnyCon screenshots
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: factory-screenshots
+          name: skinnycon-screenshots
           path: |
-            factory_*.ppm
+            skinnycon_*.ppm
 
   esp32-build-check:
     name: ESP32-S3 Build Check

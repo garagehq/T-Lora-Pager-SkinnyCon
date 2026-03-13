@@ -1,9 +1,9 @@
 /**
- * @file test_factory_sim.c
- * Factory app simulation tests for T-LoRa-Pager (480x222 RGB565).
+ * @file test_skinnycon.c
+ * SkinnyCon app simulation tests for T-LoRa-Pager (480x222 RGB565).
  *
- * Renders actual factory app screens using real assets (fonts, icons)
- * from examples/factory/src/. Screenshots are saved as PPM files for
+ * Renders actual SkinnyCon app screens using real assets (fonts, icons)
+ * from application/SkinnyCon/src/. Screenshots are saved as PPM files for
  * visual regression testing in CI.
  *
  * This test validates that the factory UI renders correctly without
@@ -32,15 +32,15 @@ LV_FONT_DECLARE(font_alibaba_40);
 LV_FONT_DECLARE(font_alibaba_100);
 
 /* Icons - v9 variants (RGB565A8, 70x70) */
-#include "../../examples/factory/src/img_configuration_v9.c"
-#include "../../examples/factory/src/img_radio_v9.c"
-#include "../../examples/factory/src/img_msgchat_v9.c"
-#include "../../examples/factory/src/img_music_v9.c"
-#include "../../examples/factory/src/img_monitoring_v9.c"
-#include "../../examples/factory/src/img_keyboard_v9.c"
-#include "../../examples/factory/src/img_bluetooth_v9.c"
-#include "../../examples/factory/src/img_wifi_v9.c"
-#include "../../examples/factory/src/img_test_v9.c"
+#include "../../application/SkinnyCon/src/img_configuration_v9.c"
+#include "../../application/SkinnyCon/src/img_radio_v9.c"
+#include "../../application/SkinnyCon/src/img_msgchat_v9.c"
+#include "../../application/SkinnyCon/src/img_music_v9.c"
+#include "../../application/SkinnyCon/src/img_monitoring_v9.c"
+#include "../../application/SkinnyCon/src/img_keyboard_v9.c"
+#include "../../application/SkinnyCon/src/img_bluetooth_v9.c"
+#include "../../application/SkinnyCon/src/img_wifi_v9.c"
+#include "../../application/SkinnyCon/src/img_test_v9.c"
 
 /* ---- Test setup/teardown ---- */
 
@@ -80,7 +80,7 @@ static void create_app_icon(lv_obj_t *parent, const char *name,
  *  TEST: Main menu screen with real app icons
  * ================================================================ */
 
-void test_factory_main_menu(void)
+void test_skinnycon_main_menu(void)
 {
     lv_obj_t *scr = lv_screen_active();
     lv_obj_set_style_bg_color(scr, lv_color_black(), LV_PART_MAIN);
