@@ -18,13 +18,13 @@ LV_IMG_DECLARE(img_radio);
 LV_IMG_DECLARE(img_gps);
 LV_IMG_DECLARE(img_power);
 LV_IMG_DECLARE(img_monitoring);
-LV_IMG_DECLARE(img_calendar);
+LV_IMG_DECLARE(img_cry);
 LV_IMG_DECLARE(img_keyboard);
 LV_IMG_DECLARE(img_gyroscope);
 LV_IMG_DECLARE(img_msgchat);
 LV_IMG_DECLARE(img_bluetooth);
 LV_IMG_DECLARE(img_test);
-LV_IMG_DECLARE(img_sports);
+LV_IMG_DECLARE(img_dog);
 LV_IMG_DECLARE(img_background);
 LV_IMG_DECLARE(img_battery);
 LV_IMG_DECLARE(img_MotionRecognition);
@@ -544,8 +544,8 @@ void setupGui()
     extern app_t ui_nettools_main;
 
     /* SkinnyCon primary apps — first in menu (unique icons per app) */
-    create_app(panel, "Nametag", &img_sports, &ui_nametag_main);
-    create_app(panel, "Schedule", &img_calendar, &ui_schedule_main);
+    create_app(panel, "Nametag", &img_dog, &ui_nametag_main);
+    create_app(panel, "Schedule", &img_cry, &ui_schedule_main);
     create_app(panel, "BadgeShark", &img_monitoring, &ui_badgeshark_main);
     create_app(panel, "Net Tools", &img_test, &ui_nettools_main);
 
