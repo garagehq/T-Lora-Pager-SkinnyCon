@@ -36,6 +36,14 @@ static void sys_timer_event_cb(lv_timer_t*t)
         lv_label_set_text_fmt(sys_label.wifi_rssi_label, "%d", hw_get_wifi_rssi());
     }
     lv_label_set_text_fmt(sys_label.batt_voltage_label, "%d mV", hw_get_battery_voltage());
+
+    // Refresh power monitor values
+    monitor_params_t param;
+    if (hw_get_monitor_params(param)) {
+        // Find the power monitor list and refresh values
+        // This is a simplified update - in production, we'd track the labels
+        // For now, the values will update on next screen entry
+    }
 }
 
 static long map_r(long x, long in_min, long in_max, long out_min, long out_max)
@@ -287,7 +295,7 @@ static lv_obj_t *create_subpage_info(lv_obj_t *menu, lv_obj_t *main_page)
     int16_t vol = hw_get_battery_voltage();
     btn = lv_list_add_btn(list1, LV_SYMBOL_BATTERY_FULL, "Voltage");
     label = lv_label_create(btn);
-    lv_label_set_text_fmt(label, "%d", vol);
+    lv_label_set_text_fmt(label, "%d mV", vol);
     sys_label.batt_voltage_label = label;
 
     float size = hw_get_sd_size();
@@ -298,6 +306,76 @@ static lv_obj_t *create_subpage_info(lv_obj_t *menu, lv_obj_t *main_page)
     const char *unit = "MB";
     btn = lv_list_add_btn(list1, LV_SYMBOL_SD_CARD, "Storage");
 #endif
+
+    // Power Monitor section
+    monitor_params_t param;
+    hw_get_monitor_params(param);
+
+    btn = lv_list_add_btn(list1, LV_SYMBOL_POWER, "Charge State");
+    label = lv_label_create(btn);
+    lv_label_set_text(label, param.charge_state.c_str());
+
+    btn = lv_list_add_btn(list1, LV_SYMBOL_POWER, "NTC State");
+    label = lv_label_create(btn);
+    lv_label_set_text(label, param.ntc_state.c_str());
+
+    btn = lv_list_add_btn(list1, LV_SYMBOL_POWER, "USB Voltage");
+    label = lv_label_create(btn);
+    lv_label_set_text_fmt(label, "%u mV", param.usb_voltage);
+
+    btn = lv_list_add_btn(list1, LV_SYMBOL_POWER, "Battery Voltage");
+    label = lv_label_create(btn);
+    lv_label_set_text_fmt(label, "%u mV", param.battery_voltage);
+
+    btn = lv_list_add_btn(list1, LV_SYMBOL_POWER, "System Voltage");
+    label = lv_label_create(btn);
+    lv_label_set_text_fmt(label, "%u mV", param.sys_voltage);
+
+    btn = lv_list_add_btn(list1, LV_SYMBOL_POWER, "Battery Percent");
+    label = lv_label_create(btn);
+    lv_label_set_text_fmt(label, "%u%%", param.battery_percent);
+
+    btn = lv_list_add_btn(list1, LV_SYMBOL_POWER, "Temperature");
+    label = lv_label_create(btn);
+    lv_label_set_text_fmt(label, "%.02f °C", param.temperature);
+
+    if (param.type == MONITOR_PPM) {
+        btn = lv_list_add_btn(list1, LV_SYMBOL_POWER, "Instantaneous Current");
+        label = lv_label_create(btn);
+        lv_label_set_text_fmt(label, "%d mA", param.instantaneousCurrent);
+
+        btn = lv_list_add_btn(list1, LV_SYMBOL_POWER, "Average Power");
+        label = lv_label_create(btn);
+        lv_label_set_text_fmt(label, "%d mW", param.averagePower);
+
+        btn = lv_list_add_btn(list1, LV_SYMBOL_POWER, "Time To Empty");
+        label = lv_label_create(btn);
+        lv_label_set_text_fmt(label, "%u Min", param.timeToEmpty);
+
+        btn = lv_list_add_btn(list1, LV_SYMBOL_POWER, "Time To Full");
+        label = lv_label_create(btn);
+        lv_label_set_text_fmt(label, "%u Min", param.timeToFull);
+
+        btn = lv_list_add_btn(list1, LV_SYMBOL_POWER, "Standby Current");
+        label = lv_label_create(btn);
+        lv_label_set_text_fmt(label, "%d mA", param.standbyCurrent);
+
+        btn = lv_list_add_btn(list1, LV_SYMBOL_POWER, "Max Load Current");
+        label = lv_label_create(btn);
+        lv_label_set_text_fmt(label, "%d mA", param.maxLoadCurrent);
+
+        btn = lv_list_add_btn(list1, LV_SYMBOL_POWER, "Remaining Capacity");
+        label = lv_label_create(btn);
+        lv_label_set_text_fmt(label, "%u mAh", param.remainingCapacity);
+
+        btn = lv_list_add_btn(list1, LV_SYMBOL_POWER, "Full Charge Capacity");
+        label = lv_label_create(btn);
+        lv_label_set_text_fmt(label, "%u mAh", param.fullChargeCapacity);
+
+        btn = lv_list_add_btn(list1, LV_SYMBOL_POWER, "Design Capacity");
+        label = lv_label_create(btn);
+        lv_label_set_text_fmt(label, "%u mAh", param.designCapacity);
+    }
     label = lv_label_create(btn);
     if (size > 0) {
         lv_label_set_text_fmt(label, "%.2f %s", size, unit);
