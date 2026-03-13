@@ -8,6 +8,10 @@
  */
 #include "ui_define.h"
 
+// Forward declarations for Nametag UI
+void nametag_setup(lv_obj_t *parent);
+void nametag_exit(void);
+
 LV_IMG_DECLARE(img_microphone);
 LV_IMG_DECLARE(img_ir_remote);
 LV_IMG_DECLARE(img_music);
@@ -51,6 +55,7 @@ lv_obj_t *menu_panel;
 lv_group_t *menu_g, *app_g;
 static lv_timer_t *clock_timer;
 static lv_obj_t *clock_page;
+static lv_obj_t *nametag_page;
 static lv_timer_t *disp_timer = NULL;
 static lv_timer_t *dev_timer = NULL;
 static uint32_t disp_time_ms = 0;
@@ -704,6 +709,11 @@ void setupGui()
 
     clock_page = setupClock();
     lv_obj_add_flag(clock_page, LV_OBJ_FLAG_HIDDEN);
+
+    // Create Nametag page and show it as default
+    nametag_page = lv_obj_create(lv_screen_active());
+    lv_obj_set_size(nametag_page, LV_PCT(100), LV_PCT(100));
+    nametag_setup(nametag_page);
 
     disp_timer = lv_timer_create(ui_poll_timer_callback, 1000, NULL);
 
