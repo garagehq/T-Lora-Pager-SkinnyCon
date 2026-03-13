@@ -6,14 +6,15 @@
  *            Ported from Supercon 2025 badge network diagnostic concept.
  */
 #include "ui_define.h"
+#include "ui_skinnycon_theme.h"
 
-#define NET_BG            lv_color_hex(0x0D1117)
-#define NET_GREEN         lv_color_hex(0x39D353)
-#define NET_YELLOW        lv_color_hex(0xE39810)
-#define NET_CYAN          lv_color_hex(0x58A6FF)
-#define NET_WHITE         lv_color_hex(0xE6EDF3)
-#define NET_RED           lv_color_hex(0xFF6B6B)
-#define NET_PANEL         lv_color_hex(0x161B22)
+#define NET_BG            SC_BG_DARK     /* Terminal-style dark bg */
+#define NET_GREEN         SC_GREEN_BRIGHT
+#define NET_YELLOW        SC_ACCENT
+#define NET_CYAN          SC_CYAN
+#define NET_WHITE         SC_TEXT
+#define NET_RED           SC_RED
+#define NET_PANEL         SC_PANEL_ALT
 #define MAX_PING_LOG      20
 
 LV_FONT_DECLARE(font_alibaba_12);
@@ -100,7 +101,7 @@ static void net_setup(lv_obj_t *parent)
     /* Header */
     lv_obj_t *header = lv_obj_create(net_cont);
     lv_obj_set_size(header, LV_PCT(100), 28);
-    lv_obj_set_style_bg_color(header, lv_color_hex(0x21262D), 0);
+    lv_obj_set_style_bg_color(header, SC_HEADER, 0);
     lv_obj_set_style_bg_opa(header, LV_OPA_COVER, 0);
     lv_obj_set_style_border_width(header, 0, 0);
     lv_obj_set_style_radius(header, 0, 0);
@@ -135,7 +136,7 @@ static void net_setup(lv_obj_t *parent)
     lv_obj_set_flex_grow(ping_panel, 3);
     lv_obj_set_style_bg_color(ping_panel, NET_PANEL, 0);
     lv_obj_set_style_bg_opa(ping_panel, LV_OPA_COVER, 0);
-    lv_obj_set_style_border_color(ping_panel, lv_color_hex(0x30363D), 0);
+    lv_obj_set_style_border_color(ping_panel, SC_BORDER, 0);
     lv_obj_set_style_border_width(ping_panel, 1, 0);
     lv_obj_set_style_radius(ping_panel, 4, 0);
     lv_obj_set_style_pad_all(ping_panel, 4, 0);
@@ -160,7 +161,7 @@ static void net_setup(lv_obj_t *parent)
     lv_obj_set_flex_grow(peer_panel, 2);
     lv_obj_set_style_bg_color(peer_panel, NET_PANEL, 0);
     lv_obj_set_style_bg_opa(peer_panel, LV_OPA_COVER, 0);
-    lv_obj_set_style_border_color(peer_panel, lv_color_hex(0x30363D), 0);
+    lv_obj_set_style_border_color(peer_panel, SC_BORDER, 0);
     lv_obj_set_style_border_width(peer_panel, 1, 0);
     lv_obj_set_style_radius(peer_panel, 4, 0);
     lv_obj_set_style_pad_all(peer_panel, 4, 0);
