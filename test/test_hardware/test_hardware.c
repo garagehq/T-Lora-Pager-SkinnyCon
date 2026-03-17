@@ -9,6 +9,9 @@
 #include <string.h>
 #include <stdlib.h>
 
+/* ---- GPS Parser implementation for native tests ---- */
+#include "gps_parser_test_impl.h"
+
 /* ---- Reproduce hardware constants from source ---- */
 
 /* Display dimensions (from LilyGo_LoRa_Pager) */
@@ -77,37 +80,6 @@ static uint8_t clamp_brightness(uint8_t level)
 static uint16_t rgb565_swap(uint16_t color)
 {
     return (color >> 8) | (color << 8);
-}
-
-/* ---- GPS NMEA coordinate parsing helper ---- */
-typedef struct {
-    double latitude;
-    double longitude;
-    int valid;
-} GpsCoord_t;
-
-static GpsCoord_t parse_gps_rmc(const char *lat_str, char lat_dir,
-                                  const char *lon_str, char lon_dir)
-{
-    GpsCoord_t coord = {0.0, 0.0, 0};
-    if (!lat_str || !lon_str) return coord;
-
-    /* Parse NMEA format: DDMM.MMMM */
-    double raw_lat = atof(lat_str);
-    double raw_lon = atof(lon_str);
-
-    int lat_deg = (int)(raw_lat / 100.0);
-    double lat_min = raw_lat - (lat_deg * 100.0);
-    coord.latitude = lat_deg + lat_min / 60.0;
-    if (lat_dir == 'S') coord.latitude = -coord.latitude;
-
-    int lon_deg = (int)(raw_lon / 100.0);
-    double lon_min = raw_lon - (lon_deg * 100.0);
-    coord.longitude = lon_deg + lon_min / 60.0;
-    if (lon_dir == 'W') coord.longitude = -coord.longitude;
-
-    coord.valid = 1;
-    return coord;
 }
 
 /* ================================================================
@@ -213,7 +185,9 @@ void test_rotary_msg_struct_layout(void)
 void test_gps_parse_north_east(void)
 {
     /* Dallas TX: 32 47.0000 N, 096 48.0000 W */
-    GpsCoord_t c = parse_gps_rmc("3247.0000", 'N', "09648.0000", 'W');
+    GPSCoord_t c;
+    int result = gps_parse_coordinates("3247.0000", 'N', "09648.0000", 'W', &c);
+    TEST_ASSERT_TRUE(result);
     TEST_ASSERT_TRUE(c.valid);
     TEST_ASSERT_DOUBLE_WITHIN(0.01, 32.783, c.latitude);
     TEST_ASSERT_DOUBLE_WITHIN(0.01, -96.80, c.longitude);
@@ -222,7 +196,9 @@ void test_gps_parse_north_east(void)
 void test_gps_parse_south_west(void)
 {
     /* Sao Paulo: 23 33.0000 S, 046 38.0000 W */
-    GpsCoord_t c = parse_gps_rmc("2333.0000", 'S', "04638.0000", 'W');
+    GPSCoord_t c;
+    int result = gps_parse_coordinates("2333.0000", 'S', "04638.0000", 'W', &c);
+    TEST_ASSERT_TRUE(result);
     TEST_ASSERT_TRUE(c.valid);
     TEST_ASSERT_TRUE(c.latitude < 0);
     TEST_ASSERT_TRUE(c.longitude < 0);
@@ -230,7 +206,9 @@ void test_gps_parse_south_west(void)
 
 void test_gps_parse_equator(void)
 {
-    GpsCoord_t c = parse_gps_rmc("0000.0000", 'N', "00000.0000", 'E');
+    GPSCoord_t c;
+    int result = gps_parse_coordinates("0000.0000", 'N', "00000.0000", 'E', &c);
+    TEST_ASSERT_TRUE(result);
     TEST_ASSERT_TRUE(c.valid);
     TEST_ASSERT_DOUBLE_WITHIN(0.001, 0.0, c.latitude);
     TEST_ASSERT_DOUBLE_WITHIN(0.001, 0.0, c.longitude);
@@ -238,14 +216,18 @@ void test_gps_parse_equator(void)
 
 void test_gps_parse_null_input(void)
 {
-    GpsCoord_t c = parse_gps_rmc(NULL, 'N', NULL, 'E');
+    GPSCoord_t c;
+    int result = gps_parse_coordinates(NULL, 'N', NULL, 'E', &c);
+    TEST_ASSERT_FALSE(result);
     TEST_ASSERT_FALSE(c.valid);
 }
 
 void test_gps_parse_huntsville(void)
 {
     /* Huntsville AL (SkinnyCon venue): 34°43.8' N, 86°35.4' W */
-    GpsCoord_t c = parse_gps_rmc("3443.8000", 'N', "08635.4000", 'W');
+    GPSCoord_t c;
+    int result = gps_parse_coordinates("3443.8000", 'N', "08635.4000", 'W', &c);
+    TEST_ASSERT_TRUE(result);
     TEST_ASSERT_TRUE(c.valid);
     TEST_ASSERT_DOUBLE_WITHIN(0.01, 34.73, c.latitude);
     TEST_ASSERT_DOUBLE_WITHIN(0.01, -86.59, c.longitude);
@@ -254,7 +236,9 @@ void test_gps_parse_huntsville(void)
 void test_gps_parse_antimeridian(void)
 {
     /* Near antimeridian: 179°59' E */
-    GpsCoord_t c = parse_gps_rmc("0000.0000", 'N', "17959.0000", 'E');
+    GPSCoord_t c;
+    int result = gps_parse_coordinates("0000.0000", 'N', "17959.0000", 'E', &c);
+    TEST_ASSERT_TRUE(result);
     TEST_ASSERT_TRUE(c.valid);
     TEST_ASSERT_DOUBLE_WITHIN(0.01, 179.983, c.longitude);
 }
@@ -262,7 +246,9 @@ void test_gps_parse_antimeridian(void)
 void test_gps_parse_max_latitude(void)
 {
     /* North pole: 90°00' N */
-    GpsCoord_t c = parse_gps_rmc("9000.0000", 'N', "00000.0000", 'E');
+    GPSCoord_t c;
+    int result = gps_parse_coordinates("9000.0000", 'N', "00000.0000", 'E', &c);
+    TEST_ASSERT_TRUE(result);
     TEST_ASSERT_TRUE(c.valid);
     TEST_ASSERT_DOUBLE_WITHIN(0.001, 90.0, c.latitude);
 }
@@ -270,9 +256,13 @@ void test_gps_parse_max_latitude(void)
 void test_gps_parse_partial_null(void)
 {
     /* One coordinate null, other valid */
-    GpsCoord_t c1 = parse_gps_rmc("3247.0000", 'N', NULL, 'W');
+    GPSCoord_t c1;
+    int result1 = gps_parse_coordinates("3247.0000", 'N', NULL, 'W', &c1);
+    TEST_ASSERT_FALSE(result1);
     TEST_ASSERT_FALSE(c1.valid);
-    GpsCoord_t c2 = parse_gps_rmc(NULL, 'N', "09648.0000", 'W');
+    GPSCoord_t c2;
+    int result2 = gps_parse_coordinates(NULL, 'N', "09648.0000", 'W', &c2);
+    TEST_ASSERT_FALSE(result2);
     TEST_ASSERT_FALSE(c2.valid);
 }
 

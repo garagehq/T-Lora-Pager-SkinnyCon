@@ -7,3 +7,21 @@ script
 *.log
 .vscode
 *.ppm
+
+# Auto-added by Marisol pipeline
+.env
+.cache/
+*.o
+*.so
+
+# Auto-added by Marisol pipeline
+__pycache__/
+*.pyc
+.pytest_cache/
+debug_*.py
+dist/
+*.egg-info/
+node_modules/
+.gradle/
+*.class
+local.properties
