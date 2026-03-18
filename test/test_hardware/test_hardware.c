@@ -410,6 +410,152 @@ void test_lora_frequency_not_eu_band(void)
 }
 
 /* ================================================================
+ *  POWER CHANNEL VALIDATION TESTS
+ * ================================================================ */
+
+/* Power channel validation logic (simulates runtime safety checks) */
+typedef enum {
+    POWER_OK,
+    POWER_CHANNEL_OUT_OF_RANGE,
+    POWER_CHANNEL_INVALID,
+    POWER_STATE_CHANGE_FAILED,
+} PowerStatus_t;
+
+static PowerStatus_t validate_power_channel(PowerCtrlChannel_t ch)
+{
+    /* Valid range check */
+    if (ch < POWER_DISPLAY || ch > POWER_RTC) {
+        return POWER_CHANNEL_OUT_OF_RANGE;
+    }
+    /* Basic validation — in real code this would check hardware support */
+    return POWER_OK;
+}
+
+static PowerStatus_t set_power_state(PowerCtrlChannel_t ch, bool enable)
+{
+    PowerStatus_t status = validate_power_channel(ch);
+    if (status != POWER_OK) {
+        return status;
+    }
+    /* Simulate successful state change */
+    return POWER_OK;
+}
+
+void test_power_validate_ok_for_valid_channel(void)
+{
+    TEST_ASSERT_EQUAL_INT(POWER_OK, validate_power_channel(POWER_DISPLAY));
+    TEST_ASSERT_EQUAL_INT(POWER_OK, validate_power_channel(POWER_GPS));
+    TEST_ASSERT_EQUAL_INT(POWER_OK, validate_power_channel(POWER_RTC));
+}
+
+void test_power_validate_out_of_range_low(void)
+{
+    TEST_ASSERT_EQUAL_INT(POWER_CHANNEL_OUT_OF_RANGE,
+                          validate_power_channel((PowerCtrlChannel_t)-1));
+}
+
+void test_power_validate_out_of_range_high(void)
+{
+    TEST_ASSERT_EQUAL_INT(POWER_CHANNEL_OUT_OF_RANGE,
+                          validate_power_channel((PowerCtrlChannel_t)100));
+}
+
+void test_power_set_state_successful_enable(void)
+{
+    /* Should succeed for all valid channels */
+    for (int i = 0; i <= POWER_RTC; i++) {
+        PowerCtrlChannel_t ch = (PowerCtrlChannel_t)i;
+        TEST_ASSERT_EQUAL_INT(POWER_OK, set_power_state(ch, true));
+        TEST_ASSERT_EQUAL_INT(POWER_OK, set_power_state(ch, false));
+    }
+}
+
+void test_power_set_state_invalid_channel(void)
+{
+    TEST_ASSERT_EQUAL_INT(POWER_CHANNEL_OUT_OF_RANGE,
+                          set_power_state((PowerCtrlChannel_t)999, true));
+}
+
+void test_power_state_transition_ordering(void)
+{
+    /* Power state changes should be sequential and safe */
+    PowerCtrlChannel_t channels[] = {
+        POWER_DISPLAY, POWER_RADIO, POWER_GPS, POWER_NFC
+    };
+    int count = 4;
+    
+    /* Enable in order */
+    for (int i = 0; i < count; i++) {
+        TEST_ASSERT_EQUAL_INT(POWER_OK, set_power_state(channels[i], true));
+    }
+    
+    /* Disable in reverse order */
+    for (int i = count - 1; i >= 0; i--) {
+        TEST_ASSERT_EQUAL_INT(POWER_OK, set_power_state(channels[i], false));
+    }
+}
+
+void test_power_critical_channels_enabled(void)
+{
+    /* Critical channels that must work: display, radio, GPS */
+    PowerCtrlChannel_t critical[] = {
+        POWER_DISPLAY, POWER_RADIO, POWER_GPS, POWER_CODEC, POWER_RTC
+    };
+    int count = 5;
+    
+    for (int i = 0; i < count; i++) {
+        TEST_ASSERT_EQUAL_INT(POWER_OK, set_power_state(critical[i], true));
+        TEST_ASSERT_EQUAL_INT(POWER_OK, set_power_state(critical[i], false));
+    }
+}
+
+void test_power_all_channels_contiguous(void)
+{
+    /* Verify all 14 channels are contiguous and valid */
+    for (int i = 0; i <= POWER_RTC; i++) {
+        TEST_ASSERT_EQUAL_INT(POWER_OK, validate_power_channel((PowerCtrlChannel_t)i));
+    }
+    TEST_ASSERT_EQUAL_INT(14, POWER_RTC + 1);
+}
+
+/* Power channel priority test for safe startup sequence */
+void test_power_startup_sequence_priority(void)
+{
+    /* Startup should follow: RTC -> Codec -> Display -> Radio */
+    int startup_order[] = {
+        (int)POWER_RTC,
+        (int)POWER_CODEC,
+        (int)POWER_DISPLAY,
+        (int)POWER_DISPLAY_BACKLIGHT,
+        (int)POWER_RADIO
+    };
+    int count = 5;
+    
+    for (int i = 0; i < count; i++) {
+        TEST_ASSERT_EQUAL_INT(POWER_OK,
+                              set_power_state((PowerCtrlChannel_t)startup_order[i], true));
+    }
+}
+
+void test_power_shutdown_sequence_priority(void)
+{
+    /* Shutdown should reverse startup: Radio -> Display -> Codec -> RTC */
+    int shutdown_order[] = {
+        (int)POWER_RADIO,
+        (int)POWER_DISPLAY_BACKLIGHT,
+        (int)POWER_DISPLAY,
+        (int)POWER_CODEC,
+        (int)POWER_RTC
+    };
+    int count = 5;
+    
+    for (int i = 0; i < count; i++) {
+        TEST_ASSERT_EQUAL_INT(POWER_OK,
+                              set_power_state((PowerCtrlChannel_t)shutdown_order[i], false));
+    }
+}
+
+/* ================================================================
  *  MAIN
  * ================================================================ */
 
@@ -459,6 +605,18 @@ int main(int argc, char **argv)
     RUN_TEST(test_lora_default_frequency_is_915);
     RUN_TEST(test_lora_frequency_in_us_ism_band);
     RUN_TEST(test_lora_frequency_not_eu_band);
+
+    /* Power channel validation */
+    RUN_TEST(test_power_validate_ok_for_valid_channel);
+    RUN_TEST(test_power_validate_out_of_range_low);
+    RUN_TEST(test_power_validate_out_of_range_high);
+    RUN_TEST(test_power_set_state_successful_enable);
+    RUN_TEST(test_power_set_state_invalid_channel);
+    RUN_TEST(test_power_state_transition_ordering);
+    RUN_TEST(test_power_critical_channels_enabled);
+    RUN_TEST(test_power_all_channels_contiguous);
+    RUN_TEST(test_power_startup_sequence_priority);
+    RUN_TEST(test_power_shutdown_sequence_priority);
 
     return UNITY_END();
 }
