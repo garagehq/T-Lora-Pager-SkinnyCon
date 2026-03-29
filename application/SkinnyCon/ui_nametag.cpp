@@ -234,6 +234,14 @@ static void nametag_rebuild(void)
     subtitle_label = NULL;
     mode_label = NULL;
 
+    /* Center short content (name modes), top-align long content (info modes) */
+    if (display_mode <= 1) {
+        lv_obj_set_flex_align(nametag_cont, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+    } else {
+        lv_obj_set_flex_align(nametag_cont, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+    }
+    lv_obj_scroll_to_y(nametag_cont, 0, LV_ANIM_OFF);
+
     switch (display_mode) {
     case 0: nametag_build_name_mode(); break;
     case 1: nametag_build_fullscreen_mode(); break;
