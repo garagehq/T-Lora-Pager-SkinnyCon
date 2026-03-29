@@ -43,21 +43,72 @@ static void back_event_handler(lv_event_t *e)
     }
 }
 
-/* Called when user confirms name edit */
-static void name_edit_done_cb(lv_event_t *e)
+/* Textarea event handler — copied from LoRa Chat's working pattern */
+static void nametag_ta_cb(lv_event_t *e)
 {
+    lv_event_code_t code = lv_event_get_code(e);
     lv_obj_t *ta = lv_event_get_target_obj(e);
-    const char *text = lv_textarea_get_text(ta);
-    if (text && strlen(text) > 0) {
-        strncpy(nametag_user_name, text, NAME_MAX_LEN);
-        nametag_user_name[NAME_MAX_LEN] = '\0';
-    }
-    /* Update the display label */
-    if (name_label) lv_label_set_text(name_label, nametag_user_name);
-    printf("[NAMETAG] Name saved: '%s'\n", nametag_user_name);
 
-    /* Go back to main page */
-    lv_obj_send_event(lv_menu_get_main_header_back_button(menu), LV_EVENT_CLICKED, NULL);
+    lv_indev_t *indev = lv_indev_active();
+    if (!indev) return;
+
+    bool edited = lv_obj_has_state(ta, LV_STATE_EDITED);
+
+    printf("[NAMETAG-TA] code=%d edited=%d indev_type=%d\n",
+           (int)code, edited, indev ? (int)indev->type : -1);
+
+    if (code == LV_EVENT_KEY) {
+        lv_key_t key = *(lv_key_t *)lv_event_get_param(e);
+        printf("[NAMETAG-TA] key=%d\n", (int)key);
+        if (key == LV_KEY_ENTER) {
+            /* Enter key = save and go back */
+            const char *text = lv_textarea_get_text(ta);
+            if (text && strlen(text) > 0) {
+                strncpy(nametag_user_name, text, NAME_MAX_LEN);
+                nametag_user_name[NAME_MAX_LEN] = '\0';
+            }
+            if (name_label) lv_label_set_text(name_label, nametag_user_name);
+            printf("[NAMETAG] Name saved: '%s'\n", nametag_user_name);
+            lv_group_set_editing((lv_group_t *)lv_obj_get_group(ta), false);
+            disable_keyboard();
+            lv_obj_send_event(lv_menu_get_main_header_back_button(menu), LV_EVENT_CLICKED, NULL);
+            lv_event_stop_processing(e);
+        }
+    } else if (code == LV_EVENT_CLICKED) {
+        if (indev->type == LV_INDEV_TYPE_ENCODER) {
+            if (edited) {
+                /* Click while editing = save and exit edit mode */
+                const char *text = lv_textarea_get_text(ta);
+                if (text && strlen(text) > 0) {
+                    strncpy(nametag_user_name, text, NAME_MAX_LEN);
+                    nametag_user_name[NAME_MAX_LEN] = '\0';
+                }
+                if (name_label) lv_label_set_text(name_label, nametag_user_name);
+                printf("[NAMETAG] Name saved via click: '%s'\n", nametag_user_name);
+                lv_group_set_editing((lv_group_t *)lv_obj_get_group(ta), false);
+                disable_keyboard();
+            } else {
+                /* Click while not editing = enter edit mode */
+                printf("[NAMETAG] Entering edit mode\n");
+                lv_group_set_editing((lv_group_t *)lv_obj_get_group(ta), true);
+            }
+        }
+    } else if (code == LV_EVENT_FOCUSED) {
+        if (edited) {
+            printf("[NAMETAG] Textarea focused in edit mode, enabling keyboard\n");
+            enable_keyboard();
+        }
+    } else if (code == LV_EVENT_DEFOCUSED) {
+        printf("[NAMETAG] Textarea defocused, disabling keyboard\n");
+        disable_keyboard();
+        /* Save on defocus */
+        const char *text = lv_textarea_get_text(ta);
+        if (text && strlen(text) > 0) {
+            strncpy(nametag_user_name, text, NAME_MAX_LEN);
+            nametag_user_name[NAME_MAX_LEN] = '\0';
+        }
+        if (name_label) lv_label_set_text(name_label, nametag_user_name);
+    }
 }
 
 /* (Edit Subtitle removed per user request) */
@@ -124,7 +175,7 @@ static void nametag_setup(lv_obj_t *parent)
     lv_textarea_set_text(name_ta, nametag_user_name);
     lv_textarea_set_one_line(name_ta, true);
     lv_obj_set_style_text_font(name_ta, &font_alibaba_24, 0);
-    lv_obj_add_event_cb(name_ta, name_edit_done_cb, LV_EVENT_READY, NULL);
+    lv_obj_add_event_cb(name_ta, nametag_ta_cb, LV_EVENT_ALL, NULL);
     /* Textarea needs to be in group for keyboard input */
     if (g) lv_group_add_obj(g, name_ta);
 

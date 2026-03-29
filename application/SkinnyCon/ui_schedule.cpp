@@ -108,8 +108,8 @@ static lv_obj_t *create_day_page(lv_obj_t *m, const talk_t *talks, int n, lv_gro
         lv_obj_set_flex_grow(title_lbl, 1);
         lv_label_set_long_mode(title_lbl, LV_LABEL_LONG_CLIP);
 
-        /* Add to group so encoder can focus/scroll this item */
-        if (g) lv_group_add_obj(g, cont);
+        /* Talk rows are display-only — don't add to group
+         * (adding makes them clickable which freezes the app) */
     }
 
     return page;
