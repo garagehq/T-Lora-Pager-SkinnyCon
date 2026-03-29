@@ -113,6 +113,14 @@ static void sched_exit(lv_obj_t *parent);  /* forward decl for ESC handler */
 static void sched_event_cb(lv_event_t *e)
 {
     lv_event_code_t code = lv_event_get_code(e);
+
+    /* Encoder click or long press = go back to menu */
+    if (code == LV_EVENT_CLICKED || code == LV_EVENT_LONG_PRESSED) {
+        sched_exit(NULL);
+        menu_show();
+        return;
+    }
+
     if (code != LV_EVENT_KEY) return;
 
     uint32_t key = lv_event_get_key(e);
@@ -122,26 +130,30 @@ static void sched_event_cb(lv_event_t *e)
         sched_exit(NULL);
         menu_show();
         return;
-    } else if (key == LV_KEY_DOWN) {
-        selected_talk = (selected_talk + 1) % n;
-        sched_update_highlight();
-        lv_obj_t *sel = lv_obj_get_child(sched_list, selected_talk);
-        if (sel) lv_obj_scroll_to_view(sel, LV_ANIM_ON);
-    } else if (key == LV_KEY_UP) {
-        selected_talk = (selected_talk + n - 1) % n;
-        sched_update_highlight();
-        lv_obj_t *sel = lv_obj_get_child(sched_list, selected_talk);
-        if (sel) lv_obj_scroll_to_view(sel, LV_ANIM_ON);
-    } else if (key == LV_KEY_RIGHT) {
-        /* Next day */
-        current_day = (current_day + 1) % 3;
-        selected_talk = 0;
-        sched_build_list();
-    } else if (key == LV_KEY_LEFT) {
-        /* Previous day */
-        current_day = (current_day + 2) % 3;
-        selected_talk = 0;
-        sched_build_list();
+    } else if (key == LV_KEY_RIGHT || key == LV_KEY_DOWN) {
+        /* Scroll down through talks; wrap to next day at end */
+        if (selected_talk >= n - 1) {
+            current_day = (current_day + 1) % 3;
+            selected_talk = 0;
+            sched_build_list();
+        } else {
+            selected_talk++;
+            sched_update_highlight();
+            lv_obj_t *sel = lv_obj_get_child(sched_list, selected_talk);
+            if (sel) lv_obj_scroll_to_view(sel, LV_ANIM_ON);
+        }
+    } else if (key == LV_KEY_LEFT || key == LV_KEY_UP) {
+        /* Scroll up; wrap to previous day at top */
+        if (selected_talk <= 0) {
+            current_day = (current_day + 2) % 3;
+            selected_talk = day_counts[current_day] - 1;
+            sched_build_list();
+        } else {
+            selected_talk--;
+            sched_update_highlight();
+            lv_obj_t *sel = lv_obj_get_child(sched_list, selected_talk);
+            if (sel) lv_obj_scroll_to_view(sel, LV_ANIM_ON);
+        }
     }
 }
 
@@ -236,8 +248,10 @@ static void sched_setup(lv_obj_t *parent)
 
     sched_build_list();
 
-    /* Register input */
+    /* Register input — key for rotate, click for back */
     lv_obj_add_event_cb(sched_cont, sched_event_cb, LV_EVENT_KEY, NULL);
+    lv_obj_add_event_cb(sched_cont, sched_event_cb, LV_EVENT_CLICKED, NULL);
+    lv_obj_add_event_cb(sched_cont, sched_event_cb, LV_EVENT_LONG_PRESSED, NULL);
     lv_group_t *g = lv_group_get_default();
     if (g) lv_group_add_obj(g, sched_cont);
 }
