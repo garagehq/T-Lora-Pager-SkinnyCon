@@ -380,6 +380,367 @@ static void draw_icon_nettools(lv_obj_t *parent)
     }
 }
 
+/* BadgeShark icon: eye/monitor */
+static void draw_icon_badgeshark(lv_obj_t *parent)
+{
+    lv_obj_t *c = lv_obj_create(parent);
+    lv_obj_set_size(c, 52, 48);
+    lv_obj_center(c);
+    lv_obj_set_style_bg_opa(c, LV_OPA_0, 0);
+    lv_obj_set_style_border_width(c, 0, 0);
+    lv_obj_remove_flag(c, LV_OBJ_FLAG_SCROLLABLE);
+
+    /* Eye outer shape — two arcs forming an eye */
+    lv_obj_t *eye = lv_obj_create(c);
+    lv_obj_set_size(eye, 44, 28);
+    lv_obj_align(eye, LV_ALIGN_CENTER, 0, 0);
+    lv_obj_set_style_bg_opa(eye, LV_OPA_0, 0);
+    lv_obj_set_style_border_color(eye, SC_TEXT, 0);
+    lv_obj_set_style_border_width(eye, 2, 0);
+    lv_obj_set_style_radius(eye, LV_RADIUS_CIRCLE, 0);
+
+    /* Pupil */
+    lv_obj_t *pupil = lv_obj_create(c);
+    lv_obj_set_size(pupil, 16, 16);
+    lv_obj_align(pupil, LV_ALIGN_CENTER, 0, 0);
+    lv_obj_set_style_radius(pupil, LV_RADIUS_CIRCLE, 0);
+    lv_obj_set_style_bg_color(pupil, SC_TEXT, 0);
+    lv_obj_set_style_bg_opa(pupil, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_width(pupil, 0, 0);
+
+    /* Inner highlight */
+    lv_obj_t *hl = lv_obj_create(c);
+    lv_obj_set_size(hl, 6, 6);
+    lv_obj_align(hl, LV_ALIGN_CENTER, -2, -2);
+    lv_obj_set_style_radius(hl, LV_RADIUS_CIRCLE, 0);
+    lv_obj_set_style_bg_color(hl, SC_PANEL, 0);
+    lv_obj_set_style_bg_opa(hl, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_width(hl, 0, 0);
+}
+
+/* LoRa icon: radio antenna with wave */
+static void draw_icon_lora(lv_obj_t *parent)
+{
+    lv_obj_t *c = lv_obj_create(parent);
+    lv_obj_set_size(c, 48, 52);
+    lv_obj_center(c);
+    lv_obj_set_style_bg_opa(c, LV_OPA_0, 0);
+    lv_obj_set_style_border_width(c, 0, 0);
+    lv_obj_remove_flag(c, LV_OBJ_FLAG_SCROLLABLE);
+
+    /* Antenna mast */
+    lv_obj_t *mast = lv_obj_create(c);
+    lv_obj_set_size(mast, 4, 34);
+    lv_obj_align(mast, LV_ALIGN_BOTTOM_MID, 0, -2);
+    lv_obj_set_style_bg_color(mast, SC_TEXT, 0);
+    lv_obj_set_style_bg_opa(mast, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_width(mast, 0, 0);
+    lv_obj_set_style_radius(mast, 2, 0);
+
+    /* Antenna tip */
+    lv_obj_t *tip = lv_obj_create(c);
+    lv_obj_set_size(tip, 10, 10);
+    lv_obj_align(tip, LV_ALIGN_TOP_MID, 0, 4);
+    lv_obj_set_style_radius(tip, LV_RADIUS_CIRCLE, 0);
+    lv_obj_set_style_bg_color(tip, SC_ACCENT, 0);
+    lv_obj_set_style_bg_opa(tip, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_width(tip, 0, 0);
+
+    /* Signal waves on right side */
+    int sizes[] = {14, 22, 30};
+    for (int i = 0; i < 3; i++) {
+        lv_obj_t *arc = lv_obj_create(c);
+        lv_obj_set_size(arc, sizes[i] / 2, sizes[i]);
+        lv_obj_align(arc, LV_ALIGN_TOP_RIGHT, -2, 6 - sizes[i] / 4);
+        lv_obj_set_style_bg_opa(arc, LV_OPA_0, 0);
+        lv_obj_set_style_border_color(arc, SC_TEAL, 0);
+        lv_obj_set_style_border_width(arc, 2, 0);
+        lv_obj_set_style_border_side(arc, (lv_border_side_t)(LV_BORDER_SIDE_RIGHT), 0);
+        lv_obj_set_style_radius(arc, sizes[i], 0);
+    }
+
+    /* Base */
+    lv_obj_t *base = lv_obj_create(c);
+    lv_obj_set_size(base, 20, 4);
+    lv_obj_align(base, LV_ALIGN_BOTTOM_MID, 0, -2);
+    lv_obj_set_style_bg_color(base, SC_TEXT, 0);
+    lv_obj_set_style_bg_opa(base, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_width(base, 0, 0);
+    lv_obj_set_style_radius(base, 2, 0);
+}
+
+/* LoRa Chat icon: speech bubble */
+static void draw_icon_chat(lv_obj_t *parent)
+{
+    lv_obj_t *c = lv_obj_create(parent);
+    lv_obj_set_size(c, 52, 48);
+    lv_obj_center(c);
+    lv_obj_set_style_bg_opa(c, LV_OPA_0, 0);
+    lv_obj_set_style_border_width(c, 0, 0);
+    lv_obj_remove_flag(c, LV_OBJ_FLAG_SCROLLABLE);
+
+    /* Bubble */
+    lv_obj_t *bubble = lv_obj_create(c);
+    lv_obj_set_size(bubble, 44, 30);
+    lv_obj_align(bubble, LV_ALIGN_TOP_MID, 0, 2);
+    lv_obj_set_style_bg_color(bubble, SC_TEXT, 0);
+    lv_obj_set_style_bg_opa(bubble, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_width(bubble, 0, 0);
+    lv_obj_set_style_radius(bubble, 12, 0);
+
+    /* Three dots inside bubble */
+    for (int i = 0; i < 3; i++) {
+        lv_obj_t *dot = lv_obj_create(bubble);
+        lv_obj_set_size(dot, 6, 6);
+        lv_obj_set_style_radius(dot, LV_RADIUS_CIRCLE, 0);
+        lv_obj_set_style_bg_color(dot, SC_PANEL, 0);
+        lv_obj_set_style_bg_opa(dot, LV_OPA_COVER, 0);
+        lv_obj_set_style_border_width(dot, 0, 0);
+        lv_obj_align(dot, LV_ALIGN_CENTER, (i - 1) * 12, 0);
+    }
+
+    /* Tail triangle (approximated with small rotated square) */
+    lv_obj_t *tail = lv_obj_create(c);
+    lv_obj_set_size(tail, 10, 10);
+    lv_obj_align(tail, LV_ALIGN_BOTTOM_LEFT, 10, -10);
+    lv_obj_set_style_bg_color(tail, SC_TEXT, 0);
+    lv_obj_set_style_bg_opa(tail, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_width(tail, 0, 0);
+    lv_obj_set_style_radius(tail, 0, 0);
+}
+
+/* Setting icon: gear */
+static void draw_icon_setting(lv_obj_t *parent)
+{
+    lv_obj_t *c = lv_obj_create(parent);
+    lv_obj_set_size(c, 48, 48);
+    lv_obj_center(c);
+    lv_obj_set_style_bg_opa(c, LV_OPA_0, 0);
+    lv_obj_set_style_border_width(c, 0, 0);
+    lv_obj_remove_flag(c, LV_OBJ_FLAG_SCROLLABLE);
+
+    /* Outer gear ring */
+    lv_obj_t *gear = lv_obj_create(c);
+    lv_obj_set_size(gear, 40, 40);
+    lv_obj_center(gear);
+    lv_obj_set_style_radius(gear, LV_RADIUS_CIRCLE, 0);
+    lv_obj_set_style_bg_opa(gear, LV_OPA_0, 0);
+    lv_obj_set_style_border_color(gear, SC_TEXT, 0);
+    lv_obj_set_style_border_width(gear, 4, 0);
+
+    /* Center hole */
+    lv_obj_t *hole = lv_obj_create(c);
+    lv_obj_set_size(hole, 14, 14);
+    lv_obj_center(hole);
+    lv_obj_set_style_radius(hole, LV_RADIUS_CIRCLE, 0);
+    lv_obj_set_style_bg_color(hole, SC_TEXT, 0);
+    lv_obj_set_style_bg_opa(hole, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_width(hole, 0, 0);
+
+    /* Gear teeth (4 rectangular teeth at N/S/E/W) */
+    int positions[][2] = {{0, -22}, {0, 22}, {-22, 0}, {22, 0}};
+    for (int i = 0; i < 4; i++) {
+        lv_obj_t *tooth = lv_obj_create(c);
+        lv_obj_set_size(tooth, (i < 2) ? 10 : 6, (i < 2) ? 6 : 10);
+        lv_obj_align(tooth, LV_ALIGN_CENTER, positions[i][0], positions[i][1]);
+        lv_obj_set_style_bg_color(tooth, SC_TEXT, 0);
+        lv_obj_set_style_bg_opa(tooth, LV_OPA_COVER, 0);
+        lv_obj_set_style_border_width(tooth, 0, 0);
+        lv_obj_set_style_radius(tooth, 1, 0);
+    }
+}
+
+/* Wireless icon: WiFi arcs */
+static void draw_icon_wireless(lv_obj_t *parent)
+{
+    lv_obj_t *c = lv_obj_create(parent);
+    lv_obj_set_size(c, 52, 48);
+    lv_obj_center(c);
+    lv_obj_set_style_bg_opa(c, LV_OPA_0, 0);
+    lv_obj_set_style_border_width(c, 0, 0);
+    lv_obj_remove_flag(c, LV_OBJ_FLAG_SCROLLABLE);
+
+    /* Dot at bottom */
+    lv_obj_t *dot = lv_obj_create(c);
+    lv_obj_set_size(dot, 8, 8);
+    lv_obj_align(dot, LV_ALIGN_BOTTOM_MID, 0, -4);
+    lv_obj_set_style_radius(dot, LV_RADIUS_CIRCLE, 0);
+    lv_obj_set_style_bg_color(dot, SC_TEXT, 0);
+    lv_obj_set_style_bg_opa(dot, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_width(dot, 0, 0);
+
+    /* WiFi arcs */
+    int sizes[] = {24, 38, 52};
+    for (int i = 0; i < 3; i++) {
+        lv_obj_t *arc = lv_obj_create(c);
+        lv_obj_set_size(arc, sizes[i], sizes[i] / 2);
+        lv_obj_align(arc, LV_ALIGN_BOTTOM_MID, 0, -4);
+        lv_obj_set_style_bg_opa(arc, LV_OPA_0, 0);
+        lv_obj_set_style_border_color(arc, SC_TEXT, 0);
+        lv_obj_set_style_border_width(arc, 3, 0);
+        lv_obj_set_style_border_side(arc, (lv_border_side_t)(LV_BORDER_SIDE_TOP), 0);
+        lv_obj_set_style_radius(arc, sizes[i], 0);
+    }
+}
+
+/* GPS icon: location pin */
+static void draw_icon_gps(lv_obj_t *parent)
+{
+    lv_obj_t *c = lv_obj_create(parent);
+    lv_obj_set_size(c, 40, 52);
+    lv_obj_center(c);
+    lv_obj_set_style_bg_opa(c, LV_OPA_0, 0);
+    lv_obj_set_style_border_width(c, 0, 0);
+    lv_obj_remove_flag(c, LV_OBJ_FLAG_SCROLLABLE);
+
+    /* Pin head (circle) */
+    lv_obj_t *pin = lv_obj_create(c);
+    lv_obj_set_size(pin, 30, 30);
+    lv_obj_align(pin, LV_ALIGN_TOP_MID, 0, 2);
+    lv_obj_set_style_radius(pin, LV_RADIUS_CIRCLE, 0);
+    lv_obj_set_style_bg_color(pin, SC_ACCENT, 0);
+    lv_obj_set_style_bg_opa(pin, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_width(pin, 0, 0);
+
+    /* Inner dot */
+    lv_obj_t *inner = lv_obj_create(c);
+    lv_obj_set_size(inner, 12, 12);
+    lv_obj_align(inner, LV_ALIGN_TOP_MID, 0, 11);
+    lv_obj_set_style_radius(inner, LV_RADIUS_CIRCLE, 0);
+    lv_obj_set_style_bg_color(inner, SC_PANEL, 0);
+    lv_obj_set_style_bg_opa(inner, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_width(inner, 0, 0);
+
+    /* Pin point (triangle approximated with small diamond) */
+    lv_obj_t *point = lv_obj_create(c);
+    lv_obj_set_size(point, 14, 18);
+    lv_obj_align(point, LV_ALIGN_BOTTOM_MID, 0, -2);
+    lv_obj_set_style_bg_color(point, SC_ACCENT, 0);
+    lv_obj_set_style_bg_opa(point, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_width(point, 0, 0);
+    lv_obj_set_style_radius(point, 0, 0);
+}
+
+/* Power icon: power button symbol */
+static void draw_icon_power(lv_obj_t *parent)
+{
+    lv_obj_t *c = lv_obj_create(parent);
+    lv_obj_set_size(c, 48, 48);
+    lv_obj_center(c);
+    lv_obj_set_style_bg_opa(c, LV_OPA_0, 0);
+    lv_obj_set_style_border_width(c, 0, 0);
+    lv_obj_remove_flag(c, LV_OBJ_FLAG_SCROLLABLE);
+
+    /* Circle */
+    lv_obj_t *ring = lv_obj_create(c);
+    lv_obj_set_size(ring, 36, 36);
+    lv_obj_center(ring);
+    lv_obj_set_style_radius(ring, LV_RADIUS_CIRCLE, 0);
+    lv_obj_set_style_bg_opa(ring, LV_OPA_0, 0);
+    lv_obj_set_style_border_color(ring, SC_TEXT, 0);
+    lv_obj_set_style_border_width(ring, 3, 0);
+
+    /* Vertical line through top */
+    lv_obj_t *line = lv_obj_create(c);
+    lv_obj_set_size(line, 4, 22);
+    lv_obj_align(line, LV_ALIGN_TOP_MID, 0, 4);
+    lv_obj_set_style_bg_color(line, SC_TEXT, 0);
+    lv_obj_set_style_bg_opa(line, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_width(line, 0, 0);
+    lv_obj_set_style_radius(line, 2, 0);
+}
+
+/* Microphone icon: mic shape */
+static void draw_icon_mic(lv_obj_t *parent)
+{
+    lv_obj_t *c = lv_obj_create(parent);
+    lv_obj_set_size(c, 40, 52);
+    lv_obj_center(c);
+    lv_obj_set_style_bg_opa(c, LV_OPA_0, 0);
+    lv_obj_set_style_border_width(c, 0, 0);
+    lv_obj_remove_flag(c, LV_OBJ_FLAG_SCROLLABLE);
+
+    /* Mic head (rounded rectangle) */
+    lv_obj_t *head = lv_obj_create(c);
+    lv_obj_set_size(head, 18, 28);
+    lv_obj_align(head, LV_ALIGN_TOP_MID, 0, 2);
+    lv_obj_set_style_bg_color(head, SC_TEXT, 0);
+    lv_obj_set_style_bg_opa(head, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_width(head, 0, 0);
+    lv_obj_set_style_radius(head, 9, 0);
+
+    /* Cradle arc */
+    lv_obj_t *cradle = lv_obj_create(c);
+    lv_obj_set_size(cradle, 30, 18);
+    lv_obj_align(cradle, LV_ALIGN_CENTER, 0, 6);
+    lv_obj_set_style_bg_opa(cradle, LV_OPA_0, 0);
+    lv_obj_set_style_border_color(cradle, SC_TEXT, 0);
+    lv_obj_set_style_border_width(cradle, 3, 0);
+    lv_obj_set_style_border_side(cradle, (lv_border_side_t)(LV_BORDER_SIDE_BOTTOM | LV_BORDER_SIDE_LEFT | LV_BORDER_SIDE_RIGHT), 0);
+    lv_obj_set_style_radius(cradle, 14, 0);
+
+    /* Stand */
+    lv_obj_t *stand = lv_obj_create(c);
+    lv_obj_set_size(stand, 4, 10);
+    lv_obj_align(stand, LV_ALIGN_BOTTOM_MID, 0, -6);
+    lv_obj_set_style_bg_color(stand, SC_TEXT, 0);
+    lv_obj_set_style_bg_opa(stand, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_width(stand, 0, 0);
+
+    /* Base */
+    lv_obj_t *base = lv_obj_create(c);
+    lv_obj_set_size(base, 18, 3);
+    lv_obj_align(base, LV_ALIGN_BOTTOM_MID, 0, -4);
+    lv_obj_set_style_bg_color(base, SC_TEXT, 0);
+    lv_obj_set_style_bg_opa(base, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_width(base, 0, 0);
+    lv_obj_set_style_radius(base, 1, 0);
+}
+
+/* IMU icon: 3-axis arrows */
+static void draw_icon_imu(lv_obj_t *parent)
+{
+    lv_obj_t *c = lv_obj_create(parent);
+    lv_obj_set_size(c, 48, 48);
+    lv_obj_center(c);
+    lv_obj_set_style_bg_opa(c, LV_OPA_0, 0);
+    lv_obj_set_style_border_width(c, 0, 0);
+    lv_obj_remove_flag(c, LV_OBJ_FLAG_SCROLLABLE);
+
+    /* Center dot */
+    lv_obj_t *center = lv_obj_create(c);
+    lv_obj_set_size(center, 8, 8);
+    lv_obj_align(center, LV_ALIGN_CENTER, 0, 4);
+    lv_obj_set_style_radius(center, LV_RADIUS_CIRCLE, 0);
+    lv_obj_set_style_bg_color(center, SC_TEXT, 0);
+    lv_obj_set_style_bg_opa(center, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_width(center, 0, 0);
+
+    /* X axis (horizontal) */
+    lv_obj_t *x = lv_obj_create(c);
+    lv_obj_set_size(x, 30, 3);
+    lv_obj_align(x, LV_ALIGN_CENTER, 8, 4);
+    lv_obj_set_style_bg_color(x, SC_ACCENT, 0);
+    lv_obj_set_style_bg_opa(x, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_width(x, 0, 0);
+
+    /* Y axis (vertical) */
+    lv_obj_t *y = lv_obj_create(c);
+    lv_obj_set_size(y, 3, 30);
+    lv_obj_align(y, LV_ALIGN_CENTER, 0, -10);
+    lv_obj_set_style_bg_color(y, SC_GREEN, 0);
+    lv_obj_set_style_bg_opa(y, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_width(y, 0, 0);
+
+    /* Z axis (diagonal) */
+    lv_obj_t *z = lv_obj_create(c);
+    lv_obj_set_size(z, 20, 3);
+    lv_obj_align(z, LV_ALIGN_CENTER, -12, 14);
+    lv_obj_set_style_bg_color(z, SC_CYAN, 0);
+    lv_obj_set_style_bg_opa(z, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_width(z, 0, 0);
+}
+
 
 void menu_name_label_event_cb(lv_event_t *e)
 {
@@ -742,12 +1103,12 @@ void setupGui()
     /* SkinnyCon primary apps — first in menu (custom drawn icons) */
     create_app_drawn(panel, "Nametag", draw_icon_nametag, &ui_nametag_main);
     create_app_drawn(panel, "Schedule", draw_icon_schedule, &ui_schedule_main);
-    create_app(panel, "BadgeShark", &img_monitoring, &ui_badgeshark_main);
+    create_app_drawn(panel, "BadgeShark", draw_icon_badgeshark, &ui_badgeshark_main);
     create_app_drawn(panel, "Net Tools", draw_icon_nettools, &ui_nettools_main);
 
     /* Radio & messaging */
-    create_app(panel, "LoRa", &img_radio, &ui_radio_main);
-    create_app(panel, "LoRa Chat", &img_msgchat, &ui_msgchat_main);
+    create_app_drawn(panel, "LoRa", draw_icon_lora, &ui_radio_main);
+    create_app_drawn(panel, "LoRa Chat", draw_icon_chat, &ui_msgchat_main);
 
     /* Other apps */
 #if defined(USING_IR_REMOTE)
@@ -790,8 +1151,8 @@ void setupGui()
     // #endif
 
     // Removed: Screen Test app (development-only, not needed for SkinnyCon)
-    create_app(panel, "Setting", &img_configuration, &ui_sys_main);
-    create_app(panel, "Wireless", &img_wifi, &ui_wireless_main);
+    create_app_drawn(panel, "Setting", draw_icon_setting, &ui_sys_main);
+    create_app_drawn(panel, "Wireless", draw_icon_wireless, &ui_wireless_main);
 
 #if defined(USING_UART_BLE)
     create_app(panel, "Bluetooth", &img_bluetooth, &ui_ble_main);
@@ -803,11 +1164,11 @@ void setupGui()
     }
 #endif
 
-    create_app(panel, "GPS", &img_gps, &ui_gps_main);
+    create_app_drawn(panel, "GPS", draw_icon_gps, &ui_gps_main);
     // Removed: Monitor app (battery info already on clock face, detailed stats are dev-only)
-    create_app(panel, "Power", &img_power, &ui_power_main);
-    create_app(panel, "Microphone", &img_microphone, &ui_microphone_main);
-    create_app(panel, "IMU", &img_gyroscope, &ui_sensor_main);
+    create_app_drawn(panel, "Power", draw_icon_power, &ui_power_main);
+    create_app_drawn(panel, "Microphone", draw_icon_mic, &ui_microphone_main);
+    create_app_drawn(panel, "IMU", draw_icon_imu, &ui_sensor_main);
 
     int offset = -10;
     if (lv_display_get_physical_vertical_resolution(NULL) > 320) {

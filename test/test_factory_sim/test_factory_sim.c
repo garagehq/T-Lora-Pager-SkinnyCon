@@ -238,6 +238,217 @@ static void draw_test_icon_nettools(lv_obj_t *parent)
     }
 }
 
+/* BadgeShark icon: eye */
+static void draw_test_icon_badgeshark(lv_obj_t *parent)
+{
+    lv_obj_t *btn = create_app_btn_test(parent, "BadgeShark");
+    lv_obj_t *c = lv_obj_create(btn);
+    lv_obj_set_size(c, 52, 48); lv_obj_center(c);
+    lv_obj_set_style_bg_opa(c, LV_OPA_0, 0); lv_obj_set_style_border_width(c, 0, 0);
+    lv_obj_remove_flag(c, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_t *eye = lv_obj_create(c); lv_obj_set_size(eye, 44, 28); lv_obj_center(eye);
+    lv_obj_set_style_bg_opa(eye, LV_OPA_0, 0); lv_obj_set_style_border_color(eye, SC_TEXT, 0);
+    lv_obj_set_style_border_width(eye, 2, 0); lv_obj_set_style_radius(eye, LV_RADIUS_CIRCLE, 0);
+    lv_obj_t *pupil = lv_obj_create(c); lv_obj_set_size(pupil, 16, 16); lv_obj_center(pupil);
+    lv_obj_set_style_radius(pupil, LV_RADIUS_CIRCLE, 0); lv_obj_set_style_bg_color(pupil, SC_TEXT, 0);
+    lv_obj_set_style_bg_opa(pupil, LV_OPA_COVER, 0); lv_obj_set_style_border_width(pupil, 0, 0);
+    lv_obj_t *hl = lv_obj_create(c); lv_obj_set_size(hl, 6, 6); lv_obj_align(hl, LV_ALIGN_CENTER, -2, -2);
+    lv_obj_set_style_radius(hl, LV_RADIUS_CIRCLE, 0); lv_obj_set_style_bg_color(hl, SC_PANEL, 0);
+    lv_obj_set_style_bg_opa(hl, LV_OPA_COVER, 0); lv_obj_set_style_border_width(hl, 0, 0);
+}
+
+/* LoRa icon: antenna with wave */
+static void draw_test_icon_lora(lv_obj_t *parent)
+{
+    lv_obj_t *btn = create_app_btn_test(parent, "LoRa");
+    lv_obj_t *c = lv_obj_create(btn);
+    lv_obj_set_size(c, 48, 52); lv_obj_center(c);
+    lv_obj_set_style_bg_opa(c, LV_OPA_0, 0); lv_obj_set_style_border_width(c, 0, 0);
+    lv_obj_remove_flag(c, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_t *mast = lv_obj_create(c); lv_obj_set_size(mast, 4, 34);
+    lv_obj_align(mast, LV_ALIGN_BOTTOM_MID, 0, -2);
+    lv_obj_set_style_bg_color(mast, SC_TEXT, 0); lv_obj_set_style_bg_opa(mast, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_width(mast, 0, 0); lv_obj_set_style_radius(mast, 2, 0);
+    lv_obj_t *tip = lv_obj_create(c); lv_obj_set_size(tip, 10, 10);
+    lv_obj_align(tip, LV_ALIGN_TOP_MID, 0, 4);
+    lv_obj_set_style_radius(tip, LV_RADIUS_CIRCLE, 0); lv_obj_set_style_bg_color(tip, SC_ACCENT, 0);
+    lv_obj_set_style_bg_opa(tip, LV_OPA_COVER, 0); lv_obj_set_style_border_width(tip, 0, 0);
+    int sizes[] = {14, 22, 30};
+    for (int i = 0; i < 3; i++) {
+        lv_obj_t *arc = lv_obj_create(c); lv_obj_set_size(arc, sizes[i] / 2, sizes[i]);
+        lv_obj_align(arc, LV_ALIGN_TOP_RIGHT, -2, 6 - sizes[i] / 4);
+        lv_obj_set_style_bg_opa(arc, LV_OPA_0, 0); lv_obj_set_style_border_color(arc, SC_TEAL, 0);
+        lv_obj_set_style_border_width(arc, 2, 0);
+        lv_obj_set_style_border_side(arc, (lv_border_side_t)(LV_BORDER_SIDE_RIGHT), 0);
+        lv_obj_set_style_radius(arc, sizes[i], 0);
+    }
+    lv_obj_t *base = lv_obj_create(c); lv_obj_set_size(base, 20, 4);
+    lv_obj_align(base, LV_ALIGN_BOTTOM_MID, 0, -2);
+    lv_obj_set_style_bg_color(base, SC_TEXT, 0); lv_obj_set_style_bg_opa(base, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_width(base, 0, 0); lv_obj_set_style_radius(base, 2, 0);
+}
+
+/* Chat icon: speech bubble */
+static void draw_test_icon_chat(lv_obj_t *parent)
+{
+    lv_obj_t *btn = create_app_btn_test(parent, "LoRa Chat");
+    lv_obj_t *c = lv_obj_create(btn);
+    lv_obj_set_size(c, 52, 48); lv_obj_center(c);
+    lv_obj_set_style_bg_opa(c, LV_OPA_0, 0); lv_obj_set_style_border_width(c, 0, 0);
+    lv_obj_remove_flag(c, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_t *bubble = lv_obj_create(c); lv_obj_set_size(bubble, 44, 30);
+    lv_obj_align(bubble, LV_ALIGN_TOP_MID, 0, 2);
+    lv_obj_set_style_bg_color(bubble, SC_TEXT, 0); lv_obj_set_style_bg_opa(bubble, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_width(bubble, 0, 0); lv_obj_set_style_radius(bubble, 12, 0);
+    for (int i = 0; i < 3; i++) {
+        lv_obj_t *dot = lv_obj_create(bubble); lv_obj_set_size(dot, 6, 6);
+        lv_obj_set_style_radius(dot, LV_RADIUS_CIRCLE, 0); lv_obj_set_style_bg_color(dot, SC_PANEL, 0);
+        lv_obj_set_style_bg_opa(dot, LV_OPA_COVER, 0); lv_obj_set_style_border_width(dot, 0, 0);
+        lv_obj_align(dot, LV_ALIGN_CENTER, (i - 1) * 12, 0);
+    }
+    lv_obj_t *tail = lv_obj_create(c); lv_obj_set_size(tail, 10, 10);
+    lv_obj_align(tail, LV_ALIGN_BOTTOM_LEFT, 10, -10);
+    lv_obj_set_style_bg_color(tail, SC_TEXT, 0); lv_obj_set_style_bg_opa(tail, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_width(tail, 0, 0); lv_obj_set_style_radius(tail, 0, 0);
+}
+
+/* Setting icon: gear */
+static void draw_test_icon_setting(lv_obj_t *parent)
+{
+    lv_obj_t *btn = create_app_btn_test(parent, "Setting");
+    lv_obj_t *c = lv_obj_create(btn);
+    lv_obj_set_size(c, 48, 48); lv_obj_center(c);
+    lv_obj_set_style_bg_opa(c, LV_OPA_0, 0); lv_obj_set_style_border_width(c, 0, 0);
+    lv_obj_remove_flag(c, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_t *gear = lv_obj_create(c); lv_obj_set_size(gear, 40, 40); lv_obj_center(gear);
+    lv_obj_set_style_radius(gear, LV_RADIUS_CIRCLE, 0); lv_obj_set_style_bg_opa(gear, LV_OPA_0, 0);
+    lv_obj_set_style_border_color(gear, SC_TEXT, 0); lv_obj_set_style_border_width(gear, 4, 0);
+    lv_obj_t *hole = lv_obj_create(c); lv_obj_set_size(hole, 14, 14); lv_obj_center(hole);
+    lv_obj_set_style_radius(hole, LV_RADIUS_CIRCLE, 0); lv_obj_set_style_bg_color(hole, SC_TEXT, 0);
+    lv_obj_set_style_bg_opa(hole, LV_OPA_COVER, 0); lv_obj_set_style_border_width(hole, 0, 0);
+    int pos[][2] = {{0, -22}, {0, 22}, {-22, 0}, {22, 0}};
+    for (int i = 0; i < 4; i++) {
+        lv_obj_t *tooth = lv_obj_create(c);
+        lv_obj_set_size(tooth, (i < 2) ? 10 : 6, (i < 2) ? 6 : 10);
+        lv_obj_align(tooth, LV_ALIGN_CENTER, pos[i][0], pos[i][1]);
+        lv_obj_set_style_bg_color(tooth, SC_TEXT, 0); lv_obj_set_style_bg_opa(tooth, LV_OPA_COVER, 0);
+        lv_obj_set_style_border_width(tooth, 0, 0); lv_obj_set_style_radius(tooth, 1, 0);
+    }
+}
+
+/* Wireless icon: WiFi arcs */
+static void draw_test_icon_wireless(lv_obj_t *parent)
+{
+    lv_obj_t *btn = create_app_btn_test(parent, "Wireless");
+    lv_obj_t *c = lv_obj_create(btn);
+    lv_obj_set_size(c, 52, 48); lv_obj_center(c);
+    lv_obj_set_style_bg_opa(c, LV_OPA_0, 0); lv_obj_set_style_border_width(c, 0, 0);
+    lv_obj_remove_flag(c, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_t *dot = lv_obj_create(c); lv_obj_set_size(dot, 8, 8);
+    lv_obj_align(dot, LV_ALIGN_BOTTOM_MID, 0, -4);
+    lv_obj_set_style_radius(dot, LV_RADIUS_CIRCLE, 0); lv_obj_set_style_bg_color(dot, SC_TEXT, 0);
+    lv_obj_set_style_bg_opa(dot, LV_OPA_COVER, 0); lv_obj_set_style_border_width(dot, 0, 0);
+    int sizes[] = {24, 38, 52};
+    for (int i = 0; i < 3; i++) {
+        lv_obj_t *arc = lv_obj_create(c); lv_obj_set_size(arc, sizes[i], sizes[i] / 2);
+        lv_obj_align(arc, LV_ALIGN_BOTTOM_MID, 0, -4);
+        lv_obj_set_style_bg_opa(arc, LV_OPA_0, 0); lv_obj_set_style_border_color(arc, SC_TEXT, 0);
+        lv_obj_set_style_border_width(arc, 3, 0);
+        lv_obj_set_style_border_side(arc, (lv_border_side_t)(LV_BORDER_SIDE_TOP), 0);
+        lv_obj_set_style_radius(arc, sizes[i], 0);
+    }
+}
+
+/* GPS icon: location pin */
+static void draw_test_icon_gps(lv_obj_t *parent)
+{
+    lv_obj_t *btn = create_app_btn_test(parent, "GPS");
+    lv_obj_t *c = lv_obj_create(btn);
+    lv_obj_set_size(c, 40, 52); lv_obj_center(c);
+    lv_obj_set_style_bg_opa(c, LV_OPA_0, 0); lv_obj_set_style_border_width(c, 0, 0);
+    lv_obj_remove_flag(c, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_t *pin = lv_obj_create(c); lv_obj_set_size(pin, 30, 30);
+    lv_obj_align(pin, LV_ALIGN_TOP_MID, 0, 2);
+    lv_obj_set_style_radius(pin, LV_RADIUS_CIRCLE, 0); lv_obj_set_style_bg_color(pin, SC_ACCENT, 0);
+    lv_obj_set_style_bg_opa(pin, LV_OPA_COVER, 0); lv_obj_set_style_border_width(pin, 0, 0);
+    lv_obj_t *inner = lv_obj_create(c); lv_obj_set_size(inner, 12, 12);
+    lv_obj_align(inner, LV_ALIGN_TOP_MID, 0, 11);
+    lv_obj_set_style_radius(inner, LV_RADIUS_CIRCLE, 0); lv_obj_set_style_bg_color(inner, SC_PANEL, 0);
+    lv_obj_set_style_bg_opa(inner, LV_OPA_COVER, 0); lv_obj_set_style_border_width(inner, 0, 0);
+    lv_obj_t *point = lv_obj_create(c); lv_obj_set_size(point, 14, 18);
+    lv_obj_align(point, LV_ALIGN_BOTTOM_MID, 0, -2);
+    lv_obj_set_style_bg_color(point, SC_ACCENT, 0); lv_obj_set_style_bg_opa(point, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_width(point, 0, 0); lv_obj_set_style_radius(point, 0, 0);
+}
+
+/* Power icon: power button */
+static void draw_test_icon_power(lv_obj_t *parent)
+{
+    lv_obj_t *btn = create_app_btn_test(parent, "Power");
+    lv_obj_t *c = lv_obj_create(btn);
+    lv_obj_set_size(c, 48, 48); lv_obj_center(c);
+    lv_obj_set_style_bg_opa(c, LV_OPA_0, 0); lv_obj_set_style_border_width(c, 0, 0);
+    lv_obj_remove_flag(c, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_t *ring = lv_obj_create(c); lv_obj_set_size(ring, 36, 36); lv_obj_center(ring);
+    lv_obj_set_style_radius(ring, LV_RADIUS_CIRCLE, 0); lv_obj_set_style_bg_opa(ring, LV_OPA_0, 0);
+    lv_obj_set_style_border_color(ring, SC_TEXT, 0); lv_obj_set_style_border_width(ring, 3, 0);
+    lv_obj_t *line = lv_obj_create(c); lv_obj_set_size(line, 4, 22);
+    lv_obj_align(line, LV_ALIGN_TOP_MID, 0, 4);
+    lv_obj_set_style_bg_color(line, SC_TEXT, 0); lv_obj_set_style_bg_opa(line, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_width(line, 0, 0); lv_obj_set_style_radius(line, 2, 0);
+}
+
+/* Mic icon: microphone */
+static void draw_test_icon_mic(lv_obj_t *parent)
+{
+    lv_obj_t *btn = create_app_btn_test(parent, "Mic");
+    lv_obj_t *c = lv_obj_create(btn);
+    lv_obj_set_size(c, 40, 52); lv_obj_center(c);
+    lv_obj_set_style_bg_opa(c, LV_OPA_0, 0); lv_obj_set_style_border_width(c, 0, 0);
+    lv_obj_remove_flag(c, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_t *head = lv_obj_create(c); lv_obj_set_size(head, 18, 28);
+    lv_obj_align(head, LV_ALIGN_TOP_MID, 0, 2);
+    lv_obj_set_style_bg_color(head, SC_TEXT, 0); lv_obj_set_style_bg_opa(head, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_width(head, 0, 0); lv_obj_set_style_radius(head, 9, 0);
+    lv_obj_t *cradle = lv_obj_create(c); lv_obj_set_size(cradle, 30, 18);
+    lv_obj_align(cradle, LV_ALIGN_CENTER, 0, 6);
+    lv_obj_set_style_bg_opa(cradle, LV_OPA_0, 0); lv_obj_set_style_border_color(cradle, SC_TEXT, 0);
+    lv_obj_set_style_border_width(cradle, 3, 0);
+    lv_obj_set_style_border_side(cradle, (lv_border_side_t)(LV_BORDER_SIDE_BOTTOM | LV_BORDER_SIDE_LEFT | LV_BORDER_SIDE_RIGHT), 0);
+    lv_obj_set_style_radius(cradle, 14, 0);
+    lv_obj_t *stand = lv_obj_create(c); lv_obj_set_size(stand, 4, 10);
+    lv_obj_align(stand, LV_ALIGN_BOTTOM_MID, 0, -6);
+    lv_obj_set_style_bg_color(stand, SC_TEXT, 0); lv_obj_set_style_bg_opa(stand, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_width(stand, 0, 0);
+    lv_obj_t *base = lv_obj_create(c); lv_obj_set_size(base, 18, 3);
+    lv_obj_align(base, LV_ALIGN_BOTTOM_MID, 0, -4);
+    lv_obj_set_style_bg_color(base, SC_TEXT, 0); lv_obj_set_style_bg_opa(base, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_width(base, 0, 0); lv_obj_set_style_radius(base, 1, 0);
+}
+
+/* IMU icon: 3-axis */
+static void draw_test_icon_imu(lv_obj_t *parent)
+{
+    lv_obj_t *btn = create_app_btn_test(parent, "IMU");
+    lv_obj_t *c = lv_obj_create(btn);
+    lv_obj_set_size(c, 48, 48); lv_obj_center(c);
+    lv_obj_set_style_bg_opa(c, LV_OPA_0, 0); lv_obj_set_style_border_width(c, 0, 0);
+    lv_obj_remove_flag(c, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_t *center = lv_obj_create(c); lv_obj_set_size(center, 8, 8);
+    lv_obj_align(center, LV_ALIGN_CENTER, 0, 4);
+    lv_obj_set_style_radius(center, LV_RADIUS_CIRCLE, 0); lv_obj_set_style_bg_color(center, SC_TEXT, 0);
+    lv_obj_set_style_bg_opa(center, LV_OPA_COVER, 0); lv_obj_set_style_border_width(center, 0, 0);
+    lv_obj_t *x = lv_obj_create(c); lv_obj_set_size(x, 30, 3); lv_obj_align(x, LV_ALIGN_CENTER, 8, 4);
+    lv_obj_set_style_bg_color(x, SC_ACCENT, 0); lv_obj_set_style_bg_opa(x, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_width(x, 0, 0);
+    lv_obj_t *y = lv_obj_create(c); lv_obj_set_size(y, 3, 30); lv_obj_align(y, LV_ALIGN_CENTER, 0, -10);
+    lv_obj_set_style_bg_color(y, SC_GREEN, 0); lv_obj_set_style_bg_opa(y, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_width(y, 0, 0);
+    lv_obj_t *z = lv_obj_create(c); lv_obj_set_size(z, 20, 3); lv_obj_align(z, LV_ALIGN_CENTER, -12, 14);
+    lv_obj_set_style_bg_color(z, SC_CYAN, 0); lv_obj_set_style_bg_opa(z, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_width(z, 0, 0);
+}
+
 /* ================================================================
  *  TEST: Main menu screen with real app icons
  * ================================================================ */
@@ -687,110 +898,51 @@ void test_icon_rendering(void)
     lv_obj_set_style_bg_color(scr, SC_BG, LV_PART_MAIN);
     lv_obj_set_style_bg_opa(scr, LV_OPA_COVER, 0);
 
-    const struct {
-        const lv_image_dsc_t *img;
-        const char *name;
-    } icons[] = {
-        {&img_configuration, "Settings"},
-        {&img_radio,         "Radio"},
-        {&img_msgchat,       "Chat"},
-        {&img_monitoring,    "BadgeShark"},
-        {&img_bluetooth,     "BT"},
-        {&img_wifi,          "WiFi"},
+    /* 4x3 grid of all drawn icons */
+    lv_obj_t *grid = lv_obj_create(scr);
+    lv_obj_set_size(grid, LV_PCT(100), LV_PCT(100));
+    lv_obj_set_style_bg_opa(grid, LV_OPA_0, 0);
+    lv_obj_set_style_border_width(grid, 0, 0);
+    lv_obj_set_style_pad_all(grid, 2, 0);
+    lv_obj_set_style_pad_row(grid, 0, 0);
+    lv_obj_set_style_pad_column(grid, 0, 0);
+    lv_obj_set_flex_flow(grid, LV_FLEX_FLOW_ROW_WRAP);
+
+    typedef void (*draw_fn_t)(lv_obj_t *);
+    const struct { draw_fn_t fn; const char *name; } icons[] = {
+        {draw_test_icon_nametag,    "Nametag"},
+        {draw_test_icon_schedule,   "Schedule"},
+        {draw_test_icon_badgeshark, "BadgeShark"},
+        {draw_test_icon_nettools,   "Net Tools"},
+        {draw_test_icon_lora,       "LoRa"},
+        {draw_test_icon_chat,       "LoRa Chat"},
+        {draw_test_icon_setting,    "Setting"},
+        {draw_test_icon_wireless,   "Wireless"},
+        {draw_test_icon_gps,        "GPS"},
+        {draw_test_icon_power,      "Power"},
+        {draw_test_icon_mic,        "Mic"},
+        {draw_test_icon_imu,        "IMU"},
     };
 
-    int cols = 3;
-    int icon_w = EXPECTED_HOR_RES / cols;
-    int icon_h = EXPECTED_VER_RES / 2;
+    for (int i = 0; i < 12; i++) {
+        lv_obj_t *slot = lv_obj_create(grid);
+        lv_obj_set_size(slot, EXPECTED_HOR_RES / 4 - 4, EXPECTED_VER_RES / 3 - 2);
+        lv_obj_set_style_bg_opa(slot, LV_OPA_0, 0);
+        lv_obj_set_style_border_width(slot, 0, 0);
+        lv_obj_set_style_pad_all(slot, 0, 0);
+        lv_obj_remove_flag(slot, LV_OBJ_FLAG_SCROLLABLE);
 
-    for (int i = 0; i < 6; i++) {
-        int col = i % cols;
-        int row = i / cols;
+        icons[i].fn(slot);
 
-        lv_obj_t *img_obj = lv_image_create(scr);
-        lv_image_set_src(img_obj, icons[i].img);
-        lv_image_set_scale(img_obj, 180);
-        lv_obj_set_pos(img_obj, col * icon_w + (icon_w - 50) / 2, row * icon_h + 10);
-
-        lv_obj_t *label = lv_label_create(scr);
-        lv_obj_set_style_text_font(label, &font_alibaba_12, LV_PART_MAIN);
-        lv_obj_set_style_text_color(label, SC_TEXT, LV_PART_MAIN);
-        lv_label_set_text(label, icons[i].name);
-        lv_obj_set_pos(label, col * icon_w + 10, row * icon_h + 70);
+        lv_obj_t *lbl = lv_label_create(slot);
+        lv_label_set_text(lbl, icons[i].name);
+        lv_obj_set_style_text_color(lbl, SC_TEXT, 0);
+        lv_obj_set_style_text_font(lbl, &lv_font_montserrat_14, 0);
+        lv_obj_align(lbl, LV_ALIGN_BOTTOM_MID, 0, -2);
     }
 
     lvgl_test_run(200);
     int result = lvgl_test_save_ppm("factory_icons.ppm");
-    TEST_ASSERT_EQUAL_INT(0, result);
-}
-
-/* ================================================================
- *  TEST: Generated icon rendering (custom LVGL-drawn icons)
- * ================================================================ */
-
-void test_generated_icon_rendering(void)
-{
-    lv_obj_t *scr = lv_screen_active();
-    lv_obj_set_style_bg_color(scr, SC_BG, LV_PART_MAIN);
-    lv_obj_set_style_bg_opa(scr, LV_OPA_COVER, 0);
-
-    /* Title */
-    lv_obj_t *title = lv_label_create(scr);
-    lv_obj_set_style_text_font(title, &font_alibaba_12, 0);
-    lv_obj_set_style_text_color(title, SC_ACCENT, 0);
-    lv_label_set_text(title, "Generated Icons (LVGL-drawn)");
-    lv_obj_align(title, LV_ALIGN_TOP_MID, 0, 5);
-
-    /* Three icon slots side by side */
-    lv_obj_t *row = lv_obj_create(scr);
-    lv_obj_set_size(row, LV_PCT(100), LV_PCT(80));
-    lv_obj_align(row, LV_ALIGN_BOTTOM_MID, 0, 0);
-    lv_obj_set_style_bg_opa(row, LV_OPA_0, 0);
-    lv_obj_set_style_border_width(row, 0, 0);
-    lv_obj_set_flex_flow(row, LV_FLEX_FLOW_ROW);
-    lv_obj_set_flex_align(row, LV_FLEX_ALIGN_SPACE_EVENLY, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
-
-    /* Nametag icon */
-    lv_obj_t *slot1 = lv_obj_create(row);
-    lv_obj_set_size(slot1, 140, LV_PCT(100));
-    lv_obj_set_style_bg_opa(slot1, LV_OPA_0, 0);
-    lv_obj_set_style_border_width(slot1, 0, 0);
-    lv_obj_set_flex_flow(slot1, LV_FLEX_FLOW_COLUMN);
-    lv_obj_set_flex_align(slot1, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
-    draw_test_icon_nametag(slot1);
-    lv_obj_t *lbl1 = lv_label_create(slot1);
-    lv_label_set_text(lbl1, "Nametag");
-    lv_obj_set_style_text_color(lbl1, SC_TEXT, 0);
-    lv_obj_set_style_text_font(lbl1, &font_alibaba_12, 0);
-
-    /* Schedule icon */
-    lv_obj_t *slot2 = lv_obj_create(row);
-    lv_obj_set_size(slot2, 140, LV_PCT(100));
-    lv_obj_set_style_bg_opa(slot2, LV_OPA_0, 0);
-    lv_obj_set_style_border_width(slot2, 0, 0);
-    lv_obj_set_flex_flow(slot2, LV_FLEX_FLOW_COLUMN);
-    lv_obj_set_flex_align(slot2, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
-    draw_test_icon_schedule(slot2);
-    lv_obj_t *lbl2 = lv_label_create(slot2);
-    lv_label_set_text(lbl2, "Schedule");
-    lv_obj_set_style_text_color(lbl2, SC_TEXT, 0);
-    lv_obj_set_style_text_font(lbl2, &font_alibaba_12, 0);
-
-    /* Net Tools icon */
-    lv_obj_t *slot3 = lv_obj_create(row);
-    lv_obj_set_size(slot3, 140, LV_PCT(100));
-    lv_obj_set_style_bg_opa(slot3, LV_OPA_0, 0);
-    lv_obj_set_style_border_width(slot3, 0, 0);
-    lv_obj_set_flex_flow(slot3, LV_FLEX_FLOW_COLUMN);
-    lv_obj_set_flex_align(slot3, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
-    draw_test_icon_nettools(slot3);
-    lv_obj_t *lbl3 = lv_label_create(slot3);
-    lv_label_set_text(lbl3, "Net Tools");
-    lv_obj_set_style_text_color(lbl3, SC_TEXT, 0);
-    lv_obj_set_style_text_font(lbl3, &font_alibaba_12, 0);
-
-    lvgl_test_run(200);
-    int result = lvgl_test_save_ppm("factory_icons_generated.ppm");
     TEST_ASSERT_EQUAL_INT(0, result);
 }
 
@@ -1494,7 +1646,6 @@ int main(int argc, char **argv)
     /* Asset quality verification */
     RUN_TEST(test_font_rendering_quality);
     RUN_TEST(test_icon_rendering);
-    RUN_TEST(test_generated_icon_rendering);
     RUN_TEST(test_screenshot_sizes);
 
     return UNITY_END();
