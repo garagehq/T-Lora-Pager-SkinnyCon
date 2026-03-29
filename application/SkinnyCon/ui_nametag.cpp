@@ -354,15 +354,13 @@ static void nametag_event_cb(lv_event_t *e)
 static void nametag_setup(lv_obj_t *parent)
 {
     nametag_cont = lv_obj_create(parent);
+    lv_obj_remove_style_all(nametag_cont);
     lv_obj_set_size(nametag_cont, LV_PCT(100), LV_PCT(100));
     lv_obj_set_style_bg_color(nametag_cont, SUPERCON_BG, 0);
     lv_obj_set_style_bg_opa(nametag_cont, LV_OPA_COVER, 0);
-    lv_obj_set_style_border_width(nametag_cont, 0, 0);
-    lv_obj_set_style_radius(nametag_cont, 0, 0);
     lv_obj_set_style_pad_all(nametag_cont, 4, 0);
     lv_obj_set_flex_flow(nametag_cont, LV_FLEX_FLOW_COLUMN);
-    lv_obj_set_flex_align(nametag_cont, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
-    /* Enable scrolling so long content is accessible */
+    lv_obj_set_flex_align(nametag_cont, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
     lv_obj_set_scrollbar_mode(nametag_cont, LV_SCROLLBAR_MODE_AUTO);
     lv_obj_set_scroll_dir(nametag_cont, LV_DIR_VER);
 

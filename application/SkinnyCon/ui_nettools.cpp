@@ -129,7 +129,7 @@ static void net_setup(lv_obj_t *parent)
     lv_obj_set_style_pad_hor(header, 8, 0);
 
     lv_obj_t *title = lv_label_create(header);
-    lv_label_set_text(title, LV_SYMBOL_WIFI " Net Tools");
+    lv_label_set_text(title, "Net Tools");
     lv_obj_set_style_text_color(title, SC_ACCENT, 0);
     lv_obj_set_style_text_font(title, &font_alibaba_12, 0);
     lv_obj_align(title, LV_ALIGN_LEFT_MID, 0, 0);
