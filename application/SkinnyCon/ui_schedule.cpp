@@ -93,23 +93,29 @@ static lv_obj_t *create_day_page(lv_obj_t *m, const talk_t *talks, int n, lv_gro
     lv_obj_t *page = lv_menu_page_create(m, NULL);
 
     for (int i = 0; i < n; i++) {
-        lv_obj_t *cont = lv_menu_cont_create(page);
-        lv_obj_set_flex_flow(cont, LV_FLEX_FLOW_ROW);
-        lv_obj_set_style_pad_ver(cont, 2, 0);
+        /* Use lv_obj (not lv_menu_cont) so clicking doesn't try to load a subpage */
+        lv_obj_t *row = lv_obj_create(page);
+        lv_obj_set_size(row, LV_PCT(100), LV_SIZE_CONTENT);
+        lv_obj_set_style_bg_opa(row, LV_OPA_0, 0);
+        lv_obj_set_style_border_width(row, 0, 0);
+        lv_obj_set_style_radius(row, 0, 0);
+        lv_obj_set_style_pad_ver(row, 3, 0);
+        lv_obj_set_style_pad_hor(row, 8, 0);
+        lv_obj_set_flex_flow(row, LV_FLEX_FLOW_ROW);
 
-        lv_obj_t *time_lbl = lv_label_create(cont);
+        lv_obj_t *time_lbl = lv_label_create(row);
         lv_label_set_text(time_lbl, talks[i].time);
         lv_obj_set_style_text_color(time_lbl, SCHED_CYAN, 0);
         lv_obj_set_style_min_width(time_lbl, 45, 0);
 
-        lv_obj_t *title_lbl = lv_label_create(cont);
+        lv_obj_t *title_lbl = lv_label_create(row);
         lv_label_set_text(title_lbl, talks[i].title);
         lv_obj_set_style_text_color(title_lbl, talks[i].is_break ? SCHED_DIM : SCHED_WHITE, 0);
         lv_obj_set_flex_grow(title_lbl, 1);
         lv_label_set_long_mode(title_lbl, LV_LABEL_LONG_CLIP);
 
-        /* Talk rows are display-only — don't add to group
-         * (adding makes them clickable which freezes the app) */
+        /* Add to group so encoder can scroll through talks */
+        if (g) lv_group_add_obj(g, row);
     }
 
     return page;
