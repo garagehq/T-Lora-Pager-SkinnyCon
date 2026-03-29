@@ -110,8 +110,14 @@ static void nametag_setup(lv_obj_t *parent)
 
     /* ── Menu items (scrollable via encoder) ─────────────────────── */
 
-    /* Edit Name — textarea on subpage, only menu_cont in group */
+    /* Edit Name — textarea in a menu subpage */
     lv_obj_t *edit_name_page = lv_menu_page_create(menu, NULL);
+
+    lv_obj_t *ta_label = lv_label_create(edit_name_page);
+    lv_label_set_text(ta_label, "Type your name:");
+    lv_obj_set_style_text_font(ta_label, &font_alibaba_12, 0);
+    lv_obj_set_style_text_color(ta_label, SC_TEXT_DIM, 0);
+
     lv_obj_t *name_ta = lv_textarea_create(edit_name_page);
     lv_obj_set_size(name_ta, LV_PCT(90), 40);
     lv_textarea_set_max_length(name_ta, NAME_MAX_LEN);
@@ -119,6 +125,8 @@ static void nametag_setup(lv_obj_t *parent)
     lv_textarea_set_one_line(name_ta, true);
     lv_obj_set_style_text_font(name_ta, &font_alibaba_24, 0);
     lv_obj_add_event_cb(name_ta, name_edit_done_cb, LV_EVENT_READY, NULL);
+    /* Textarea needs to be in group for keyboard input */
+    if (g) lv_group_add_obj(g, name_ta);
 
     lv_obj_t *edit_name_cont = lv_menu_cont_create(main_page);
     lv_obj_t *edit_name_lbl = lv_label_create(edit_name_cont);
@@ -213,11 +221,21 @@ static void nametag_setup(lv_obj_t *parent)
 
 static void nametag_exit(lv_obj_t *parent)
 {
-    printf("[NAMETAG] Exit\n");
+    printf("[NAMETAG] Exit — cleaning up\n");
+    /* Save name from textarea if still on edit page */
+    lv_group_t *g = lv_group_get_default();
+    if (g) {
+        printf("[NAMETAG] Group had %d objs before cleanup\n",
+               (int)lv_group_get_obj_count(g));
+    }
     if (menu) {
         lv_obj_clean(menu);
         lv_obj_del(menu);
         menu = NULL;
+    }
+    if (g) {
+        printf("[NAMETAG] Group has %d objs after menu delete\n",
+               (int)lv_group_get_obj_count(g));
     }
     name_label = NULL;
     subtitle_label = NULL;
