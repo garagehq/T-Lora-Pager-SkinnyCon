@@ -36,9 +36,11 @@ static lv_obj_t *subtitle_label = NULL;
 static lv_obj_t *mode_label = NULL;
 static uint8_t display_mode = 0;
 
-/* Editable name storage */
-static char user_name[NAME_MAX_LEN + 1] = "YOUR NAME";
-static char user_subtitle[SUBTITLE_MAX_LEN + 1] = "SkinnyCon 2026";
+/* Editable name storage (non-static so idle screen can read) */
+char nametag_user_name[NAME_MAX_LEN + 1] = "YOUR NAME";
+char nametag_user_subtitle[SUBTITLE_MAX_LEN + 1] = "SkinnyCon 2026";
+#define user_name nametag_user_name
+#define user_subtitle nametag_user_subtitle
 static bool editing_name = false;
 static bool editing_subtitle = false;
 

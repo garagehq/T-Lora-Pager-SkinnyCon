@@ -8,6 +8,11 @@
  */
 #include "ui_define.h"
 #include "ui_skinnycon_theme.h"
+#include <string.h>
+
+/* Nametag name storage (defined in ui_nametag.cpp) */
+extern char nametag_user_name[];
+extern char nametag_user_subtitle[];
 
 LV_IMG_DECLARE(img_microphone);
 LV_IMG_DECLARE(img_ir_remote);
@@ -583,6 +588,8 @@ void menu_name_label_event_cb(lv_event_t *e)
 
 
 
+static void idle_update_center(void);  /* forward decl */
+
 static void clock_update_datetime(lv_timer_t *t)
 {
     const char *week[] = {"Sun", "Mon", "Tue", "Wed", "Thur", "Fri", "Sat"};
@@ -595,12 +602,43 @@ static void clock_update_datetime(lv_timer_t *t)
     monitor_params_t params;
     hw_get_monitor_params(params);
     lv_label_set_text_fmt(clock_label.battery_label, "%d%%", params.battery_percent);
+
+    /* Update idle screen center if user changed their name */
+    idle_update_center();
+}
+
+static lv_obj_t *idle_name_label = NULL;
+static lv_obj_t *idle_subtitle_label = NULL;
+static lv_obj_t *idle_logo_row = NULL;
+
+/* Update idle screen center content based on whether user set their name */
+static void idle_update_center(void)
+{
+    bool name_set = (strcmp(nametag_user_name, "YOUR NAME") != 0);
+
+    if (name_set) {
+        /* Show user's name big in the center */
+        if (idle_logo_row) lv_obj_add_flag(idle_logo_row, LV_OBJ_FLAG_HIDDEN);
+        if (idle_name_label) {
+            lv_obj_remove_flag(idle_name_label, LV_OBJ_FLAG_HIDDEN);
+            lv_label_set_text(idle_name_label, nametag_user_name);
+        }
+        if (idle_subtitle_label) {
+            lv_obj_remove_flag(idle_subtitle_label, LV_OBJ_FLAG_HIDDEN);
+            lv_label_set_text(idle_subtitle_label, nametag_user_subtitle);
+        }
+    } else {
+        /* Show SkinnyCon logo */
+        if (idle_logo_row) lv_obj_remove_flag(idle_logo_row, LV_OBJ_FLAG_HIDDEN);
+        if (idle_name_label) lv_obj_add_flag(idle_name_label, LV_OBJ_FLAG_HIDDEN);
+        if (idle_subtitle_label) lv_obj_add_flag(idle_subtitle_label, LV_OBJ_FLAG_HIDDEN);
+    }
 }
 
 lv_obj_t *setupClock()
 {
-    /* SkinnyCon badge idle screen — replaces the default clock face.
-     * Shows conference name prominently with time/battery in footer. */
+    /* SkinnyCon badge idle screen — shows user's name if set,
+     * otherwise shows SkinnyCon logo. Footer has time/battery. */
     lv_obj_t *page = lv_obj_create(lv_screen_active());
     lv_obj_set_size(page, LV_PCT(100), LV_PCT(100));
     lv_obj_remove_flag(page, LV_OBJ_FLAG_SCROLLABLE);
@@ -619,16 +657,30 @@ lv_obj_t *setupClock()
     lv_obj_set_style_radius(bar_top, 0, 0);
     lv_obj_set_style_pad_all(bar_top, 0, 0);
 
-    /* Conference logo */
-    lv_obj_t *logo_row = draw_skinnycon_logo(page, &font_alibaba_60, 52);
-    lv_obj_align(logo_row, LV_ALIGN_CENTER, 0, -25);
+    /* Conference logo (shown when name not set) */
+    idle_logo_row = draw_skinnycon_logo(page, &font_alibaba_60, 52);
+    lv_obj_align(idle_logo_row, LV_ALIGN_CENTER, 0, -25);
 
-    /* Year subtitle */
-    lv_obj_t *year_label = lv_label_create(page);
-    lv_label_set_text(year_label, "Presented by Skinny Research and Development");
-    lv_obj_set_style_text_font(year_label, &font_alibaba_12, LV_PART_MAIN);
-    lv_obj_set_style_text_color(year_label, SC_TEXT_DIM, LV_PART_MAIN);
-    lv_obj_align(year_label, LV_ALIGN_CENTER, 0, 15);
+    /* User name display (shown when name is set) */
+    idle_name_label = lv_label_create(page);
+    lv_label_set_text(idle_name_label, nametag_user_name);
+    lv_obj_set_style_text_font(idle_name_label, &font_alibaba_60, LV_PART_MAIN);
+    lv_obj_set_style_text_color(idle_name_label, SC_TEXT, LV_PART_MAIN);
+    lv_obj_set_style_text_align(idle_name_label, LV_TEXT_ALIGN_CENTER, 0);
+    lv_obj_set_width(idle_name_label, LV_PCT(100));
+    lv_label_set_long_mode(idle_name_label, LV_LABEL_LONG_SCROLL_CIRCULAR);
+    lv_obj_align(idle_name_label, LV_ALIGN_CENTER, 0, -20);
+
+    idle_subtitle_label = lv_label_create(page);
+    lv_label_set_text(idle_subtitle_label, nametag_user_subtitle);
+    lv_obj_set_style_text_font(idle_subtitle_label, &font_alibaba_24, LV_PART_MAIN);
+    lv_obj_set_style_text_color(idle_subtitle_label, SC_GREEN, LV_PART_MAIN);
+    lv_obj_set_style_text_align(idle_subtitle_label, LV_TEXT_ALIGN_CENTER, 0);
+    lv_obj_set_width(idle_subtitle_label, LV_PCT(100));
+    lv_obj_align(idle_subtitle_label, LV_ALIGN_CENTER, 0, 20);
+
+    /* Show the right center content */
+    idle_update_center();
 
     /* Bottom bar with time + battery */
     lv_obj_t *footer = lv_obj_create(page);
