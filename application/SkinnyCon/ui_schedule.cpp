@@ -236,7 +236,7 @@ static void sched_setup(lv_obj_t *parent)
 
     lv_menu_set_page(menu, main_page);
 
-    /* Key handler for day switching */
+    /* Key handler for day/talk navigation */
     lv_obj_add_event_cb(menu, sched_key_cb, LV_EVENT_KEY, NULL);
 }
 
