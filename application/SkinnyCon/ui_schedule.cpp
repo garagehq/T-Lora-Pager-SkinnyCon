@@ -246,8 +246,12 @@ static void sched_setup(lv_obj_t *parent)
 
     lv_menu_set_page(menu, main_page);
 
-    /* Key handler for day/talk navigation */
-    lv_obj_add_event_cb(menu, sched_key_cb, LV_EVENT_KEY, NULL);
+    /* Make sched_list focusable so encoder events reach our key handler */
+    lv_obj_add_flag(sched_list, LV_OBJ_FLAG_CLICK_FOCUSABLE);
+    lv_obj_add_event_cb(sched_list, sched_key_cb, LV_EVENT_KEY, NULL);
+    lv_group_t *g = lv_group_get_default();
+    if (g) lv_group_add_obj(g, sched_list);
+    printf("[SCHED] Setup complete. sched_list added to group.\n");
 }
 
 static void sched_exit(lv_obj_t *parent)
