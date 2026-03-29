@@ -203,10 +203,12 @@ static void draw_test_icon_lora(lv_obj_t *p) {
 static void draw_test_icon_chat(lv_obj_t *p) {
     lv_obj_t *btn = create_app_btn_test(p, "LoRa Chat");
     lv_obj_t *c = icon_shape(btn, 52, 48); lv_obj_center(c);
-    lv_obj_t *bub = icon_ring(c, 44, 32, SC_TEXT, 3, 14); lv_obj_align(bub, LV_ALIGN_TOP_MID, 0, 0);
-    lv_obj_t *l1 = icon_fill(bub, 26, 3, SC_TEXT, 1); lv_obj_align(l1, LV_ALIGN_CENTER, 0, -5);
-    lv_obj_t *l2 = icon_fill(bub, 20, 3, SC_TEXT, 1); lv_obj_align(l2, LV_ALIGN_CENTER, 0, 3);
-    lv_obj_t *tail = icon_fill(c, 10, 10, SC_TEXT, 0); lv_obj_align(tail, LV_ALIGN_BOTTOM_LEFT, 8, -6);
+    lv_obj_t *bub = icon_fill(c, 44, 32, SC_TEXT, 16); lv_obj_align(bub, LV_ALIGN_TOP_MID, 0, 0);
+    for (int i = 0; i < 3; i++) {
+        lv_obj_t *dot = icon_fill(bub, 6, 6, SC_PANEL, LV_RADIUS_CIRCLE);
+        lv_obj_align(dot, LV_ALIGN_CENTER, (i-1)*12, 0);
+    }
+    lv_obj_t *tail = icon_fill(c, 12, 12, SC_TEXT, 0); lv_obj_align(tail, LV_ALIGN_BOTTOM_LEFT, 6, -4);
 }
 static void draw_test_icon_setting(lv_obj_t *p) {
     lv_obj_t *btn = create_app_btn_test(p, "Setting");
@@ -229,10 +231,10 @@ static void draw_test_icon_wireless(lv_obj_t *p) {
 }
 static void draw_test_icon_gps(lv_obj_t *p) {
     lv_obj_t *btn = create_app_btn_test(p, "GPS");
-    lv_obj_t *c = icon_shape(btn, 40, 52); lv_obj_center(c);
-    lv_obj_t *head = icon_fill(c, 32, 32, SC_ACCENT, LV_RADIUS_CIRCLE); lv_obj_align(head, LV_ALIGN_TOP_MID, 0, 0);
-    lv_obj_t *inner = icon_fill(c, 12, 12, SC_PANEL, LV_RADIUS_CIRCLE); lv_obj_align(inner, LV_ALIGN_TOP_MID, 0, 10);
-    lv_obj_t *pt = icon_fill(c, 12, 20, SC_ACCENT, 0); lv_obj_align(pt, LV_ALIGN_BOTTOM_MID, 0, 0);
+    lv_obj_t *c = icon_shape(btn, 36, 52); lv_obj_center(c);
+    lv_obj_t *pt = icon_fill(c, 8, 22, SC_ACCENT, 0); lv_obj_align(pt, LV_ALIGN_BOTTOM_MID, 0, -2);
+    lv_obj_t *head = icon_fill(c, 30, 30, SC_ACCENT, LV_RADIUS_CIRCLE); lv_obj_align(head, LV_ALIGN_TOP_MID, 0, 2);
+    lv_obj_t *inner = icon_fill(c, 10, 10, SC_PANEL, LV_RADIUS_CIRCLE); lv_obj_align(inner, LV_ALIGN_TOP_MID, 0, 12);
 }
 static void draw_test_icon_power(lv_obj_t *p) {
     lv_obj_t *btn = create_app_btn_test(p, "Power");
@@ -250,11 +252,15 @@ static void draw_test_icon_mic(lv_obj_t *p) {
 static void draw_test_icon_imu(lv_obj_t *p) {
     lv_obj_t *btn = create_app_btn_test(p, "IMU");
     lv_obj_t *c = icon_shape(btn, 48, 48); lv_obj_center(c);
-    lv_obj_t *front = icon_ring(c, 30, 30, SC_TEXT, 3, 2); lv_obj_align(front, LV_ALIGN_CENTER, -4, 4);
-    lv_obj_t *back = icon_ring(c, 30, 30, SC_TEXT_DIM, 2, 2); lv_obj_align(back, LV_ALIGN_CENTER, 4, -4);
-    lv_obj_t *tl = icon_fill(c, 12, 2, SC_TEXT_DIM, 0); lv_obj_align(tl, LV_ALIGN_TOP_LEFT, 7, 6);
-    lv_obj_t *tr = icon_fill(c, 2, 12, SC_TEXT_DIM, 0); lv_obj_align(tr, LV_ALIGN_TOP_RIGHT, -6, 6);
-    lv_obj_t *bl = icon_fill(c, 2, 12, SC_TEXT_DIM, 0); lv_obj_align(bl, LV_ALIGN_BOTTOM_LEFT, 7, -7);
+    lv_obj_t *chip = icon_ring(c, 28, 28, SC_TEXT, 3, 4); lv_obj_align(chip, LV_ALIGN_CENTER, -2, 2);
+    for (int i = 0; i < 3; i++) {
+        lv_obj_t *lp = icon_fill(c, 6, 2, SC_TEXT, 0); lv_obj_align(lp, LV_ALIGN_CENTER, -17, -6+i*6);
+        lv_obj_t *rp = icon_fill(c, 6, 2, SC_TEXT, 0); lv_obj_align(rp, LV_ALIGN_CENTER, 13, -6+i*6);
+    }
+    lv_obj_t *a1 = icon_ring(c, 20, 10, SC_ACCENT, 2, 20); lv_obj_align(a1, LV_ALIGN_TOP_RIGHT, -2, 4);
+    lv_obj_set_style_border_side(a1, (lv_border_side_t)(LV_BORDER_SIDE_TOP), 0);
+    lv_obj_t *a2 = icon_ring(c, 30, 14, SC_ACCENT, 2, 30); lv_obj_align(a2, LV_ALIGN_TOP_RIGHT, 2, 0);
+    lv_obj_set_style_border_side(a2, (lv_border_side_t)(LV_BORDER_SIDE_TOP), 0);
 }
 
 /* ================================================================

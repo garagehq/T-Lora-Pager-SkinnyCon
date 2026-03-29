@@ -448,22 +448,22 @@ static void draw_icon_lora(lv_obj_t *parent)
     lv_obj_align(tip, LV_ALIGN_TOP_MID, 0, 0);
 }
 
-/* LoRa Chat icon: outlined speech bubble with text lines */
+/* LoRa Chat icon: solid speech bubble with dots */
 static void draw_icon_chat(lv_obj_t *parent)
 {
     lv_obj_t *c = icon_shape(parent, 52, 48);
     lv_obj_center(c);
-    /* Bubble outline */
-    lv_obj_t *bubble = icon_ring(c, 44, 32, SC_TEXT, 3, 14);
+    /* Solid filled bubble */
+    lv_obj_t *bubble = icon_fill(c, 44, 32, SC_TEXT, 16);
     lv_obj_align(bubble, LV_ALIGN_TOP_MID, 0, 0);
-    /* Text lines inside */
-    lv_obj_t *l1 = icon_fill(bubble, 26, 3, SC_TEXT, 1);
-    lv_obj_align(l1, LV_ALIGN_CENTER, 0, -5);
-    lv_obj_t *l2 = icon_fill(bubble, 20, 3, SC_TEXT, 1);
-    lv_obj_align(l2, LV_ALIGN_CENTER, 0, 3);
-    /* Tail */
-    lv_obj_t *tail = icon_fill(c, 10, 10, SC_TEXT, 0);
-    lv_obj_align(tail, LV_ALIGN_BOTTOM_LEFT, 8, -6);
+    /* Three dots */
+    for (int i = 0; i < 3; i++) {
+        lv_obj_t *dot = icon_fill(bubble, 6, 6, SC_PANEL, LV_RADIUS_CIRCLE);
+        lv_obj_align(dot, LV_ALIGN_CENTER, (i - 1) * 12, 0);
+    }
+    /* Tail — overlaps with bubble bottom-left */
+    lv_obj_t *tail = icon_fill(c, 12, 12, SC_TEXT, 0);
+    lv_obj_align(tail, LV_ALIGN_BOTTOM_LEFT, 6, -4);
 }
 
 /* Setting icon: two horizontal sliders */
@@ -498,20 +498,20 @@ static void draw_icon_wireless(lv_obj_t *parent)
     }
 }
 
-/* GPS icon: location pin */
+/* GPS icon: location pin — circle with narrow point below */
 static void draw_icon_gps(lv_obj_t *parent)
 {
-    lv_obj_t *c = icon_shape(parent, 40, 52);
+    lv_obj_t *c = icon_shape(parent, 36, 52);
     lv_obj_center(c);
-    /* Pin head */
-    lv_obj_t *head = icon_fill(c, 32, 32, SC_ACCENT, LV_RADIUS_CIRCLE);
-    lv_obj_align(head, LV_ALIGN_TOP_MID, 0, 0);
-    /* White center */
-    lv_obj_t *inner = icon_fill(c, 12, 12, SC_PANEL, LV_RADIUS_CIRCLE);
-    lv_obj_align(inner, LV_ALIGN_TOP_MID, 0, 10);
-    /* Pin point */
-    lv_obj_t *point = icon_fill(c, 12, 20, SC_ACCENT, 0);
-    lv_obj_align(point, LV_ALIGN_BOTTOM_MID, 0, 0);
+    /* Pin point (narrow, underneath the circle) */
+    lv_obj_t *point = icon_fill(c, 8, 22, SC_ACCENT, 0);
+    lv_obj_align(point, LV_ALIGN_BOTTOM_MID, 0, -2);
+    /* Pin head circle (on top of point) */
+    lv_obj_t *head = icon_fill(c, 30, 30, SC_ACCENT, LV_RADIUS_CIRCLE);
+    lv_obj_align(head, LV_ALIGN_TOP_MID, 0, 2);
+    /* White center dot */
+    lv_obj_t *inner = icon_fill(c, 10, 10, SC_PANEL, LV_RADIUS_CIRCLE);
+    lv_obj_align(inner, LV_ALIGN_TOP_MID, 0, 12);
 }
 
 /* Power icon: power button */
@@ -541,24 +541,28 @@ static void draw_icon_mic(lv_obj_t *parent)
     lv_obj_align(base, LV_ALIGN_BOTTOM_MID, 0, -4);
 }
 
-/* IMU icon: cube outline (represents 3D sensor) */
+/* IMU icon: chip with motion lines */
 static void draw_icon_imu(lv_obj_t *parent)
 {
     lv_obj_t *c = icon_shape(parent, 48, 48);
     lv_obj_center(c);
-    /* Front face */
-    lv_obj_t *front = icon_ring(c, 30, 30, SC_TEXT, 3, 2);
-    lv_obj_align(front, LV_ALIGN_CENTER, -4, 4);
-    /* Back face (offset) */
-    lv_obj_t *back = icon_ring(c, 30, 30, SC_TEXT_DIM, 2, 2);
-    lv_obj_align(back, LV_ALIGN_CENTER, 4, -4);
-    /* Connecting lines (just corners) */
-    lv_obj_t *tl = icon_fill(c, 12, 2, SC_TEXT_DIM, 0);
-    lv_obj_align(tl, LV_ALIGN_TOP_LEFT, 7, 6);
-    lv_obj_t *tr = icon_fill(c, 2, 12, SC_TEXT_DIM, 0);
-    lv_obj_align(tr, LV_ALIGN_TOP_RIGHT, -6, 6);
-    lv_obj_t *bl = icon_fill(c, 2, 12, SC_TEXT_DIM, 0);
-    lv_obj_align(bl, LV_ALIGN_BOTTOM_LEFT, 7, -7);
+    /* Chip body */
+    lv_obj_t *chip = icon_ring(c, 28, 28, SC_TEXT, 3, 4);
+    lv_obj_align(chip, LV_ALIGN_CENTER, -2, 2);
+    /* Chip pins (4 on each side) */
+    for (int i = 0; i < 3; i++) {
+        lv_obj_t *lp = icon_fill(c, 6, 2, SC_TEXT, 0);
+        lv_obj_align(lp, LV_ALIGN_CENTER, -17, -6 + i * 6);
+        lv_obj_t *rp = icon_fill(c, 6, 2, SC_TEXT, 0);
+        lv_obj_align(rp, LV_ALIGN_CENTER, 13, -6 + i * 6);
+    }
+    /* Motion arc (upper-right) */
+    lv_obj_t *a1 = icon_ring(c, 20, 10, SC_ACCENT, 2, 20);
+    lv_obj_align(a1, LV_ALIGN_TOP_RIGHT, -2, 4);
+    lv_obj_set_style_border_side(a1, (lv_border_side_t)(LV_BORDER_SIDE_TOP), 0);
+    lv_obj_t *a2 = icon_ring(c, 30, 14, SC_ACCENT, 2, 30);
+    lv_obj_align(a2, LV_ALIGN_TOP_RIGHT, 2, 0);
+    lv_obj_set_style_border_side(a2, (lv_border_side_t)(LV_BORDER_SIDE_TOP), 0);
 }
 
 
@@ -665,10 +669,13 @@ lv_obj_t *setupClock()
     /* Hidden labels not used in nametag mode (keep struct happy) */
     clock_label.seg = lv_label_create(page);
     lv_obj_add_flag(clock_label.seg, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_set_size(clock_label.seg, 0, 0);
     clock_label.minute = lv_label_create(page);
     lv_obj_add_flag(clock_label.minute, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_set_size(clock_label.minute, 0, 0);
     clock_label.battery_bar = lv_bar_create(page);
     lv_obj_add_flag(clock_label.battery_bar, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_set_size(clock_label.battery_bar, 0, 0);
 
     clock_timer = lv_timer_create(clock_update_datetime, 1000, NULL);
     lv_timer_pause(clock_timer);

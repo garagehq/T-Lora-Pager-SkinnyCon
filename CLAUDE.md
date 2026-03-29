@@ -5,3 +5,4 @@
 - When creating PRs, include screenshots of EVERY application screen rendered by the test suite. Use the headless LVGL simulator PPM->PNG pipeline to generate them.
 - After every commit that changes UI code, regenerate screenshots and update them on the PR before pushing.
 - After updating a PR, check CI results after a few minutes (use background bash with sleep). If tests fail, note which ones failed and work on a fix. Repeat until all tests pass.
+- Before pushing new commits, cancel any in-progress GitHub Actions runs for the branch (`gh run list --branch <branch> --status in_progress` then `gh run cancel <id>`). We only care about the latest run.
