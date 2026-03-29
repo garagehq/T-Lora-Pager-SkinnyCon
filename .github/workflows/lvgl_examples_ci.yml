@@ -62,7 +62,7 @@ jobs:
       SKETCH: ${{matrix.lvgl_examples}}
       LILYGO_BOARD_TYPE: ${{matrix.board}}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -75,7 +75,7 @@ jobs:
           arduino-cli config init
           arduino-cli config add board_manager.additional_urls https://espressif.github.io/arduino-esp32/package_esp32_dev_index.json
           arduino-cli core update-index
-          arduino-cli core install esp32:esp32
+          for i in 1 2 3; do arduino-cli core install esp32:esp32 && break || sleep 10; done
 
       - name: Check ci.json
         id: check_json
