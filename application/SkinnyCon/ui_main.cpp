@@ -251,6 +251,39 @@ static lv_obj_t *draw_skinnycon_logo(lv_obj_t *parent, const lv_font_t *font, in
 
 /* ── LVGL-drawn menu icons ─────────────────────────────────────── */
 
+/* Helper: create a clean shape with no default LVGL styling artifacts */
+static lv_obj_t *icon_shape(lv_obj_t *parent, int w, int h)
+{
+    lv_obj_t *o = lv_obj_create(parent);
+    lv_obj_set_size(o, w, h);
+    lv_obj_set_style_bg_opa(o, LV_OPA_0, 0);
+    lv_obj_set_style_border_width(o, 0, 0);
+    lv_obj_set_style_pad_all(o, 0, 0);
+    lv_obj_set_style_radius(o, 0, 0);
+    lv_obj_remove_flag(o, LV_OBJ_FLAG_SCROLLABLE);
+    return o;
+}
+
+/* Helper: create a filled shape */
+static lv_obj_t *icon_fill(lv_obj_t *parent, int w, int h, lv_color_t color, int radius)
+{
+    lv_obj_t *o = icon_shape(parent, w, h);
+    lv_obj_set_style_bg_color(o, color, 0);
+    lv_obj_set_style_bg_opa(o, LV_OPA_COVER, 0);
+    lv_obj_set_style_radius(o, radius, 0);
+    return o;
+}
+
+/* Helper: create a ring (border-only circle/shape) */
+static lv_obj_t *icon_ring(lv_obj_t *parent, int w, int h, lv_color_t color, int bw, int radius)
+{
+    lv_obj_t *o = icon_shape(parent, w, h);
+    lv_obj_set_style_border_color(o, color, 0);
+    lv_obj_set_style_border_width(o, bw, 0);
+    lv_obj_set_style_radius(o, radius, 0);
+    return o;
+}
+
 /* Nametag icon: vertical ID badge with person silhouette */
 static void draw_icon_nametag(lv_obj_t *parent)
 {
@@ -380,365 +413,152 @@ static void draw_icon_nettools(lv_obj_t *parent)
     }
 }
 
-/* BadgeShark icon: eye/monitor */
+/* BadgeShark icon: eye */
 static void draw_icon_badgeshark(lv_obj_t *parent)
 {
-    lv_obj_t *c = lv_obj_create(parent);
-    lv_obj_set_size(c, 52, 48);
+    lv_obj_t *c = icon_shape(parent, 52, 48);
     lv_obj_center(c);
-    lv_obj_set_style_bg_opa(c, LV_OPA_0, 0);
-    lv_obj_set_style_border_width(c, 0, 0);
-    lv_obj_remove_flag(c, LV_OBJ_FLAG_SCROLLABLE);
-
-    /* Eye outer shape — two arcs forming an eye */
-    lv_obj_t *eye = lv_obj_create(c);
-    lv_obj_set_size(eye, 44, 28);
+    lv_obj_t *eye = icon_ring(c, 44, 28, SC_TEXT, 3, LV_RADIUS_CIRCLE);
     lv_obj_align(eye, LV_ALIGN_CENTER, 0, 0);
-    lv_obj_set_style_bg_opa(eye, LV_OPA_0, 0);
-    lv_obj_set_style_border_color(eye, SC_TEXT, 0);
-    lv_obj_set_style_border_width(eye, 2, 0);
-    lv_obj_set_style_radius(eye, LV_RADIUS_CIRCLE, 0);
-
-    /* Pupil */
-    lv_obj_t *pupil = lv_obj_create(c);
-    lv_obj_set_size(pupil, 16, 16);
+    lv_obj_t *pupil = icon_fill(c, 16, 16, SC_TEXT, LV_RADIUS_CIRCLE);
     lv_obj_align(pupil, LV_ALIGN_CENTER, 0, 0);
-    lv_obj_set_style_radius(pupil, LV_RADIUS_CIRCLE, 0);
-    lv_obj_set_style_bg_color(pupil, SC_TEXT, 0);
-    lv_obj_set_style_bg_opa(pupil, LV_OPA_COVER, 0);
-    lv_obj_set_style_border_width(pupil, 0, 0);
-
-    /* Inner highlight */
-    lv_obj_t *hl = lv_obj_create(c);
-    lv_obj_set_size(hl, 6, 6);
+    lv_obj_t *hl = icon_fill(c, 6, 6, SC_PANEL, LV_RADIUS_CIRCLE);
     lv_obj_align(hl, LV_ALIGN_CENTER, -2, -2);
-    lv_obj_set_style_radius(hl, LV_RADIUS_CIRCLE, 0);
-    lv_obj_set_style_bg_color(hl, SC_PANEL, 0);
-    lv_obj_set_style_bg_opa(hl, LV_OPA_COVER, 0);
-    lv_obj_set_style_border_width(hl, 0, 0);
 }
 
-/* LoRa icon: radio antenna with wave */
+/* LoRa icon: simple radio tower — vertical bar with 3 horizontal bars */
 static void draw_icon_lora(lv_obj_t *parent)
 {
-    lv_obj_t *c = lv_obj_create(parent);
-    lv_obj_set_size(c, 48, 52);
+    LV_FONT_DECLARE(font_alibaba_12);
+    lv_obj_t *c = icon_shape(parent, 48, 52);
     lv_obj_center(c);
-    lv_obj_set_style_bg_opa(c, LV_OPA_0, 0);
-    lv_obj_set_style_border_width(c, 0, 0);
-    lv_obj_remove_flag(c, LV_OBJ_FLAG_SCROLLABLE);
 
-    /* Antenna mast */
-    lv_obj_t *mast = lv_obj_create(c);
-    lv_obj_set_size(mast, 4, 34);
-    lv_obj_align(mast, LV_ALIGN_BOTTOM_MID, 0, -2);
-    lv_obj_set_style_bg_color(mast, SC_TEXT, 0);
-    lv_obj_set_style_bg_opa(mast, LV_OPA_COVER, 0);
-    lv_obj_set_style_border_width(mast, 0, 0);
-    lv_obj_set_style_radius(mast, 2, 0);
-
-    /* Antenna tip */
-    lv_obj_t *tip = lv_obj_create(c);
-    lv_obj_set_size(tip, 10, 10);
-    lv_obj_align(tip, LV_ALIGN_TOP_MID, 0, 4);
-    lv_obj_set_style_radius(tip, LV_RADIUS_CIRCLE, 0);
-    lv_obj_set_style_bg_color(tip, SC_ACCENT, 0);
-    lv_obj_set_style_bg_opa(tip, LV_OPA_COVER, 0);
-    lv_obj_set_style_border_width(tip, 0, 0);
-
-    /* Signal waves on right side */
-    int sizes[] = {14, 22, 30};
-    for (int i = 0; i < 3; i++) {
-        lv_obj_t *arc = lv_obj_create(c);
-        lv_obj_set_size(arc, sizes[i] / 2, sizes[i]);
-        lv_obj_align(arc, LV_ALIGN_TOP_RIGHT, -2, 6 - sizes[i] / 4);
-        lv_obj_set_style_bg_opa(arc, LV_OPA_0, 0);
-        lv_obj_set_style_border_color(arc, SC_TEAL, 0);
-        lv_obj_set_style_border_width(arc, 2, 0);
-        lv_obj_set_style_border_side(arc, (lv_border_side_t)(LV_BORDER_SIDE_RIGHT), 0);
-        lv_obj_set_style_radius(arc, sizes[i], 0);
-    }
-
-    /* Base */
-    lv_obj_t *base = lv_obj_create(c);
-    lv_obj_set_size(base, 20, 4);
-    lv_obj_align(base, LV_ALIGN_BOTTOM_MID, 0, -2);
-    lv_obj_set_style_bg_color(base, SC_TEXT, 0);
-    lv_obj_set_style_bg_opa(base, LV_OPA_COVER, 0);
-    lv_obj_set_style_border_width(base, 0, 0);
-    lv_obj_set_style_radius(base, 2, 0);
+    /* Tower body */
+    lv_obj_t *tower = icon_fill(c, 6, 40, SC_TEXT, 2);
+    lv_obj_align(tower, LV_ALIGN_CENTER, 0, 0);
+    /* Cross bars */
+    lv_obj_t *b1 = icon_fill(c, 30, 4, SC_TEXT, 1);
+    lv_obj_align(b1, LV_ALIGN_CENTER, 0, -12);
+    lv_obj_t *b2 = icon_fill(c, 22, 4, SC_TEXT, 1);
+    lv_obj_align(b2, LV_ALIGN_CENTER, 0, -2);
+    lv_obj_t *b3 = icon_fill(c, 14, 4, SC_TEXT, 1);
+    lv_obj_align(b3, LV_ALIGN_CENTER, 0, 8);
+    /* Tip */
+    lv_obj_t *tip = icon_fill(c, 10, 10, SC_ACCENT, LV_RADIUS_CIRCLE);
+    lv_obj_align(tip, LV_ALIGN_TOP_MID, 0, 0);
 }
 
-/* LoRa Chat icon: speech bubble */
+/* LoRa Chat icon: outlined speech bubble with text lines */
 static void draw_icon_chat(lv_obj_t *parent)
 {
-    lv_obj_t *c = lv_obj_create(parent);
-    lv_obj_set_size(c, 52, 48);
+    lv_obj_t *c = icon_shape(parent, 52, 48);
     lv_obj_center(c);
-    lv_obj_set_style_bg_opa(c, LV_OPA_0, 0);
-    lv_obj_set_style_border_width(c, 0, 0);
-    lv_obj_remove_flag(c, LV_OBJ_FLAG_SCROLLABLE);
-
-    /* Bubble */
-    lv_obj_t *bubble = lv_obj_create(c);
-    lv_obj_set_size(bubble, 44, 30);
-    lv_obj_align(bubble, LV_ALIGN_TOP_MID, 0, 2);
-    lv_obj_set_style_bg_color(bubble, SC_TEXT, 0);
-    lv_obj_set_style_bg_opa(bubble, LV_OPA_COVER, 0);
-    lv_obj_set_style_border_width(bubble, 0, 0);
-    lv_obj_set_style_radius(bubble, 12, 0);
-
-    /* Three dots inside bubble */
-    for (int i = 0; i < 3; i++) {
-        lv_obj_t *dot = lv_obj_create(bubble);
-        lv_obj_set_size(dot, 6, 6);
-        lv_obj_set_style_radius(dot, LV_RADIUS_CIRCLE, 0);
-        lv_obj_set_style_bg_color(dot, SC_PANEL, 0);
-        lv_obj_set_style_bg_opa(dot, LV_OPA_COVER, 0);
-        lv_obj_set_style_border_width(dot, 0, 0);
-        lv_obj_align(dot, LV_ALIGN_CENTER, (i - 1) * 12, 0);
-    }
-
-    /* Tail triangle (approximated with small rotated square) */
-    lv_obj_t *tail = lv_obj_create(c);
-    lv_obj_set_size(tail, 10, 10);
-    lv_obj_align(tail, LV_ALIGN_BOTTOM_LEFT, 10, -10);
-    lv_obj_set_style_bg_color(tail, SC_TEXT, 0);
-    lv_obj_set_style_bg_opa(tail, LV_OPA_COVER, 0);
-    lv_obj_set_style_border_width(tail, 0, 0);
-    lv_obj_set_style_radius(tail, 0, 0);
+    /* Bubble outline */
+    lv_obj_t *bubble = icon_ring(c, 44, 32, SC_TEXT, 3, 14);
+    lv_obj_align(bubble, LV_ALIGN_TOP_MID, 0, 0);
+    /* Text lines inside */
+    lv_obj_t *l1 = icon_fill(bubble, 26, 3, SC_TEXT, 1);
+    lv_obj_align(l1, LV_ALIGN_CENTER, 0, -5);
+    lv_obj_t *l2 = icon_fill(bubble, 20, 3, SC_TEXT, 1);
+    lv_obj_align(l2, LV_ALIGN_CENTER, 0, 3);
+    /* Tail */
+    lv_obj_t *tail = icon_fill(c, 10, 10, SC_TEXT, 0);
+    lv_obj_align(tail, LV_ALIGN_BOTTOM_LEFT, 8, -6);
 }
 
-/* Setting icon: gear */
+/* Setting icon: two horizontal sliders */
 static void draw_icon_setting(lv_obj_t *parent)
 {
-    lv_obj_t *c = lv_obj_create(parent);
-    lv_obj_set_size(c, 48, 48);
+    lv_obj_t *c = icon_shape(parent, 48, 48);
     lv_obj_center(c);
-    lv_obj_set_style_bg_opa(c, LV_OPA_0, 0);
-    lv_obj_set_style_border_width(c, 0, 0);
-    lv_obj_remove_flag(c, LV_OBJ_FLAG_SCROLLABLE);
 
-    /* Outer gear ring */
-    lv_obj_t *gear = lv_obj_create(c);
-    lv_obj_set_size(gear, 40, 40);
-    lv_obj_center(gear);
-    lv_obj_set_style_radius(gear, LV_RADIUS_CIRCLE, 0);
-    lv_obj_set_style_bg_opa(gear, LV_OPA_0, 0);
-    lv_obj_set_style_border_color(gear, SC_TEXT, 0);
-    lv_obj_set_style_border_width(gear, 4, 0);
-
-    /* Center hole */
-    lv_obj_t *hole = lv_obj_create(c);
-    lv_obj_set_size(hole, 14, 14);
-    lv_obj_center(hole);
-    lv_obj_set_style_radius(hole, LV_RADIUS_CIRCLE, 0);
-    lv_obj_set_style_bg_color(hole, SC_TEXT, 0);
-    lv_obj_set_style_bg_opa(hole, LV_OPA_COVER, 0);
-    lv_obj_set_style_border_width(hole, 0, 0);
-
-    /* Gear teeth (4 rectangular teeth at N/S/E/W) */
-    int positions[][2] = {{0, -22}, {0, 22}, {-22, 0}, {22, 0}};
-    for (int i = 0; i < 4; i++) {
-        lv_obj_t *tooth = lv_obj_create(c);
-        lv_obj_set_size(tooth, (i < 2) ? 10 : 6, (i < 2) ? 6 : 10);
-        lv_obj_align(tooth, LV_ALIGN_CENTER, positions[i][0], positions[i][1]);
-        lv_obj_set_style_bg_color(tooth, SC_TEXT, 0);
-        lv_obj_set_style_bg_opa(tooth, LV_OPA_COVER, 0);
-        lv_obj_set_style_border_width(tooth, 0, 0);
-        lv_obj_set_style_radius(tooth, 1, 0);
+    /* Three horizontal tracks with knobs at different positions */
+    int y_offsets[] = {-14, 0, 14};
+    int knob_x[] = {10, -6, 6};
+    for (int i = 0; i < 3; i++) {
+        lv_obj_t *track = icon_fill(c, 36, 3, SC_TEXT_DIM, 1);
+        lv_obj_align(track, LV_ALIGN_CENTER, 0, y_offsets[i]);
+        lv_obj_t *knob = icon_fill(c, 10, 10, SC_TEXT, LV_RADIUS_CIRCLE);
+        lv_obj_align(knob, LV_ALIGN_CENTER, knob_x[i], y_offsets[i]);
     }
 }
 
-/* Wireless icon: WiFi arcs */
+/* Wireless icon: WiFi dot + 3 arcs */
 static void draw_icon_wireless(lv_obj_t *parent)
 {
-    lv_obj_t *c = lv_obj_create(parent);
-    lv_obj_set_size(c, 52, 48);
+    lv_obj_t *c = icon_shape(parent, 52, 48);
     lv_obj_center(c);
-    lv_obj_set_style_bg_opa(c, LV_OPA_0, 0);
-    lv_obj_set_style_border_width(c, 0, 0);
-    lv_obj_remove_flag(c, LV_OBJ_FLAG_SCROLLABLE);
-
-    /* Dot at bottom */
-    lv_obj_t *dot = lv_obj_create(c);
-    lv_obj_set_size(dot, 8, 8);
+    lv_obj_t *dot = icon_fill(c, 8, 8, SC_TEXT, LV_RADIUS_CIRCLE);
     lv_obj_align(dot, LV_ALIGN_BOTTOM_MID, 0, -4);
-    lv_obj_set_style_radius(dot, LV_RADIUS_CIRCLE, 0);
-    lv_obj_set_style_bg_color(dot, SC_TEXT, 0);
-    lv_obj_set_style_bg_opa(dot, LV_OPA_COVER, 0);
-    lv_obj_set_style_border_width(dot, 0, 0);
-
-    /* WiFi arcs */
-    int sizes[] = {24, 38, 52};
+    int sizes[] = {22, 36, 50};
     for (int i = 0; i < 3; i++) {
-        lv_obj_t *arc = lv_obj_create(c);
-        lv_obj_set_size(arc, sizes[i], sizes[i] / 2);
+        lv_obj_t *arc = icon_ring(c, sizes[i], sizes[i] / 2, SC_TEXT, 3, sizes[i]);
         lv_obj_align(arc, LV_ALIGN_BOTTOM_MID, 0, -4);
-        lv_obj_set_style_bg_opa(arc, LV_OPA_0, 0);
-        lv_obj_set_style_border_color(arc, SC_TEXT, 0);
-        lv_obj_set_style_border_width(arc, 3, 0);
         lv_obj_set_style_border_side(arc, (lv_border_side_t)(LV_BORDER_SIDE_TOP), 0);
-        lv_obj_set_style_radius(arc, sizes[i], 0);
     }
 }
 
 /* GPS icon: location pin */
 static void draw_icon_gps(lv_obj_t *parent)
 {
-    lv_obj_t *c = lv_obj_create(parent);
-    lv_obj_set_size(c, 40, 52);
+    lv_obj_t *c = icon_shape(parent, 40, 52);
     lv_obj_center(c);
-    lv_obj_set_style_bg_opa(c, LV_OPA_0, 0);
-    lv_obj_set_style_border_width(c, 0, 0);
-    lv_obj_remove_flag(c, LV_OBJ_FLAG_SCROLLABLE);
-
-    /* Pin head (circle) */
-    lv_obj_t *pin = lv_obj_create(c);
-    lv_obj_set_size(pin, 30, 30);
-    lv_obj_align(pin, LV_ALIGN_TOP_MID, 0, 2);
-    lv_obj_set_style_radius(pin, LV_RADIUS_CIRCLE, 0);
-    lv_obj_set_style_bg_color(pin, SC_ACCENT, 0);
-    lv_obj_set_style_bg_opa(pin, LV_OPA_COVER, 0);
-    lv_obj_set_style_border_width(pin, 0, 0);
-
-    /* Inner dot */
-    lv_obj_t *inner = lv_obj_create(c);
-    lv_obj_set_size(inner, 12, 12);
-    lv_obj_align(inner, LV_ALIGN_TOP_MID, 0, 11);
-    lv_obj_set_style_radius(inner, LV_RADIUS_CIRCLE, 0);
-    lv_obj_set_style_bg_color(inner, SC_PANEL, 0);
-    lv_obj_set_style_bg_opa(inner, LV_OPA_COVER, 0);
-    lv_obj_set_style_border_width(inner, 0, 0);
-
-    /* Pin point (triangle approximated with small diamond) */
-    lv_obj_t *point = lv_obj_create(c);
-    lv_obj_set_size(point, 14, 18);
-    lv_obj_align(point, LV_ALIGN_BOTTOM_MID, 0, -2);
-    lv_obj_set_style_bg_color(point, SC_ACCENT, 0);
-    lv_obj_set_style_bg_opa(point, LV_OPA_COVER, 0);
-    lv_obj_set_style_border_width(point, 0, 0);
-    lv_obj_set_style_radius(point, 0, 0);
+    /* Pin head */
+    lv_obj_t *head = icon_fill(c, 32, 32, SC_ACCENT, LV_RADIUS_CIRCLE);
+    lv_obj_align(head, LV_ALIGN_TOP_MID, 0, 0);
+    /* White center */
+    lv_obj_t *inner = icon_fill(c, 12, 12, SC_PANEL, LV_RADIUS_CIRCLE);
+    lv_obj_align(inner, LV_ALIGN_TOP_MID, 0, 10);
+    /* Pin point */
+    lv_obj_t *point = icon_fill(c, 12, 20, SC_ACCENT, 0);
+    lv_obj_align(point, LV_ALIGN_BOTTOM_MID, 0, 0);
 }
 
-/* Power icon: power button symbol */
+/* Power icon: power button */
 static void draw_icon_power(lv_obj_t *parent)
 {
-    lv_obj_t *c = lv_obj_create(parent);
-    lv_obj_set_size(c, 48, 48);
+    lv_obj_t *c = icon_shape(parent, 48, 48);
     lv_obj_center(c);
-    lv_obj_set_style_bg_opa(c, LV_OPA_0, 0);
-    lv_obj_set_style_border_width(c, 0, 0);
-    lv_obj_remove_flag(c, LV_OBJ_FLAG_SCROLLABLE);
-
-    /* Circle */
-    lv_obj_t *ring = lv_obj_create(c);
-    lv_obj_set_size(ring, 36, 36);
+    lv_obj_t *ring = icon_ring(c, 36, 36, SC_TEXT, 4, LV_RADIUS_CIRCLE);
     lv_obj_center(ring);
-    lv_obj_set_style_radius(ring, LV_RADIUS_CIRCLE, 0);
-    lv_obj_set_style_bg_opa(ring, LV_OPA_0, 0);
-    lv_obj_set_style_border_color(ring, SC_TEXT, 0);
-    lv_obj_set_style_border_width(ring, 3, 0);
-
-    /* Vertical line through top */
-    lv_obj_t *line = lv_obj_create(c);
-    lv_obj_set_size(line, 4, 22);
+    lv_obj_t *line = icon_fill(c, 5, 22, SC_TEXT, 2);
     lv_obj_align(line, LV_ALIGN_TOP_MID, 0, 4);
-    lv_obj_set_style_bg_color(line, SC_TEXT, 0);
-    lv_obj_set_style_bg_opa(line, LV_OPA_COVER, 0);
-    lv_obj_set_style_border_width(line, 0, 0);
-    lv_obj_set_style_radius(line, 2, 0);
 }
 
-/* Microphone icon: mic shape */
+/* Microphone icon: simple mic capsule + stand */
 static void draw_icon_mic(lv_obj_t *parent)
 {
-    lv_obj_t *c = lv_obj_create(parent);
-    lv_obj_set_size(c, 40, 52);
+    lv_obj_t *c = icon_shape(parent, 40, 52);
     lv_obj_center(c);
-    lv_obj_set_style_bg_opa(c, LV_OPA_0, 0);
-    lv_obj_set_style_border_width(c, 0, 0);
-    lv_obj_remove_flag(c, LV_OBJ_FLAG_SCROLLABLE);
-
-    /* Mic head (rounded rectangle) */
-    lv_obj_t *head = lv_obj_create(c);
-    lv_obj_set_size(head, 18, 28);
-    lv_obj_align(head, LV_ALIGN_TOP_MID, 0, 2);
-    lv_obj_set_style_bg_color(head, SC_TEXT, 0);
-    lv_obj_set_style_bg_opa(head, LV_OPA_COVER, 0);
-    lv_obj_set_style_border_width(head, 0, 0);
-    lv_obj_set_style_radius(head, 9, 0);
-
-    /* Cradle arc */
-    lv_obj_t *cradle = lv_obj_create(c);
-    lv_obj_set_size(cradle, 30, 18);
-    lv_obj_align(cradle, LV_ALIGN_CENTER, 0, 6);
-    lv_obj_set_style_bg_opa(cradle, LV_OPA_0, 0);
-    lv_obj_set_style_border_color(cradle, SC_TEXT, 0);
-    lv_obj_set_style_border_width(cradle, 3, 0);
-    lv_obj_set_style_border_side(cradle, (lv_border_side_t)(LV_BORDER_SIDE_BOTTOM | LV_BORDER_SIDE_LEFT | LV_BORDER_SIDE_RIGHT), 0);
-    lv_obj_set_style_radius(cradle, 14, 0);
-
-    /* Stand */
-    lv_obj_t *stand = lv_obj_create(c);
-    lv_obj_set_size(stand, 4, 10);
-    lv_obj_align(stand, LV_ALIGN_BOTTOM_MID, 0, -6);
-    lv_obj_set_style_bg_color(stand, SC_TEXT, 0);
-    lv_obj_set_style_bg_opa(stand, LV_OPA_COVER, 0);
-    lv_obj_set_style_border_width(stand, 0, 0);
-
+    /* Mic capsule */
+    lv_obj_t *capsule = icon_fill(c, 20, 30, SC_TEXT, 10);
+    lv_obj_align(capsule, LV_ALIGN_TOP_MID, 0, 0);
+    /* Stand stem */
+    lv_obj_t *stem = icon_fill(c, 4, 12, SC_TEXT, 0);
+    lv_obj_align(stem, LV_ALIGN_BOTTOM_MID, 0, -8);
     /* Base */
-    lv_obj_t *base = lv_obj_create(c);
-    lv_obj_set_size(base, 18, 3);
+    lv_obj_t *base = icon_fill(c, 20, 4, SC_TEXT, 2);
     lv_obj_align(base, LV_ALIGN_BOTTOM_MID, 0, -4);
-    lv_obj_set_style_bg_color(base, SC_TEXT, 0);
-    lv_obj_set_style_bg_opa(base, LV_OPA_COVER, 0);
-    lv_obj_set_style_border_width(base, 0, 0);
-    lv_obj_set_style_radius(base, 1, 0);
 }
 
-/* IMU icon: 3-axis arrows */
+/* IMU icon: cube outline (represents 3D sensor) */
 static void draw_icon_imu(lv_obj_t *parent)
 {
-    lv_obj_t *c = lv_obj_create(parent);
-    lv_obj_set_size(c, 48, 48);
+    lv_obj_t *c = icon_shape(parent, 48, 48);
     lv_obj_center(c);
-    lv_obj_set_style_bg_opa(c, LV_OPA_0, 0);
-    lv_obj_set_style_border_width(c, 0, 0);
-    lv_obj_remove_flag(c, LV_OBJ_FLAG_SCROLLABLE);
-
-    /* Center dot */
-    lv_obj_t *center = lv_obj_create(c);
-    lv_obj_set_size(center, 8, 8);
-    lv_obj_align(center, LV_ALIGN_CENTER, 0, 4);
-    lv_obj_set_style_radius(center, LV_RADIUS_CIRCLE, 0);
-    lv_obj_set_style_bg_color(center, SC_TEXT, 0);
-    lv_obj_set_style_bg_opa(center, LV_OPA_COVER, 0);
-    lv_obj_set_style_border_width(center, 0, 0);
-
-    /* X axis (horizontal) */
-    lv_obj_t *x = lv_obj_create(c);
-    lv_obj_set_size(x, 30, 3);
-    lv_obj_align(x, LV_ALIGN_CENTER, 8, 4);
-    lv_obj_set_style_bg_color(x, SC_ACCENT, 0);
-    lv_obj_set_style_bg_opa(x, LV_OPA_COVER, 0);
-    lv_obj_set_style_border_width(x, 0, 0);
-
-    /* Y axis (vertical) */
-    lv_obj_t *y = lv_obj_create(c);
-    lv_obj_set_size(y, 3, 30);
-    lv_obj_align(y, LV_ALIGN_CENTER, 0, -10);
-    lv_obj_set_style_bg_color(y, SC_GREEN, 0);
-    lv_obj_set_style_bg_opa(y, LV_OPA_COVER, 0);
-    lv_obj_set_style_border_width(y, 0, 0);
-
-    /* Z axis (diagonal) */
-    lv_obj_t *z = lv_obj_create(c);
-    lv_obj_set_size(z, 20, 3);
-    lv_obj_align(z, LV_ALIGN_CENTER, -12, 14);
-    lv_obj_set_style_bg_color(z, SC_CYAN, 0);
-    lv_obj_set_style_bg_opa(z, LV_OPA_COVER, 0);
-    lv_obj_set_style_border_width(z, 0, 0);
+    /* Front face */
+    lv_obj_t *front = icon_ring(c, 30, 30, SC_TEXT, 3, 2);
+    lv_obj_align(front, LV_ALIGN_CENTER, -4, 4);
+    /* Back face (offset) */
+    lv_obj_t *back = icon_ring(c, 30, 30, SC_TEXT_DIM, 2, 2);
+    lv_obj_align(back, LV_ALIGN_CENTER, 4, -4);
+    /* Connecting lines (just corners) */
+    lv_obj_t *tl = icon_fill(c, 12, 2, SC_TEXT_DIM, 0);
+    lv_obj_align(tl, LV_ALIGN_TOP_LEFT, 7, 6);
+    lv_obj_t *tr = icon_fill(c, 2, 12, SC_TEXT_DIM, 0);
+    lv_obj_align(tr, LV_ALIGN_TOP_RIGHT, -6, 6);
+    lv_obj_t *bl = icon_fill(c, 2, 12, SC_TEXT_DIM, 0);
+    lv_obj_align(bl, LV_ALIGN_BOTTOM_LEFT, 7, -7);
 }
 
 
