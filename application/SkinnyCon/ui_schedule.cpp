@@ -246,12 +246,10 @@ static void sched_setup(lv_obj_t *parent)
 
     lv_menu_set_page(menu, main_page);
 
-    /* Make sched_list focusable so encoder events reach our key handler */
-    lv_obj_add_flag(sched_list, LV_OBJ_FLAG_CLICK_FOCUSABLE);
-    lv_obj_add_event_cb(sched_list, sched_key_cb, LV_EVENT_KEY, NULL);
-    lv_group_t *g = lv_group_get_default();
-    if (g) lv_group_add_obj(g, sched_list);
-    printf("[SCHED] Setup complete. sched_list added to group.\n");
+    /* Let the lv_menu handle its own focus/scrolling — don't add to group.
+     * The menu's built-in back button is reachable via normal encoder navigation.
+     * The talk list scrolls naturally as the menu page content overflows. */
+    printf("[SCHED] Setup complete. Menu handles scroll + back button.\n");
 }
 
 static void sched_exit(lv_obj_t *parent)
