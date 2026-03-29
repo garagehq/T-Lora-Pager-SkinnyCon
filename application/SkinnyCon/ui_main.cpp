@@ -906,6 +906,12 @@ void setupGui()
     lv_obj_set_style_text_font(year_lbl, &font_alibaba_24, 0);
     lv_obj_set_style_text_color(year_lbl, SC_TEXT_DIM, 0);
 
+    lv_obj_t *credit = lv_label_create(boot_cont);
+    lv_label_set_text(credit, "Created by: The Garage Agency, LLC - https://thegarage.dev/");
+    lv_obj_set_style_text_color(credit, SC_TEXT_DIM, 0);
+    lv_obj_set_style_text_align(credit, LV_TEXT_ALIGN_CENTER, 0);
+    lv_obj_set_width(credit, LV_PCT(100));
+
     lv_refr_now(NULL);
     lv_delay_ms(5000);
     lv_obj_delete(boot_cont);
