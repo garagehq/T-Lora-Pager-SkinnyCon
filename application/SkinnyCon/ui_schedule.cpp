@@ -123,9 +123,13 @@ static void back_event_handler(lv_event_t *e)
 
 static void sched_key_cb(lv_event_t *e)
 {
-    if (lv_event_get_code(e) != LV_EVENT_KEY) return;
+    lv_event_code_t code = lv_event_get_code(e);
+    printf("[SCHED-EVT] code=%d\n", (int)code);
+    if (code != LV_EVENT_KEY) return;
     uint32_t key = lv_event_get_key(e);
     const int n = day_counts[current_day];
+    printf("[SCHED-KEY] key=%lu day=%d talk=%d/%d\n",
+           (unsigned long)key, current_day, selected_talk, n);
 
     if (key == LV_KEY_RIGHT || key == LV_KEY_DOWN) {
         /* Scroll down through talks; wrap to next day at end */

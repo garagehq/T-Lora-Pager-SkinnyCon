@@ -113,7 +113,7 @@ static void nametag_build_fullscreen_mode(void)
 {
     name_label = lv_label_create(nametag_cont);
     lv_label_set_text(name_label, user_name);
-    lv_obj_set_style_text_font(name_label, &font_alibaba_100, 0);
+    lv_obj_set_style_text_font(name_label, &font_alibaba_40, 0);
     lv_obj_set_style_text_color(name_label, SUPERCON_ACCENT, 0);
     lv_obj_set_style_text_align(name_label, LV_TEXT_ALIGN_CENTER, 0);
     lv_obj_set_width(name_label, LV_PCT(100));
@@ -255,6 +255,8 @@ static void nametag_rebuild(void)
 #ifdef ARDUINO
 static void nametag_kb_callback(int state, char &c)
 {
+    printf("[NAMETAG-KB] state=%d char=%d('%c') mode=%d editing_name=%d editing_sub=%d\n",
+           state, (int)c, (c >= 32 && c <= 126) ? c : '?', display_mode, editing_name, editing_subtitle);
     if (state != 1) return;
     if (display_mode != 0) return;
 
@@ -325,6 +327,8 @@ static void nametag_exit(lv_obj_t *parent);
 static void nametag_event_cb(lv_event_t *e)
 {
     lv_event_code_t code = lv_event_get_code(e);
+    printf("[NAMETAG-EVT] code=%d mode=%d editing=%d/%d\n",
+           (int)code, display_mode, editing_name, editing_subtitle);
 
     if (code == LV_EVENT_CLICKED) {
         if (editing_name || editing_subtitle) {
@@ -341,6 +345,8 @@ static void nametag_event_cb(lv_event_t *e)
     if (code != LV_EVENT_KEY) return;
 
     uint32_t key = lv_event_get_key(e);
+    printf("[NAMETAG-KEY] key=%lu (RIGHT=%d LEFT=%d DOWN=%d UP=%d ESC=%d)\n",
+           (unsigned long)key, LV_KEY_RIGHT, LV_KEY_LEFT, LV_KEY_DOWN, LV_KEY_UP, LV_KEY_ESC);
 
     if (key == LV_KEY_ESC) {
         nametag_exit(NULL);
@@ -384,6 +390,9 @@ static void nametag_setup(lv_obj_t *parent)
 
 #ifdef ARDUINO
     hw_set_keyboard_read_callback(nametag_kb_callback);
+    printf("[NAMETAG] Setup complete. KB callback registered. Mode=%d\n", display_mode);
+#else
+    printf("[NAMETAG] Setup complete. NO KB callback (not ARDUINO). Mode=%d\n", display_mode);
 #endif
 }
 
