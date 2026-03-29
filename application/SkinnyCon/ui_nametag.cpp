@@ -37,8 +37,8 @@ static lv_obj_t *mode_label = NULL;
 static uint8_t display_mode = 0;
 
 /* Editable name storage */
-static char user_name[NAME_MAX_LEN + 1] = "SkinnyCon";
-static char user_subtitle[SUBTITLE_MAX_LEN + 1] = "T-LoRa-Pager";
+static char user_name[NAME_MAX_LEN + 1] = "YOUR NAME";
+static char user_subtitle[SUBTITLE_MAX_LEN + 1] = "SkinnyCon 2026";
 static bool editing_name = false;
 static bool editing_subtitle = false;
 
@@ -97,7 +97,7 @@ static void nametag_build_name_mode(void)
         snprintf(buf, sizeof(buf), "%s_", user_subtitle);
         lv_label_set_text(subtitle_label, buf);
     } else {
-        lv_label_set_text(mode_label, "ESC=back  " LV_SYMBOL_REFRESH " Rotate=mode  " LV_SYMBOL_KEYBOARD " Type=edit");
+        lv_label_set_text(mode_label, "Click=back  Rotate=mode  Type=edit");
         lv_obj_set_style_text_color(mode_label, SC_TEXT_DIM, 0);
     }
     lv_obj_set_style_text_align(mode_label, LV_TEXT_ALIGN_CENTER, 0);
@@ -156,7 +156,7 @@ static void nametag_build_about_mode(void)
     lv_label_set_long_mode(info, LV_LABEL_LONG_WRAP);
 
     mode_label = lv_label_create(nametag_cont);
-    lv_label_set_text(mode_label, "ESC=back  " LV_SYMBOL_REFRESH " Rotate=mode");
+    lv_label_set_text(mode_label, "Click=back  Rotate=mode");
     lv_obj_set_style_text_color(mode_label, SC_TEXT_DIM, 0);
     lv_obj_set_style_text_align(mode_label, LV_TEXT_ALIGN_CENTER, 0);
     lv_obj_set_width(mode_label, LV_PCT(100));
@@ -207,7 +207,7 @@ static void nametag_build_coc_mode(void)
     lv_label_set_long_mode(coc, LV_LABEL_LONG_WRAP);
 
     mode_label = lv_label_create(nametag_cont);
-    lv_label_set_text(mode_label, "ESC=back  " LV_SYMBOL_REFRESH " Rotate=mode");
+    lv_label_set_text(mode_label, "Click=back  Rotate=mode");
     lv_obj_set_style_text_color(mode_label, SC_TEXT_DIM, 0);
     lv_obj_set_style_text_align(mode_label, LV_TEXT_ALIGN_CENTER, 0);
     lv_obj_set_width(mode_label, LV_PCT(100));
@@ -248,7 +248,7 @@ static void nametag_build_badge_info_mode(void)
     lv_obj_set_style_text_color(info, SUPERCON_WHITE, 0);
 
     mode_label = lv_label_create(nametag_cont);
-    lv_label_set_text(mode_label, "ESC=back  " LV_SYMBOL_REFRESH " Rotate=mode");
+    lv_label_set_text(mode_label, "Click=back  Rotate=mode");
     lv_obj_set_style_text_color(mode_label, SC_TEXT_DIM, 0);
     lv_obj_set_style_text_align(mode_label, LV_TEXT_ALIGN_CENTER, 0);
     lv_obj_set_width(mode_label, LV_PCT(100));
@@ -342,11 +342,25 @@ static void nametag_exit(lv_obj_t *parent);  /* forward decl for ESC handler */
 static void nametag_event_cb(lv_event_t *e)
 {
     lv_event_code_t code = lv_event_get_code(e);
+
+    /* Encoder click = go back (or confirm edit if editing) */
+    if (code == LV_EVENT_CLICKED) {
+        if (editing_name || editing_subtitle) {
+            editing_name = false;
+            editing_subtitle = false;
+            nametag_rebuild();
+        } else {
+            nametag_exit(NULL);
+            menu_show();
+        }
+        return;
+    }
+
     if (code != LV_EVENT_KEY) return;
 
     uint32_t key = lv_event_get_key(e);
 
-    /* ESC exits even while editing */
+    /* ESC also exits (for keyboards that have it) */
     if (key == LV_KEY_ESC) {
         nametag_exit(NULL);
         menu_show();
@@ -379,6 +393,7 @@ static void nametag_setup(lv_obj_t *parent)
     lv_obj_set_scrollbar_mode(nametag_cont, LV_SCROLLBAR_MODE_OFF);
 
     lv_obj_add_event_cb(nametag_cont, nametag_event_cb, LV_EVENT_KEY, NULL);
+    lv_obj_add_event_cb(nametag_cont, nametag_event_cb, LV_EVENT_CLICKED, NULL);
     lv_group_t *g = lv_group_get_default();
     if (g) lv_group_add_obj(g, nametag_cont);
 

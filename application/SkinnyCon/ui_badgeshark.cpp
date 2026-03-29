@@ -114,13 +114,19 @@ static void shark_rx_task(lv_timer_t *t)
 #endif
 }
 
-static void shark_exit(lv_obj_t *parent);  /* forward decl for ESC handler */
+static lv_obj_t *shark_menu = NULL;
 
-static void shark_event_cb(lv_event_t *e)
+static void back_event_handler(lv_event_t *e)
 {
-    if (lv_event_get_code(e) != LV_EVENT_KEY) return;
-    if (lv_event_get_key(e) == LV_KEY_ESC) {
-        shark_exit(NULL);
+    lv_obj_t *obj = (lv_obj_t *)lv_event_get_target(e);
+    if (lv_menu_back_btn_is_root(shark_menu, obj)) {
+        if (rx_timer) { lv_timer_del(rx_timer); rx_timer = NULL; }
+        lv_obj_clean(shark_menu);
+        lv_obj_del(shark_menu);
+        shark_menu = NULL;
+        shark_cont = NULL;
+        stats_label = NULL;
+        packet_list = NULL;
         menu_show();
     }
 }
@@ -130,7 +136,11 @@ static void shark_setup(lv_obj_t *parent)
     total_packets = 0;
     total_bytes = 0;
 
-    shark_cont = lv_obj_create(parent);
+    shark_menu = create_menu(parent, back_event_handler);
+
+    lv_obj_t *main_page = lv_menu_page_create(shark_menu, NULL);
+
+    shark_cont = lv_obj_create(main_page);
     lv_obj_set_size(shark_cont, LV_PCT(100), LV_PCT(100));
     lv_obj_set_style_bg_color(shark_cont, SHARK_BG, 0);
     lv_obj_set_style_bg_opa(shark_cont, LV_OPA_COVER, 0);
@@ -198,10 +208,7 @@ static void shark_setup(lv_obj_t *parent)
     lv_obj_set_scrollbar_mode(packet_list, LV_SCROLLBAR_MODE_AUTO);
     lv_obj_set_scroll_dir(packet_list, LV_DIR_VER);
 
-    /* Register input for back button */
-    lv_obj_add_event_cb(shark_cont, shark_event_cb, LV_EVENT_KEY, NULL);
-    lv_group_t *g = lv_group_get_default();
-    if (g) lv_group_add_obj(g, shark_cont);
+    lv_menu_set_page(shark_menu, main_page);
 
     /* Start listening */
 #ifdef ARDUINO
@@ -223,8 +230,9 @@ static void shark_exit(lv_obj_t *parent)
         lv_timer_del(rx_timer);
         rx_timer = NULL;
     }
-    if (shark_cont) {
-        lv_obj_del(shark_cont);
+    if (shark_menu) {
+        lv_obj_del(shark_menu);
+        shark_menu = NULL;
         shark_cont = NULL;
     }
     stats_label = NULL;

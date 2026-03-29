@@ -81,13 +81,19 @@ static void net_ping_task(lv_timer_t *t)
 #endif
 }
 
-static void net_exit(lv_obj_t *parent);  /* forward decl for ESC handler */
+static lv_obj_t *net_menu = NULL;
 
-static void net_event_cb(lv_event_t *e)
+static void back_event_handler(lv_event_t *e)
 {
-    if (lv_event_get_code(e) != LV_EVENT_KEY) return;
-    if (lv_event_get_key(e) == LV_KEY_ESC) {
-        net_exit(NULL);
+    lv_obj_t *obj = (lv_obj_t *)lv_event_get_target(e);
+    if (lv_menu_back_btn_is_root(net_menu, obj)) {
+        if (ping_timer) { lv_timer_del(ping_timer); ping_timer = NULL; }
+        lv_obj_clean(net_menu);
+        lv_obj_del(net_menu);
+        net_menu = NULL;
+        net_cont = NULL;
+        net_stats_label = NULL;
+        ping_log = NULL;
         menu_show();
     }
 }
@@ -100,7 +106,11 @@ static void net_setup(lv_obj_t *parent)
     min_rtt = 9999;
     max_rtt = 0;
 
-    net_cont = lv_obj_create(parent);
+    net_menu = create_menu(parent, back_event_handler);
+
+    lv_obj_t *main_page = lv_menu_page_create(net_menu, NULL);
+
+    net_cont = lv_obj_create(main_page);
     lv_obj_set_size(net_cont, LV_PCT(100), LV_PCT(100));
     lv_obj_set_style_bg_color(net_cont, NET_BG, 0);
     lv_obj_set_style_bg_opa(net_cont, LV_OPA_COVER, 0);
@@ -182,10 +192,7 @@ static void net_setup(lv_obj_t *parent)
     lv_label_set_text(peer_title, "PEERS");
     lv_obj_set_style_text_color(peer_title, NET_CYAN, 0);
 
-    /* Register input for back button */
-    lv_obj_add_event_cb(net_cont, net_event_cb, LV_EVENT_KEY, NULL);
-    lv_group_t *g = lv_group_get_default();
-    if (g) lv_group_add_obj(g, net_cont);
+    lv_menu_set_page(net_menu, main_page);
 
 #ifndef ARDUINO
     /* Demo data for simulation */
@@ -218,10 +225,11 @@ static void net_exit(lv_obj_t *parent)
         lv_timer_del(ping_timer);
         ping_timer = NULL;
     }
-    if (net_cont) {
-        lv_obj_del(net_cont);
-        net_cont = NULL;
+    if (net_menu) {
+        lv_obj_del(net_menu);
+        net_menu = NULL;
     }
+    net_cont = NULL;
     net_stats_label = NULL;
     ping_log = NULL;
 }

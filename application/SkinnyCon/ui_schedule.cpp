@@ -1,9 +1,9 @@
 /**
  * @file      ui_schedule.cpp
  * @brief     SkinnyCon 2026 Schedule — May 12-14, Huntsville AL
- * @details   Browse the 3-day conference schedule. Scrollable list with
- *            time, title, and speaker. Rotary/keyboard navigates items.
- *            Left/Right arrows switch between days.
+ * @details   Browse the 3-day conference schedule using LVGL menu widget.
+ *            Scroll through talks, left/right to switch days.
+ *            Back button returns to main menu.
  */
 #include "ui_define.h"
 #include "ui_skinnycon_theme.h"
@@ -18,7 +18,7 @@
 LV_FONT_DECLARE(font_alibaba_12);
 LV_FONT_DECLARE(font_alibaba_24);
 
-static lv_obj_t *sched_cont = NULL;
+static lv_obj_t *menu = NULL;
 static lv_obj_t *sched_list = NULL;
 static lv_obj_t *day_label = NULL;
 static int selected_talk = 0;
@@ -108,20 +108,33 @@ static void sched_update_highlight(void)
     }
 }
 
-static void sched_exit(lv_obj_t *parent);  /* forward decl for ESC handler */
-
-static void sched_event_cb(lv_event_t *e)
+static void back_event_handler(lv_event_t *e)
 {
-    lv_event_code_t code = lv_event_get_code(e);
-    if (code != LV_EVENT_KEY) return;
+    lv_obj_t *obj = (lv_obj_t *)lv_event_get_target(e);
+    if (lv_menu_back_btn_is_root(menu, obj)) {
+        lv_obj_clean(menu);
+        lv_obj_del(menu);
+        menu = NULL;
+        sched_list = NULL;
+        day_label = NULL;
+        menu_show();
+    }
+}
 
+static void sched_key_cb(lv_event_t *e)
+{
+    if (lv_event_get_code(e) != LV_EVENT_KEY) return;
     uint32_t key = lv_event_get_key(e);
     const int n = day_counts[current_day];
 
-    if (key == LV_KEY_ESC) {
-        sched_exit(NULL);
-        menu_show();
-        return;
+    if (key == LV_KEY_RIGHT) {
+        current_day = (current_day + 1) % 3;
+        selected_talk = 0;
+        sched_build_list();
+    } else if (key == LV_KEY_LEFT) {
+        current_day = (current_day + 2) % 3;
+        selected_talk = 0;
+        sched_build_list();
     } else if (key == LV_KEY_DOWN) {
         selected_talk = (selected_talk + 1) % n;
         sched_update_highlight();
@@ -132,16 +145,6 @@ static void sched_event_cb(lv_event_t *e)
         sched_update_highlight();
         lv_obj_t *sel = lv_obj_get_child(sched_list, selected_talk);
         if (sel) lv_obj_scroll_to_view(sel, LV_ANIM_ON);
-    } else if (key == LV_KEY_RIGHT) {
-        /* Next day */
-        current_day = (current_day + 1) % 3;
-        selected_talk = 0;
-        sched_build_list();
-    } else if (key == LV_KEY_LEFT) {
-        /* Previous day */
-        current_day = (current_day + 2) % 3;
-        selected_talk = 0;
-        sched_build_list();
     }
 }
 
@@ -193,17 +196,12 @@ static void sched_setup(lv_obj_t *parent)
     selected_talk = 0;
     current_day = 0;
 
-    sched_cont = lv_obj_create(parent);
-    lv_obj_set_size(sched_cont, LV_PCT(100), LV_PCT(100));
-    lv_obj_set_style_bg_color(sched_cont, SCHED_BG, 0);
-    lv_obj_set_style_bg_opa(sched_cont, LV_OPA_COVER, 0);
-    lv_obj_set_style_border_width(sched_cont, 0, 0);
-    lv_obj_set_style_radius(sched_cont, 0, 0);
-    lv_obj_set_style_pad_all(sched_cont, 0, 0);
-    lv_obj_set_flex_flow(sched_cont, LV_FLEX_FLOW_COLUMN);
+    menu = create_menu(parent, back_event_handler);
+
+    lv_obj_t *main_page = lv_menu_page_create(menu, NULL);
 
     /* Header */
-    lv_obj_t *header = lv_obj_create(sched_cont);
+    lv_obj_t *header = lv_obj_create(main_page);
     lv_obj_set_size(header, LV_PCT(100), 28);
     lv_obj_set_style_bg_color(header, SC_HEADER, 0);
     lv_obj_set_style_bg_opa(header, LV_OPA_COVER, 0);
@@ -212,7 +210,7 @@ static void sched_setup(lv_obj_t *parent)
     lv_obj_set_style_pad_hor(header, 8, 0);
 
     lv_obj_t *title = lv_label_create(header);
-    lv_label_set_text(title, LV_SYMBOL_LIST " SkinnyCon 2026");
+    lv_label_set_text(title, "SkinnyCon 2026");
     lv_obj_set_style_text_color(title, SCHED_ACCENT, 0);
     lv_obj_set_style_text_font(title, &font_alibaba_12, 0);
     lv_obj_align(title, LV_ALIGN_LEFT_MID, 0, 0);
@@ -222,7 +220,7 @@ static void sched_setup(lv_obj_t *parent)
     lv_obj_align(day_label, LV_ALIGN_RIGHT_MID, 0, 0);
 
     /* Talk list */
-    sched_list = lv_obj_create(sched_cont);
+    sched_list = lv_obj_create(main_page);
     lv_obj_set_size(sched_list, LV_PCT(100), LV_PCT(100));
     lv_obj_set_flex_grow(sched_list, 1);
     lv_obj_set_style_bg_color(sched_list, SCHED_BG, 0);
@@ -236,17 +234,18 @@ static void sched_setup(lv_obj_t *parent)
 
     sched_build_list();
 
-    /* Register input */
-    lv_obj_add_event_cb(sched_cont, sched_event_cb, LV_EVENT_KEY, NULL);
-    lv_group_t *g = lv_group_get_default();
-    if (g) lv_group_add_obj(g, sched_cont);
+    lv_menu_set_page(menu, main_page);
+
+    /* Key handler for day switching */
+    lv_obj_add_event_cb(menu, sched_key_cb, LV_EVENT_KEY, NULL);
 }
 
 static void sched_exit(lv_obj_t *parent)
 {
-    if (sched_cont) {
-        lv_obj_del(sched_cont);
-        sched_cont = NULL;
+    if (menu) {
+        lv_obj_clean(menu);
+        lv_obj_del(menu);
+        menu = NULL;
     }
     sched_list = NULL;
     day_label = NULL;
