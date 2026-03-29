@@ -49,7 +49,7 @@ const char* screen_state_to_string(ScreenState_t state);
 
 /**
  * @brief Convert string to screen state (case-insensitive).
- * @param str String representation of state
+ * @param str String representation of state (e.g. "IDLE", "idle", "Idle")
  * @return ScreenState_t or SCREEN_STATE_IDLE on invalid input
  */
 ScreenState_t screen_state_from_string(const char* str);
@@ -91,7 +91,7 @@ void nav_history_init(NavigationHistory_t* history);
  * @param state New screen state
  * @param timestamp_ms Current timestamp in milliseconds
  * @param app_id App identifier (0 if not in app state)
- * @return true if push succeeded, false if stack is full
+ * @return true if push succeeded (evicts oldest entry when full), false on NULL input
  */
 bool nav_history_push(NavigationHistory_t* history, 
                       ScreenState_t state, 
@@ -170,7 +170,6 @@ typedef struct {
     ScreenStateManagerConfig_t config;
     bool has_activity;           /* Has recent user activity */
     uint32_t last_activity_ms;   /* Timestamp of last activity */
-    bool power_transition_pending; /* Power event pending */
 } ScreenStateManager_t;
 
 /**

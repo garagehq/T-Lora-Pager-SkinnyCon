@@ -13,6 +13,7 @@
 
 #include "screen_state_manager.h"
 #include <string.h>
+#include <strings.h>
 
 /* ============================================================
  * STATE STRING CONVERSION
@@ -34,14 +35,14 @@ const char* screen_state_to_string(ScreenState_t state)
 ScreenState_t screen_state_from_string(const char* str)
 {
     if (!str) return SCREEN_STATE_IDLE;
-    
-    if (strcmp(str, "IDLE") == 0 || strcmp(str, "idle") == 0) return SCREEN_STATE_IDLE;
-    if (strcmp(str, "MENU") == 0 || strcmp(str, "menu") == 0) return SCREEN_STATE_MENU;
-    if (strcmp(str, "APP") == 0 || strcmp(str, "app") == 0) return SCREEN_STATE_APP;
-    if (strcmp(str, "APP_NESTED") == 0 || strcmp(str, "app_nested") == 0) return SCREEN_STATE_APP_NESTED;
-    if (strcmp(str, "LOW_POWER") == 0 || strcmp(str, "low_power") == 0) return SCREEN_STATE_LOW_POWER;
-    if (strcmp(str, "POWER_OFF") == 0 || strcmp(str, "power_off") == 0) return SCREEN_STATE_POWER_OFF;
-    
+
+    if (strcasecmp(str, "IDLE") == 0) return SCREEN_STATE_IDLE;
+    if (strcasecmp(str, "MENU") == 0) return SCREEN_STATE_MENU;
+    if (strcasecmp(str, "APP") == 0) return SCREEN_STATE_APP;
+    if (strcasecmp(str, "APP_NESTED") == 0) return SCREEN_STATE_APP_NESTED;
+    if (strcasecmp(str, "LOW_POWER") == 0) return SCREEN_STATE_LOW_POWER;
+    if (strcasecmp(str, "POWER_OFF") == 0) return SCREEN_STATE_POWER_OFF;
+
     return SCREEN_STATE_IDLE;
 }
 
@@ -181,7 +182,6 @@ void screen_state_manager_init(ScreenStateManager_t* manager,
     
     manager->has_activity = true;
     manager->last_activity_ms = 0;  /* Will be set by first activity */
-    manager->power_transition_pending = false;
     
     /* Push initial idle state to history */
     nav_history_push(&manager->history, SCREEN_STATE_IDLE, 0, 0);
