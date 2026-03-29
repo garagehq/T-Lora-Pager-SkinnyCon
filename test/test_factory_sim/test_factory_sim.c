@@ -120,55 +120,73 @@ static void create_app_icon(lv_obj_t *parent, const char *name,
     }
 }
 
-/* Nametag icon: badge/ID card shape */
+/* Nametag icon: vertical ID badge with person silhouette */
 static void draw_test_icon_nametag(lv_obj_t *parent)
 {
     lv_obj_t *btn = create_app_btn_test(parent, "Nametag");
-    lv_obj_t *card = lv_obj_create(btn);
-    lv_obj_set_size(card, 56, 44);
-    lv_obj_center(card);
-    lv_obj_set_style_bg_color(card, SC_PANEL, 0);
-    lv_obj_set_style_bg_opa(card, LV_OPA_COVER, 0);
-    lv_obj_set_style_border_color(card, SC_TEAL, 0);
-    lv_obj_set_style_border_width(card, 2, 0);
-    lv_obj_set_style_radius(card, 6, 0);
-    lv_obj_remove_flag(card, LV_OBJ_FLAG_SCROLLABLE);
 
-    lv_obj_t *stripe = lv_obj_create(card);
-    lv_obj_set_size(stripe, LV_PCT(100), 12);
-    lv_obj_align(stripe, LV_ALIGN_TOP_MID, 0, 0);
-    lv_obj_set_style_bg_color(stripe, SC_ACCENT, 0);
-    lv_obj_set_style_bg_opa(stripe, LV_OPA_COVER, 0);
-    lv_obj_set_style_border_width(stripe, 0, 0);
-    lv_obj_set_style_radius(stripe, 0, 0);
+    lv_obj_t *badge = lv_obj_create(btn);
+    lv_obj_set_size(badge, 44, 58);
+    lv_obj_center(badge);
+    lv_obj_set_style_bg_color(badge, SC_PANEL, 0);
+    lv_obj_set_style_bg_opa(badge, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_color(badge, SC_TEXT, 0);
+    lv_obj_set_style_border_width(badge, 2, 0);
+    lv_obj_set_style_radius(badge, 4, 0);
+    lv_obj_remove_flag(badge, LV_OBJ_FLAG_SCROLLABLE);
 
-    lv_obj_t *line1 = lv_obj_create(card);
-    lv_obj_set_size(line1, 32, 3);
-    lv_obj_align(line1, LV_ALIGN_CENTER, 0, 2);
-    lv_obj_set_style_bg_color(line1, SC_TEXT, 0);
-    lv_obj_set_style_bg_opa(line1, LV_OPA_COVER, 0);
-    lv_obj_set_style_border_width(line1, 0, 0);
-    lv_obj_set_style_radius(line1, 1, 0);
+    lv_obj_t *band = lv_obj_create(badge);
+    lv_obj_set_size(band, LV_PCT(100), 10);
+    lv_obj_align(band, LV_ALIGN_TOP_MID, 0, 0);
+    lv_obj_set_style_bg_color(band, SC_ACCENT, 0);
+    lv_obj_set_style_bg_opa(band, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_width(band, 0, 0);
+    lv_obj_set_style_radius(band, 0, 0);
 
-    lv_obj_t *line2 = lv_obj_create(card);
-    lv_obj_set_size(line2, 22, 2);
-    lv_obj_align(line2, LV_ALIGN_CENTER, 0, 10);
-    lv_obj_set_style_bg_color(line2, SC_TEXT_DIM, 0);
-    lv_obj_set_style_bg_opa(line2, LV_OPA_COVER, 0);
-    lv_obj_set_style_border_width(line2, 0, 0);
-    lv_obj_set_style_radius(line2, 1, 0);
+    lv_obj_t *head = lv_obj_create(badge);
+    lv_obj_set_size(head, 14, 14);
+    lv_obj_align(head, LV_ALIGN_CENTER, 0, -6);
+    lv_obj_set_style_radius(head, LV_RADIUS_CIRCLE, 0);
+    lv_obj_set_style_bg_color(head, SC_TEXT_DIM, 0);
+    lv_obj_set_style_bg_opa(head, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_width(head, 0, 0);
+
+    lv_obj_t *body = lv_obj_create(badge);
+    lv_obj_set_size(body, 22, 10);
+    lv_obj_align(body, LV_ALIGN_CENTER, 0, 6);
+    lv_obj_set_style_radius(body, 10, 0);
+    lv_obj_set_style_bg_color(body, SC_TEXT_DIM, 0);
+    lv_obj_set_style_bg_opa(body, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_width(body, 0, 0);
+
+    lv_obj_t *nline = lv_obj_create(badge);
+    lv_obj_set_size(nline, 28, 3);
+    lv_obj_align(nline, LV_ALIGN_BOTTOM_MID, 0, -10);
+    lv_obj_set_style_bg_color(nline, SC_TEXT, 0);
+    lv_obj_set_style_bg_opa(nline, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_width(nline, 0, 0);
+    lv_obj_set_style_radius(nline, 1, 0);
+
+    lv_obj_t *sline = lv_obj_create(badge);
+    lv_obj_set_size(sline, 20, 2);
+    lv_obj_align(sline, LV_ALIGN_BOTTOM_MID, 0, -5);
+    lv_obj_set_style_bg_color(sline, SC_TEXT_DIM, 0);
+    lv_obj_set_style_bg_opa(sline, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_width(sline, 0, 0);
+    lv_obj_set_style_radius(sline, 1, 0);
 }
 
-/* Schedule icon: calendar grid */
+/* Schedule icon: calendar page with day number */
 static void draw_test_icon_schedule(lv_obj_t *parent)
 {
     lv_obj_t *btn = create_app_btn_test(parent, "Schedule");
+
     lv_obj_t *cal = lv_obj_create(btn);
-    lv_obj_set_size(cal, 48, 48);
+    lv_obj_set_size(cal, 48, 52);
     lv_obj_center(cal);
     lv_obj_set_style_bg_color(cal, SC_PANEL, 0);
     lv_obj_set_style_bg_opa(cal, LV_OPA_COVER, 0);
-    lv_obj_set_style_border_color(cal, SC_TEAL, 0);
+    lv_obj_set_style_border_color(cal, SC_TEXT, 0);
     lv_obj_set_style_border_width(cal, 2, 0);
     lv_obj_set_style_radius(cal, 4, 0);
     lv_obj_remove_flag(cal, LV_OBJ_FLAG_SCROLLABLE);
@@ -181,17 +199,11 @@ static void draw_test_icon_schedule(lv_obj_t *parent)
     lv_obj_set_style_border_width(hdr, 0, 0);
     lv_obj_set_style_radius(hdr, 0, 0);
 
-    for (int r = 0; r < 3; r++) {
-        for (int c = 0; c < 3; c++) {
-            lv_obj_t *dot = lv_obj_create(cal);
-            lv_obj_set_size(dot, 6, 4);
-            lv_obj_set_pos(dot, 8 + c * 13, 18 + r * 9);
-            lv_obj_set_style_bg_color(dot, (r == 0 && c == 1) ? SC_ACCENT : SC_TEXT_DIM, 0);
-            lv_obj_set_style_bg_opa(dot, LV_OPA_COVER, 0);
-            lv_obj_set_style_border_width(dot, 0, 0);
-            lv_obj_set_style_radius(dot, 1, 0);
-        }
-    }
+    lv_obj_t *day = lv_label_create(cal);
+    lv_label_set_text(day, "12");
+    lv_obj_set_style_text_font(day, &font_alibaba_24, 0);
+    lv_obj_set_style_text_color(day, SC_TEXT, 0);
+    lv_obj_align(day, LV_ALIGN_CENTER, 0, 5);
 }
 
 /* Net Tools icon: signal waves */
