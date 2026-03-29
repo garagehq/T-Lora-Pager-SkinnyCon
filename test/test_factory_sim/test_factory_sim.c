@@ -832,6 +832,91 @@ void test_supercon_nametag(void)
 }
 
 /* ================================================================
+ *  TEST: Nametag fullscreen mode (mode 1)
+ * ================================================================ */
+
+void test_supercon_nametag_fullscreen(void)
+{
+    lv_obj_t *scr = lv_screen_active();
+    lv_obj_set_style_bg_color(scr, SUPERCON_BG_C, LV_PART_MAIN);
+    lv_obj_set_style_bg_opa(scr, LV_OPA_COVER, 0);
+
+    lv_obj_t *cont = lv_obj_create(scr);
+    lv_obj_set_size(cont, LV_PCT(100), LV_PCT(100));
+    lv_obj_set_style_bg_color(cont, SUPERCON_BG_C, 0);
+    lv_obj_set_style_bg_opa(cont, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_width(cont, 0, 0);
+    lv_obj_set_style_radius(cont, 0, 0);
+
+    lv_obj_t *name = lv_label_create(cont);
+    lv_label_set_text(name, "SkinnyCon");
+    lv_obj_set_style_text_font(name, &font_alibaba_40, 0);
+    lv_obj_set_style_text_color(name, SUPERCON_ACCENT_C, 0);
+    lv_obj_set_style_text_align(name, LV_TEXT_ALIGN_CENTER, 0);
+    lv_obj_set_width(name, LV_PCT(100));
+    lv_label_set_long_mode(name, LV_LABEL_LONG_CLIP);
+    lv_obj_center(name);
+
+    lvgl_test_run(200);
+    int result = lvgl_test_save_ppm("factory_nametag_fullscreen.ppm");
+    TEST_ASSERT_EQUAL_INT(0, result);
+}
+
+/* ================================================================
+ *  TEST: Nametag badge info mode (mode 4)
+ * ================================================================ */
+
+void test_supercon_nametag_badge_info(void)
+{
+    lv_obj_t *scr = lv_screen_active();
+    lv_obj_set_style_bg_color(scr, SUPERCON_BG_C, LV_PART_MAIN);
+    lv_obj_set_style_bg_opa(scr, LV_OPA_COVER, 0);
+
+    lv_obj_t *cont = lv_obj_create(scr);
+    lv_obj_set_size(cont, LV_PCT(100), LV_PCT(100));
+    lv_obj_set_style_bg_color(cont, SUPERCON_BG_C, 0);
+    lv_obj_set_style_bg_opa(cont, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_width(cont, 0, 0);
+    lv_obj_set_style_radius(cont, 0, 0);
+    lv_obj_set_style_pad_all(cont, 8, 0);
+    lv_obj_set_flex_flow(cont, LV_FLEX_FLOW_COLUMN);
+    lv_obj_set_flex_align(cont, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+
+    lv_obj_t *title = lv_label_create(cont);
+    lv_label_set_text(title, "BADGE INFO");
+    lv_obj_set_style_text_font(title, &font_alibaba_24, 0);
+    lv_obj_set_style_text_color(title, SUPERCON_ACCENT_C, 0);
+    lv_obj_set_style_text_align(title, LV_TEXT_ALIGN_CENTER, 0);
+    lv_obj_set_width(title, LV_PCT(100));
+
+    lv_obj_t *panel = lv_obj_create(cont);
+    lv_obj_set_size(panel, LV_PCT(90), LV_SIZE_CONTENT);
+    lv_obj_set_style_bg_color(panel, SUPERCON_PANEL_C, 0);
+    lv_obj_set_style_bg_opa(panel, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_color(panel, SC_TEAL, 0);
+    lv_obj_set_style_border_width(panel, 1, 0);
+    lv_obj_set_style_radius(panel, 8, 0);
+    lv_obj_set_style_pad_all(panel, 10, 0);
+    lv_obj_center(panel);
+
+    lv_obj_t *info = lv_label_create(panel);
+    lv_label_set_text(info,
+        "Device: T-LoRa-Pager\n"
+        "MCU: ESP32-S3 240MHz\n"
+        "Display: 480x222 IPS\n"
+        "Radio: SX1262 LoRa\n"
+        "Freq: 915 MHz\n"
+        "GPS: u-blox MIA-M10Q\n"
+        "NFC: ST25R3911B"
+    );
+    lv_obj_set_style_text_color(info, SUPERCON_WHITE_C, 0);
+
+    lvgl_test_run(200);
+    int result = lvgl_test_save_ppm("factory_nametag_badge_info.ppm");
+    TEST_ASSERT_EQUAL_INT(0, result);
+}
+
+/* ================================================================
  *  TEST: About SkinnyCon screen (standalone C recreation)
  * ================================================================ */
 
@@ -991,7 +1076,7 @@ void test_supercon_badgeshark(void)
 
     lv_obj_t *title = lv_label_create(header);
     lv_label_set_text(title, "BadgeShark");
-    lv_obj_set_style_text_color(title, SHARK_GREEN_C, 0);
+    lv_obj_set_style_text_color(title, SC_ACCENT, 0);
     lv_obj_set_style_text_font(title, &font_alibaba_12, 0);
     lv_obj_align(title, LV_ALIGN_LEFT_MID, 0, 0);
 
@@ -1222,7 +1307,7 @@ void test_supercon_nettools(void)
 
     lv_obj_t *ntitle = lv_label_create(header);
     lv_label_set_text(ntitle, "Net Tools");
-    lv_obj_set_style_text_color(ntitle, NET_GREEN_C, 0);
+    lv_obj_set_style_text_color(ntitle, SC_ACCENT, 0);
     lv_obj_set_style_text_font(ntitle, &font_alibaba_12, 0);
     lv_obj_align(ntitle, LV_ALIGN_LEFT_MID, 0, 0);
 
@@ -1354,6 +1439,8 @@ int main(int argc, char **argv)
 
     /* Supercon-inspired app screens */
     RUN_TEST(test_supercon_nametag);
+    RUN_TEST(test_supercon_nametag_fullscreen);
+    RUN_TEST(test_supercon_nametag_badge_info);
     RUN_TEST(test_supercon_about);
     RUN_TEST(test_supercon_coc);
     RUN_TEST(test_supercon_badgeshark);
