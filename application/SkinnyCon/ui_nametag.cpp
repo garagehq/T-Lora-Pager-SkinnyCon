@@ -43,6 +43,12 @@ static void back_event_handler(lv_event_t *e)
     }
 }
 
+static void force_uppercase(char *str) {
+    for (int i = 0; str[i]; i++) {
+        if (str[i] >= 'a' && str[i] <= 'z') str[i] -= 32;
+    }
+}
+
 /* Textarea event handler — copied from LoRa Chat's working pattern */
 static void nametag_ta_cb(lv_event_t *e)
 {
@@ -57,6 +63,24 @@ static void nametag_ta_cb(lv_event_t *e)
     printf("[NAMETAG-TA] code=%d edited=%d indev_type=%d\n",
            (int)code, edited, indev ? (int)indev->type : -1);
 
+    /* Force uppercase on every text change */
+    if (code == LV_EVENT_VALUE_CHANGED) {
+        const char *text = lv_textarea_get_text(ta);
+        if (text) {
+            char upper[NAME_MAX_LEN + 1];
+            int i;
+            for (i = 0; text[i] && i < NAME_MAX_LEN; i++) {
+                upper[i] = (text[i] >= 'a' && text[i] <= 'z') ? text[i] - 32 : text[i];
+            }
+            upper[i] = '\0';
+            if (strcmp(upper, text) != 0) {
+                uint32_t cur = lv_textarea_get_cursor_pos(ta);
+                lv_textarea_set_text(ta, upper);
+                lv_textarea_set_cursor_pos(ta, cur);
+            }
+        }
+    }
+
     if (code == LV_EVENT_KEY) {
         lv_key_t key = *(lv_key_t *)lv_event_get_param(e);
         printf("[NAMETAG-TA] key=%d\n", (int)key);
@@ -66,6 +90,7 @@ static void nametag_ta_cb(lv_event_t *e)
             if (text && strlen(text) > 0) {
                 strncpy(nametag_user_name, text, NAME_MAX_LEN);
                 nametag_user_name[NAME_MAX_LEN] = '\0';
+                force_uppercase(nametag_user_name);
             }
             if (name_label) lv_label_set_text(name_label, nametag_user_name);
             printf("[NAMETAG] Name saved: '%s'\n", nametag_user_name);
@@ -82,6 +107,7 @@ static void nametag_ta_cb(lv_event_t *e)
                 if (text && strlen(text) > 0) {
                     strncpy(nametag_user_name, text, NAME_MAX_LEN);
                     nametag_user_name[NAME_MAX_LEN] = '\0';
+                force_uppercase(nametag_user_name);
                 }
                 if (name_label) lv_label_set_text(name_label, nametag_user_name);
                 printf("[NAMETAG] Name saved via click: '%s'\n", nametag_user_name);
@@ -106,6 +132,7 @@ static void nametag_ta_cb(lv_event_t *e)
         if (text && strlen(text) > 0) {
             strncpy(nametag_user_name, text, NAME_MAX_LEN);
             nametag_user_name[NAME_MAX_LEN] = '\0';
+                force_uppercase(nametag_user_name);
         }
         if (name_label) lv_label_set_text(name_label, nametag_user_name);
     }

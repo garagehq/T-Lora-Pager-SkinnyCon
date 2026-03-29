@@ -116,7 +116,10 @@ static lv_obj_t *create_day_page(lv_obj_t *m, const talk_t *talks, int n, lv_gro
 
         /* Add to group so encoder can scroll through talks */
         if (g) lv_group_add_obj(g, row);
+        printf("[SCHED] Added talk row %d to group: '%s %s'\n", i, talks[i].time, talks[i].title);
     }
+    printf("[SCHED] Day page created with %d talks, group now has %d objs\n",
+           n, g ? (int)lv_group_get_obj_count(g) : -1);
 
     return page;
 }
@@ -161,12 +164,16 @@ static void sched_setup(lv_obj_t *parent)
 
 static void sched_exit(lv_obj_t *parent)
 {
-    printf("[SCHED] Exit\n");
+    lv_group_t *g = lv_group_get_default();
+    printf("[SCHED] Exit — group has %d objs before cleanup\n",
+           g ? (int)lv_group_get_obj_count(g) : -1);
     if (sched_menu) {
         lv_obj_clean(sched_menu);
         lv_obj_del(sched_menu);
         sched_menu = NULL;
     }
+    printf("[SCHED] Exit — group has %d objs after cleanup\n",
+           g ? (int)lv_group_get_obj_count(g) : -1);
 }
 
 app_t ui_schedule_main = {sched_setup, sched_exit, NULL};
