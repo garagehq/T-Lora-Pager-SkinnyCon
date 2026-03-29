@@ -43,6 +43,7 @@ char nametag_user_subtitle[SUBTITLE_MAX_LEN + 1] = "SkinnyCon 2026";
 #define user_subtitle nametag_user_subtitle
 static bool editing_name = false;
 static bool editing_subtitle = false;
+static bool subtitle_first_char = false;  /* clear subtitle on first typed char */
 
 static void nametag_rebuild(void);
 
@@ -260,6 +261,7 @@ static void nametag_kb_callback(int state, char &c)
         if (editing_name) {
             editing_name = false;
             editing_subtitle = true;
+            subtitle_first_char = true;  /* clear on first typed char */
         } else if (editing_subtitle) {
             editing_subtitle = false;
             editing_name = true;
@@ -292,10 +294,17 @@ static void nametag_kb_callback(int state, char &c)
                 user_name[len + 1] = '\0';
             }
         } else if (editing_subtitle) {
-            int len = strlen(user_subtitle);
-            if (len < SUBTITLE_MAX_LEN) {
-                user_subtitle[len] = c;
-                user_subtitle[len + 1] = '\0';
+            if (subtitle_first_char) {
+                /* First char after Tab clears the subtitle */
+                user_subtitle[0] = c;
+                user_subtitle[1] = '\0';
+                subtitle_first_char = false;
+            } else {
+                int len = strlen(user_subtitle);
+                if (len < SUBTITLE_MAX_LEN) {
+                    user_subtitle[len] = c;
+                    user_subtitle[len + 1] = '\0';
+                }
             }
         }
         nametag_rebuild();
