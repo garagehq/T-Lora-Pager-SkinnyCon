@@ -713,6 +713,76 @@ void test_icon_rendering(void)
 }
 
 /* ================================================================
+ *  TEST: Generated icon rendering (custom LVGL-drawn icons)
+ * ================================================================ */
+
+void test_generated_icon_rendering(void)
+{
+    lv_obj_t *scr = lv_screen_active();
+    lv_obj_set_style_bg_color(scr, SC_BG, LV_PART_MAIN);
+    lv_obj_set_style_bg_opa(scr, LV_OPA_COVER, 0);
+
+    /* Title */
+    lv_obj_t *title = lv_label_create(scr);
+    lv_obj_set_style_text_font(title, &font_alibaba_12, 0);
+    lv_obj_set_style_text_color(title, SC_ACCENT, 0);
+    lv_label_set_text(title, "Generated Icons (LVGL-drawn)");
+    lv_obj_align(title, LV_ALIGN_TOP_MID, 0, 5);
+
+    /* Three icon slots side by side */
+    lv_obj_t *row = lv_obj_create(scr);
+    lv_obj_set_size(row, LV_PCT(100), LV_PCT(80));
+    lv_obj_align(row, LV_ALIGN_BOTTOM_MID, 0, 0);
+    lv_obj_set_style_bg_opa(row, LV_OPA_0, 0);
+    lv_obj_set_style_border_width(row, 0, 0);
+    lv_obj_set_flex_flow(row, LV_FLEX_FLOW_ROW);
+    lv_obj_set_flex_align(row, LV_FLEX_ALIGN_SPACE_EVENLY, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+
+    /* Nametag icon */
+    lv_obj_t *slot1 = lv_obj_create(row);
+    lv_obj_set_size(slot1, 140, LV_PCT(100));
+    lv_obj_set_style_bg_opa(slot1, LV_OPA_0, 0);
+    lv_obj_set_style_border_width(slot1, 0, 0);
+    lv_obj_set_flex_flow(slot1, LV_FLEX_FLOW_COLUMN);
+    lv_obj_set_flex_align(slot1, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+    draw_test_icon_nametag(slot1);
+    lv_obj_t *lbl1 = lv_label_create(slot1);
+    lv_label_set_text(lbl1, "Nametag");
+    lv_obj_set_style_text_color(lbl1, SC_TEXT, 0);
+    lv_obj_set_style_text_font(lbl1, &font_alibaba_12, 0);
+
+    /* Schedule icon */
+    lv_obj_t *slot2 = lv_obj_create(row);
+    lv_obj_set_size(slot2, 140, LV_PCT(100));
+    lv_obj_set_style_bg_opa(slot2, LV_OPA_0, 0);
+    lv_obj_set_style_border_width(slot2, 0, 0);
+    lv_obj_set_flex_flow(slot2, LV_FLEX_FLOW_COLUMN);
+    lv_obj_set_flex_align(slot2, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+    draw_test_icon_schedule(slot2);
+    lv_obj_t *lbl2 = lv_label_create(slot2);
+    lv_label_set_text(lbl2, "Schedule");
+    lv_obj_set_style_text_color(lbl2, SC_TEXT, 0);
+    lv_obj_set_style_text_font(lbl2, &font_alibaba_12, 0);
+
+    /* Net Tools icon */
+    lv_obj_t *slot3 = lv_obj_create(row);
+    lv_obj_set_size(slot3, 140, LV_PCT(100));
+    lv_obj_set_style_bg_opa(slot3, LV_OPA_0, 0);
+    lv_obj_set_style_border_width(slot3, 0, 0);
+    lv_obj_set_flex_flow(slot3, LV_FLEX_FLOW_COLUMN);
+    lv_obj_set_flex_align(slot3, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+    draw_test_icon_nettools(slot3);
+    lv_obj_t *lbl3 = lv_label_create(slot3);
+    lv_label_set_text(lbl3, "Net Tools");
+    lv_obj_set_style_text_color(lbl3, SC_TEXT, 0);
+    lv_obj_set_style_text_font(lbl3, &font_alibaba_12, 0);
+
+    lvgl_test_run(200);
+    int result = lvgl_test_save_ppm("factory_icons_generated.ppm");
+    TEST_ASSERT_EQUAL_INT(0, result);
+}
+
+/* ================================================================
  *  TEST: Supercon Nametag screen (standalone C recreation)
  * ================================================================ */
 
@@ -865,10 +935,11 @@ void test_supercon_nametag_badge_info(void)
         "Device: T-LoRa-Pager\n"
         "MCU: ESP32-S3 240MHz\n"
         "Display: 480x222 IPS\n"
-        "Radio: SX1262 LoRa\n"
-        "Freq: 915 MHz\n"
+        "Radio: SX1262 LoRa 915MHz\n"
         "GPS: u-blox MIA-M10Q\n"
-        "NFC: ST25R3911B"
+        "NFC: ST25R3911B\n\n"
+        "Created by: Cyril Engmann\n"
+        "Garage Agency LLC"
     );
     lv_obj_set_style_text_color(info, SUPERCON_WHITE_C, 0);
 
@@ -1185,12 +1256,12 @@ void test_supercon_schedule(void)
     lv_obj_set_flex_flow(list, LV_FLEX_FLOW_COLUMN);
     lv_obj_set_scrollbar_mode(list, LV_SCROLLBAR_MODE_AUTO);
 
-    const char *times[] = {"0800", "0900", "0915", "0930", "1030", "1100"};
-    const char *titles[] = {"Check-in / Breakfast", "Welcome", "How to CTF",
-                            "Tech Ops Case Files", "Break", "Intro to Reverse Engineering"};
-    int is_break[] = {1, 0, 0, 0, 1, 0};
+    const char *times[] = {"0800", "0900", "0915", "0930", "1030", "1100", "1150"};
+    const char *titles[] = {"Check-in/Breakfast/Vendor", "Welcome", "How to CTF",
+                            "Tech Ops Case Files", "Break", "Intro to Reverse Eng.", "Lunch"};
+    int is_break[] = {1, 0, 0, 0, 1, 0, 1};
 
-    for (int i = 0; i < 6; i++) {
+    for (int i = 0; i < 7; i++) {
         lv_obj_t *row = lv_obj_create(list);
         lv_obj_set_size(row, LV_PCT(100), LV_SIZE_CONTENT);
         lv_obj_set_style_bg_color(row, (i == 0) ? SC_BORDER :
@@ -1411,6 +1482,7 @@ int main(int argc, char **argv)
     /* Asset quality verification */
     RUN_TEST(test_font_rendering_quality);
     RUN_TEST(test_icon_rendering);
+    RUN_TEST(test_generated_icon_rendering);
     RUN_TEST(test_screenshot_sizes);
 
     return UNITY_END();

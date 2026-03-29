@@ -239,10 +239,11 @@ static void nametag_build_badge_info_mode(void)
         "Device: T-LoRa-Pager\n"
         "MCU: ESP32-S3 240MHz\n"
         "Display: 480x222 IPS\n"
-        "Radio: SX1262 LoRa\n"
-        "Freq: 915 MHz\n"
+        "Radio: SX1262 LoRa 915MHz\n"
         "GPS: u-blox MIA-M10Q\n"
-        "NFC: ST25R3911B"
+        "NFC: ST25R3911B\n\n"
+        "Created by: Cyril Engmann\n"
+        "Garage Agency LLC"
     );
     lv_obj_set_style_text_color(info, SUPERCON_WHITE, 0);
 

@@ -33,44 +33,47 @@ typedef struct {
 
 /* SkinnyCon 2026 — Tuesday, May 12 */
 static const talk_t day1_talks[] = {
-    {"0800", "Check-in / Breakfast / Vendor Setup",     "",                 true},
+    {"0800", "Check-in/Breakfast/Vendor Setup",          "",                 true},
     {"0900", "Welcome",                                  "",                 false},
     {"0915", "How to CTF",                               "",                 false},
     {"0930", "Tech Ops Case Files: Real Stories",        "",                 false},
     {"1030", "Break",                                    "",                 true},
     {"1100", "Intro to Reverse Engineering",             "",                 false},
     {"1150", "Lunch",                                    "",                 true},
-    {"1300", "Training 1: SDR + GNU Radio",              "",                 false},
-    {"1500", "Training 2: RF Situational Awareness",     "",                 false},
-    {"1500", "Spectral Ops with SDRs",                   "",                 false},
+    {"1300", "Training 1",                               "",                 false},
+    {"1300", "Upping IQ on I&Q: GNU Radio",              "",                 false},
+    {"1500", "Training 2",                               "",                 false},
+    {"1500", "RF Situational Awareness in IPMS",         "",                 false},
+    {"1500", "Behind the Waterfall: SDRs",               "",                 false},
 };
 
 /* SkinnyCon 2026 — Wednesday, May 13 */
 static const talk_t day2_talks[] = {
-    {"0800", "Check-in / Breakfast / Vendor Setup",     "",                 true},
+    {"0800", "Check-in/Breakfast/Vendor Setup",          "",                 true},
     {"0900", "Welcome",                                  "",                 false},
-    {"0910", "Ultrasonic + Magnetic Sensor",             "",                 false},
+    {"0910", "H&E Field Ultrasonic+Magnetic Sensor",     "",                 false},
     {"0940", "Electronic Sniffing K-9s",                 "",                 false},
     {"1030", "Break",                                    "",                 true},
     {"1100", "Reverse Engineering Medical Devices",      "",                 false},
     {"1150", "Lunch",                                    "",                 true},
-    {"1335", "BYOD Upgrades and Updates",                "",                 false},
-    {"1405", "Training 3: Portable X-Ray",               "",                 false},
-    {"1600", "TSCM Workforce Survey",                    "",                 false},
+    {"1330", "BYOD Upgrades and Updates",                "",                 false},
+    {"1405", "Training 3",                               "",                 false},
+    {"1405", "Next-Gen Portable X-Ray in Action",        "",                 false},
+    {"1600", "TSCM Workforce Survey and Report",         "",                 false},
 };
 
 /* SkinnyCon 2026 — Thursday, May 14 */
 static const talk_t day3_talks[] = {
-    {"0800", "Check-in / Breakfast / Vendor Chats",     "",                 true},
+    {"0800", "Check-in/Breakfast/Vendor Chats",          "",                 true},
     {"0900", "Welcome",                                  "",                 false},
     {"0910", "Supertooth",                               "",                 false},
     {"0945", "State of TSCM Education",                  "",                 false},
     {"1035", "Break",                                    "",                 true},
-    {"1100", "TBD",                                      "",                 false},
+    {"1100", "Converge and Cringe",                      "",                 false},
     {"1150", "Lunch",                                    "",                 true},
     {"1300", "Commercial TSCM Panel",                    "",                 false},
     {"1350", "Break",                                    "",                 true},
-    {"1420", "Converge and Cringe",                      "",                 false},
+    {"1420", "TBD",                                      "",                 false},
     {"1520", "Closing Remarks",                          "",                 false},
 };
 
