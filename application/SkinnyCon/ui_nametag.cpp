@@ -1,15 +1,9 @@
 /**
  * @file      ui_nametag.cpp
- * @brief     SkinnyCon Nametag — editable name badge with conference info
- * @details   Conference badge with 5 display modes cycled via rotary encoder:
- *            0 = Name + subtitle (editable via lv_textarea)
- *            1 = Fullscreen giant name
- *            2 = About SkinnyCon
- *            3 = Code of Conduct
- *            4 = Badge info (hardware specs)
- *            Encoder click = go back to menu (or confirm edit).
- *            Encoder rotate = cycle modes (when not editing).
- *            Physical keyboard types into lv_textarea (mode 0).
+ * @brief     SkinnyCon Nametag — editable name badge
+ * @details   Uses lv_menu like all other working apps.
+ *            Main page shows name/subtitle. Subpages for about/coc/badge info.
+ *            Click "Edit Name" to enter textarea for keyboard editing.
  */
 #include "ui_define.h"
 #include <string.h>
@@ -19,126 +13,156 @@
 #define SUPERCON_ACCENT   SC_ACCENT
 #define SUPERCON_WHITE    SC_TEXT
 #define SUPERCON_GREEN    SC_GREEN
-#define SUPERCON_PANEL    SC_PANEL
 
 #define NAME_MAX_LEN      24
 #define SUBTITLE_MAX_LEN  32
-#define NUM_MODES         5
 
 LV_FONT_DECLARE(font_alibaba_40);
 LV_FONT_DECLARE(font_alibaba_24);
 LV_FONT_DECLARE(font_alibaba_12);
 
-static lv_obj_t *nametag_cont = NULL;
+static lv_obj_t *menu = NULL;
 static lv_obj_t *name_label = NULL;
 static lv_obj_t *subtitle_label = NULL;
-static lv_obj_t *mode_label = NULL;
-static lv_obj_t *name_textarea = NULL;  /* lv_textarea for editing */
-static uint8_t display_mode = 0;
-static bool is_editing = false;
 
 /* Editable name storage (non-static so idle screen can read) */
 char nametag_user_name[NAME_MAX_LEN + 1] = "YOUR NAME";
 char nametag_user_subtitle[SUBTITLE_MAX_LEN + 1] = "SkinnyCon 2026";
-#define user_name nametag_user_name
-#define user_subtitle nametag_user_subtitle
 
-static void nametag_rebuild(void);
-
-/* ── Mode 0: Name + Subtitle ──────────────────────────────────── */
-static void nametag_build_name_mode(void)
+static void back_event_handler(lv_event_t *e)
 {
-    /* Top accent bar */
-    lv_obj_t *bar = lv_obj_create(nametag_cont);
+    lv_obj_t *obj = (lv_obj_t *)lv_event_get_target(e);
+    if (lv_menu_back_btn_is_root(menu, obj)) {
+        printf("[NAMETAG] Back button pressed, exiting\n");
+        lv_obj_clean(menu);
+        lv_obj_del(menu);
+        menu = NULL;
+        name_label = NULL;
+        subtitle_label = NULL;
+        menu_show();
+    }
+}
+
+/* Called when user confirms name edit */
+static void name_edit_done_cb(lv_event_t *e)
+{
+    lv_obj_t *ta = lv_event_get_target_obj(e);
+    const char *text = lv_textarea_get_text(ta);
+    if (text && strlen(text) > 0) {
+        strncpy(nametag_user_name, text, NAME_MAX_LEN);
+        nametag_user_name[NAME_MAX_LEN] = '\0';
+    }
+    /* Update the display label */
+    if (name_label) lv_label_set_text(name_label, nametag_user_name);
+    printf("[NAMETAG] Name saved: '%s'\n", nametag_user_name);
+
+    /* Go back to main page */
+    lv_obj_send_event(lv_menu_get_main_header_back_button(menu), LV_EVENT_CLICKED, NULL);
+}
+
+/* Called when user confirms subtitle edit */
+static void subtitle_edit_done_cb(lv_event_t *e)
+{
+    lv_obj_t *ta = lv_event_get_target_obj(e);
+    const char *text = lv_textarea_get_text(ta);
+    if (text && strlen(text) > 0) {
+        strncpy(nametag_user_subtitle, text, SUBTITLE_MAX_LEN);
+        nametag_user_subtitle[SUBTITLE_MAX_LEN] = '\0';
+    }
+    if (subtitle_label) lv_label_set_text(subtitle_label, nametag_user_subtitle);
+    printf("[NAMETAG] Subtitle saved: '%s'\n", nametag_user_subtitle);
+    lv_obj_send_event(lv_menu_get_main_header_back_button(menu), LV_EVENT_CLICKED, NULL);
+}
+
+static void nametag_setup(lv_obj_t *parent)
+{
+    printf("[NAMETAG] Setup starting\n");
+
+    lv_group_t *g = lv_group_get_default();
+    menu = create_menu(parent, back_event_handler);
+
+    /* ── Main page: name display + menu items ────────────────────── */
+    lv_obj_t *main_page = lv_menu_page_create(menu, NULL);
+
+    /* Name display (big, centered) */
+    lv_obj_t *name_cont = lv_obj_create(main_page);
+    lv_obj_set_size(name_cont, LV_PCT(100), LV_SIZE_CONTENT);
+    lv_obj_set_style_bg_opa(name_cont, LV_OPA_0, 0);
+    lv_obj_set_style_border_width(name_cont, 0, 0);
+    lv_obj_set_style_pad_ver(name_cont, 10, 0);
+    lv_obj_set_flex_flow(name_cont, LV_FLEX_FLOW_COLUMN);
+    lv_obj_set_flex_align(name_cont, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+
+    /* Teal accent bar */
+    lv_obj_t *bar = lv_obj_create(name_cont);
     lv_obj_remove_style_all(bar);
     lv_obj_set_size(bar, LV_PCT(100), 3);
     lv_obj_set_style_bg_color(bar, SC_TEAL, 0);
     lv_obj_set_style_bg_opa(bar, LV_OPA_COVER, 0);
 
-    if (is_editing) {
-        /* Show textarea for editing */
-        name_textarea = lv_textarea_create(nametag_cont);
-        lv_obj_set_size(name_textarea, LV_PCT(90), 40);
-        lv_textarea_set_max_length(name_textarea, NAME_MAX_LEN);
-        lv_textarea_set_text(name_textarea, user_name);
-        lv_textarea_set_one_line(name_textarea, true);
-        lv_obj_set_style_text_font(name_textarea, &font_alibaba_24, 0);
-        lv_obj_set_style_text_color(name_textarea, SUPERCON_WHITE, 0);
-        lv_obj_set_style_text_align(name_textarea, LV_TEXT_ALIGN_CENTER, 0);
-        lv_obj_set_style_border_color(name_textarea, SC_ACCENT, 0);
-        lv_obj_set_style_border_width(name_textarea, 2, 0);
-
-        /* Add textarea to group so keyboard input reaches it */
-        lv_group_t *g = lv_group_get_default();
-        if (g) lv_group_add_obj(g, name_textarea);
-        lv_group_focus_obj(name_textarea);
-
-        printf("[NAMETAG] Editing mode: textarea created and focused\n");
-
-        mode_label = lv_label_create(nametag_cont);
-        lv_label_set_text(mode_label, "Type name  Click=done");
-        lv_obj_set_style_text_color(mode_label, SUPERCON_ACCENT, 0);
-        lv_obj_set_style_text_font(mode_label, &font_alibaba_12, 0);
-        lv_obj_set_style_text_align(mode_label, LV_TEXT_ALIGN_CENTER, 0);
-        lv_obj_set_width(mode_label, LV_PCT(100));
-    } else {
-        /* Display mode — show name and subtitle as labels */
-        name_label = lv_label_create(nametag_cont);
-        lv_label_set_text(name_label, user_name);
-        lv_obj_set_style_text_font(name_label, &font_alibaba_40, 0);
-        lv_obj_set_style_text_color(name_label, SUPERCON_WHITE, 0);
-        lv_obj_set_style_text_align(name_label, LV_TEXT_ALIGN_CENTER, 0);
-        lv_obj_set_width(name_label, LV_PCT(100));
-        lv_label_set_long_mode(name_label, LV_LABEL_LONG_SCROLL_CIRCULAR);
-
-        subtitle_label = lv_label_create(nametag_cont);
-        lv_label_set_text(subtitle_label, user_subtitle);
-        lv_obj_set_style_text_font(subtitle_label, &font_alibaba_24, 0);
-        lv_obj_set_style_text_color(subtitle_label, SUPERCON_GREEN, 0);
-        lv_obj_set_style_text_align(subtitle_label, LV_TEXT_ALIGN_CENTER, 0);
-        lv_obj_set_width(subtitle_label, LV_PCT(100));
-
-        /* Bottom accent bar */
-        lv_obj_t *bot = lv_obj_create(nametag_cont);
-        lv_obj_remove_style_all(bot);
-        lv_obj_set_size(bot, LV_PCT(100), 3);
-        lv_obj_set_style_bg_color(bot, SC_TEAL, 0);
-        lv_obj_set_style_bg_opa(bot, LV_OPA_COVER, 0);
-
-        mode_label = lv_label_create(nametag_cont);
-        lv_label_set_text(mode_label, "Click=edit  Rotate=mode");
-        lv_obj_set_style_text_color(mode_label, SC_TEXT_DIM, 0);
-        lv_obj_set_style_text_font(mode_label, &font_alibaba_12, 0);
-        lv_obj_set_style_text_align(mode_label, LV_TEXT_ALIGN_CENTER, 0);
-        lv_obj_set_width(mode_label, LV_PCT(100));
-    }
-}
-
-/* ── Mode 1: Fullscreen giant name ─────────────────────────────── */
-static void nametag_build_fullscreen_mode(void)
-{
-    name_label = lv_label_create(nametag_cont);
-    lv_label_set_text(name_label, user_name);
+    name_label = lv_label_create(name_cont);
+    lv_label_set_text(name_label, nametag_user_name);
     lv_obj_set_style_text_font(name_label, &font_alibaba_40, 0);
-    lv_obj_set_style_text_color(name_label, SUPERCON_ACCENT, 0);
+    lv_obj_set_style_text_color(name_label, SUPERCON_WHITE, 0);
     lv_obj_set_style_text_align(name_label, LV_TEXT_ALIGN_CENTER, 0);
     lv_obj_set_width(name_label, LV_PCT(100));
-    lv_label_set_long_mode(name_label, LV_LABEL_LONG_SCROLL_CIRCULAR);
-    lv_obj_center(name_label);
-}
 
-/* ── Mode 2: About SkinnyCon ───────────────────────────────────── */
-static void nametag_build_about_mode(void)
-{
-    lv_obj_t *title = lv_label_create(nametag_cont);
-    lv_label_set_text(title, "SKINNYCON 2026");
-    lv_obj_set_style_text_font(title, &font_alibaba_12, 0);
-    lv_obj_set_style_text_color(title, SUPERCON_ACCENT, 0);
-    lv_obj_set_style_text_align(title, LV_TEXT_ALIGN_CENTER, 0);
-    lv_obj_set_width(title, LV_PCT(100));
+    subtitle_label = lv_label_create(name_cont);
+    lv_label_set_text(subtitle_label, nametag_user_subtitle);
+    lv_obj_set_style_text_font(subtitle_label, &font_alibaba_24, 0);
+    lv_obj_set_style_text_color(subtitle_label, SUPERCON_GREEN, 0);
+    lv_obj_set_style_text_align(subtitle_label, LV_TEXT_ALIGN_CENTER, 0);
+    lv_obj_set_width(subtitle_label, LV_PCT(100));
 
-    lv_obj_t *info = lv_label_create(nametag_cont);
-    lv_label_set_text(info,
+    lv_obj_t *bar2 = lv_obj_create(name_cont);
+    lv_obj_remove_style_all(bar2);
+    lv_obj_set_size(bar2, LV_PCT(100), 3);
+    lv_obj_set_style_bg_color(bar2, SC_TEAL, 0);
+    lv_obj_set_style_bg_opa(bar2, LV_OPA_COVER, 0);
+
+    /* ── Menu items (scrollable via encoder) ─────────────────────── */
+
+    /* Edit Name */
+    lv_obj_t *edit_name_page = lv_menu_page_create(menu, NULL);
+    lv_obj_t *name_ta = lv_textarea_create(edit_name_page);
+    lv_obj_set_size(name_ta, LV_PCT(90), 40);
+    lv_textarea_set_max_length(name_ta, NAME_MAX_LEN);
+    lv_textarea_set_text(name_ta, nametag_user_name);
+    lv_textarea_set_one_line(name_ta, true);
+    lv_obj_set_style_text_font(name_ta, &font_alibaba_24, 0);
+    lv_obj_add_event_cb(name_ta, name_edit_done_cb, LV_EVENT_READY, NULL);
+    if (g) lv_group_add_obj(g, name_ta);
+
+    lv_obj_t *edit_name_cont = lv_menu_cont_create(main_page);
+    lv_obj_t *edit_name_lbl = lv_label_create(edit_name_cont);
+    lv_label_set_text(edit_name_lbl, "Edit Name");
+    lv_obj_set_style_text_color(edit_name_lbl, SUPERCON_ACCENT, 0);
+    lv_menu_set_load_page_event(menu, edit_name_cont, edit_name_page);
+    if (g) lv_group_add_obj(g, edit_name_cont);
+
+    /* Edit Subtitle */
+    lv_obj_t *edit_sub_page = lv_menu_page_create(menu, NULL);
+    lv_obj_t *sub_ta = lv_textarea_create(edit_sub_page);
+    lv_obj_set_size(sub_ta, LV_PCT(90), 40);
+    lv_textarea_set_max_length(sub_ta, SUBTITLE_MAX_LEN);
+    lv_textarea_set_text(sub_ta, nametag_user_subtitle);
+    lv_textarea_set_one_line(sub_ta, true);
+    lv_obj_set_style_text_font(sub_ta, &font_alibaba_24, 0);
+    lv_obj_add_event_cb(sub_ta, subtitle_edit_done_cb, LV_EVENT_READY, NULL);
+    if (g) lv_group_add_obj(g, sub_ta);
+
+    lv_obj_t *edit_sub_cont = lv_menu_cont_create(main_page);
+    lv_obj_t *edit_sub_lbl = lv_label_create(edit_sub_cont);
+    lv_label_set_text(edit_sub_lbl, "Edit Subtitle");
+    lv_obj_set_style_text_color(edit_sub_lbl, SUPERCON_ACCENT, 0);
+    lv_menu_set_load_page_event(menu, edit_sub_cont, edit_sub_page);
+    if (g) lv_group_add_obj(g, edit_sub_cont);
+
+    /* About SkinnyCon */
+    lv_obj_t *about_page = lv_menu_page_create(menu, NULL);
+    lv_obj_t *about_info = lv_label_create(about_page);
+    lv_label_set_text(about_info,
+        "SKINNYCON 2026\n\n"
         "May 12-14, 2026\n"
         "Huntsville, Alabama\n"
         "I2C Invention to Innovation Center\n"
@@ -150,31 +174,22 @@ static void nametag_build_about_mode(void)
         "Hosted by Skinny R&D\n"
         "Jason Baird, President"
     );
-    lv_obj_set_style_text_font(info, &font_alibaba_12, 0);
-    lv_obj_set_style_text_color(info, SUPERCON_WHITE, 0);
-    lv_obj_set_width(info, LV_PCT(100));
-    lv_label_set_long_mode(info, LV_LABEL_LONG_WRAP);
+    lv_obj_set_style_text_font(about_info, &font_alibaba_12, 0);
+    lv_obj_set_style_text_color(about_info, SUPERCON_WHITE, 0);
+    lv_obj_set_width(about_info, LV_PCT(100));
+    lv_label_set_long_mode(about_info, LV_LABEL_LONG_WRAP);
 
-    mode_label = lv_label_create(nametag_cont);
-    lv_label_set_text(mode_label, "Click=back  Rotate=mode");
-    lv_obj_set_style_text_font(mode_label, &font_alibaba_12, 0);
-    lv_obj_set_style_text_color(mode_label, SC_TEXT_DIM, 0);
-    lv_obj_set_style_text_align(mode_label, LV_TEXT_ALIGN_CENTER, 0);
-    lv_obj_set_width(mode_label, LV_PCT(100));
-}
+    lv_obj_t *about_cont = lv_menu_cont_create(main_page);
+    lv_obj_t *about_lbl = lv_label_create(about_cont);
+    lv_label_set_text(about_lbl, "About SkinnyCon");
+    lv_menu_set_load_page_event(menu, about_cont, about_page);
+    if (g) lv_group_add_obj(g, about_cont);
 
-/* ── Mode 3: Code of Conduct ───────────────────────────────────── */
-static void nametag_build_coc_mode(void)
-{
-    lv_obj_t *title = lv_label_create(nametag_cont);
-    lv_label_set_text(title, "(!) CODE OF CONDUCT");
-    lv_obj_set_style_text_font(title, &font_alibaba_12, 0);
-    lv_obj_set_style_text_color(title, SUPERCON_ACCENT, 0);
-    lv_obj_set_style_text_align(title, LV_TEXT_ALIGN_CENTER, 0);
-    lv_obj_set_width(title, LV_PCT(100));
-
-    lv_obj_t *coc = lv_label_create(nametag_cont);
-    lv_label_set_text(coc,
+    /* Code of Conduct */
+    lv_obj_t *coc_page = lv_menu_page_create(menu, NULL);
+    lv_obj_t *coc_info = lv_label_create(coc_page);
+    lv_label_set_text(coc_info,
+        "(!) CODE OF CONDUCT\n\n"
         "- Be kind, considerate, respectful\n"
         "- Behave professionally\n"
         "- Respect differing viewpoints\n"
@@ -185,31 +200,22 @@ static void nametag_build_coc_mode(void)
         "Do not play with door locks!\n"
         "UAH is 100% tobacco free."
     );
-    lv_obj_set_style_text_font(coc, &font_alibaba_12, 0);
-    lv_obj_set_style_text_color(coc, SUPERCON_WHITE, 0);
-    lv_obj_set_width(coc, LV_PCT(100));
-    lv_label_set_long_mode(coc, LV_LABEL_LONG_WRAP);
+    lv_obj_set_style_text_font(coc_info, &font_alibaba_12, 0);
+    lv_obj_set_style_text_color(coc_info, SUPERCON_WHITE, 0);
+    lv_obj_set_width(coc_info, LV_PCT(100));
+    lv_label_set_long_mode(coc_info, LV_LABEL_LONG_WRAP);
 
-    mode_label = lv_label_create(nametag_cont);
-    lv_label_set_text(mode_label, "Click=back  Rotate=mode");
-    lv_obj_set_style_text_font(mode_label, &font_alibaba_12, 0);
-    lv_obj_set_style_text_color(mode_label, SC_TEXT_DIM, 0);
-    lv_obj_set_style_text_align(mode_label, LV_TEXT_ALIGN_CENTER, 0);
-    lv_obj_set_width(mode_label, LV_PCT(100));
-}
+    lv_obj_t *coc_cont = lv_menu_cont_create(main_page);
+    lv_obj_t *coc_lbl = lv_label_create(coc_cont);
+    lv_label_set_text(coc_lbl, "Code of Conduct");
+    lv_menu_set_load_page_event(menu, coc_cont, coc_page);
+    if (g) lv_group_add_obj(g, coc_cont);
 
-/* ── Mode 4: Badge hardware info ──────────────────────────────── */
-static void nametag_build_badge_info_mode(void)
-{
-    lv_obj_t *title = lv_label_create(nametag_cont);
-    lv_label_set_text(title, "BADGE INFO");
-    lv_obj_set_style_text_font(title, &font_alibaba_12, 0);
-    lv_obj_set_style_text_color(title, SUPERCON_ACCENT, 0);
-    lv_obj_set_style_text_align(title, LV_TEXT_ALIGN_CENTER, 0);
-    lv_obj_set_width(title, LV_PCT(100));
-
-    lv_obj_t *info = lv_label_create(nametag_cont);
-    lv_label_set_text(info,
+    /* Badge Info */
+    lv_obj_t *badge_page = lv_menu_page_create(menu, NULL);
+    lv_obj_t *badge_info = lv_label_create(badge_page);
+    lv_label_set_text(badge_info,
+        "BADGE INFO\n\n"
         "Device: T-LoRa-Pager\n"
         "MCU: ESP32-S3 240MHz\n"
         "Display: 480x222 IPS\n"
@@ -219,185 +225,33 @@ static void nametag_build_badge_info_mode(void)
         "Created by: Cyril Engmann\n"
         "Garage Agency LLC"
     );
-    lv_obj_set_style_text_font(info, &font_alibaba_12, 0);
-    lv_obj_set_style_text_color(info, SUPERCON_WHITE, 0);
-    lv_obj_set_width(info, LV_PCT(100));
-    lv_label_set_long_mode(info, LV_LABEL_LONG_WRAP);
+    lv_obj_set_style_text_font(badge_info, &font_alibaba_12, 0);
+    lv_obj_set_style_text_color(badge_info, SUPERCON_WHITE, 0);
+    lv_obj_set_width(badge_info, LV_PCT(100));
+    lv_label_set_long_mode(badge_info, LV_LABEL_LONG_WRAP);
 
-    mode_label = lv_label_create(nametag_cont);
-    lv_label_set_text(mode_label, "Click=back  Rotate=mode");
-    lv_obj_set_style_text_font(mode_label, &font_alibaba_12, 0);
-    lv_obj_set_style_text_color(mode_label, SC_TEXT_DIM, 0);
-    lv_obj_set_style_text_align(mode_label, LV_TEXT_ALIGN_CENTER, 0);
-    lv_obj_set_width(mode_label, LV_PCT(100));
-}
+    lv_obj_t *badge_cont = lv_menu_cont_create(main_page);
+    lv_obj_t *badge_lbl = lv_label_create(badge_cont);
+    lv_label_set_text(badge_lbl, "Badge Info");
+    lv_menu_set_load_page_event(menu, badge_cont, badge_page);
+    if (g) lv_group_add_obj(g, badge_cont);
 
-/* ── Mode switching ────────────────────────────────────────────── */
-static void nametag_rebuild(void)
-{
-    printf("[NAMETAG] rebuild: mode=%d editing=%d\n", display_mode, is_editing);
+    lv_menu_set_page(menu, main_page);
 
-    /* Save textarea content before cleaning */
-    if (name_textarea) {
-        const char *text = lv_textarea_get_text(name_textarea);
-        if (text && strlen(text) > 0) {
-            strncpy(user_name, text, NAME_MAX_LEN);
-            user_name[NAME_MAX_LEN] = '\0';
-            printf("[NAMETAG] Saved name from textarea: '%s'\n", user_name);
-        }
-        name_textarea = NULL;
-    }
-
-    lv_obj_clean(nametag_cont);
-    name_label = NULL;
-    subtitle_label = NULL;
-    mode_label = NULL;
-
-    /* Center short content, top-align long content */
-    if (display_mode <= 1 && !is_editing) {
-        lv_obj_set_flex_align(nametag_cont, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
-    } else {
-        lv_obj_set_flex_align(nametag_cont, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
-    }
-    lv_obj_scroll_to_y(nametag_cont, 0, LV_ANIM_OFF);
-
-    switch (display_mode) {
-    case 0: nametag_build_name_mode(); break;
-    case 1: nametag_build_fullscreen_mode(); break;
-    case 2: nametag_build_about_mode(); break;
-    case 3: nametag_build_coc_mode(); break;
-    case 4: nametag_build_badge_info_mode(); break;
-    }
-
-    /* Re-focus nametag_cont for non-editing modes so encoder works */
-    if (!is_editing) {
-        lv_group_t *g = lv_group_get_default();
-        if (g) {
-            /* Remove any stale objects, add nametag_cont */
-            lv_group_remove_all_objs(g);
-            lv_group_add_obj(g, nametag_cont);
-            lv_group_focus_obj(nametag_cont);
-        }
-    }
-}
-
-static void nametag_exit(lv_obj_t *parent);
-
-static void nametag_event_cb(lv_event_t *e)
-{
-    lv_event_code_t code = lv_event_get_code(e);
-    printf("[NAMETAG-EVT] code=%d mode=%d editing=%d\n",
-           (int)code, display_mode, is_editing);
-
-    if (code == LV_EVENT_CLICKED) {
-        if (is_editing) {
-            /* Confirm edit and return to display mode */
-            is_editing = false;
-            printf("[NAMETAG] Edit confirmed, rebuilding display mode\n");
-            nametag_rebuild();
-        } else if (display_mode == 0) {
-            /* Enter edit mode */
-            is_editing = true;
-            printf("[NAMETAG] Entering edit mode\n");
-            nametag_rebuild();
-        } else {
-            /* Exit to menu from info modes */
-            printf("[NAMETAG] Exiting to menu\n");
-            nametag_exit(NULL);
-            menu_show();
-        }
-        return;
-    }
-
-    if (code != LV_EVENT_KEY) return;
-
-    uint32_t key = lv_event_get_key(e);
-    printf("[NAMETAG-KEY] key=%lu (RIGHT=%d LEFT=%d)\n",
-           (unsigned long)key, LV_KEY_RIGHT, LV_KEY_LEFT);
-
-    if (key == LV_KEY_ESC) {
-        nametag_exit(NULL);
-        menu_show();
-        return;
-    }
-
-    /* Don't switch modes while editing */
-    if (is_editing) return;
-
-    if (key == LV_KEY_RIGHT || key == LV_KEY_DOWN) {
-        display_mode = (display_mode + 1) % NUM_MODES;
-        nametag_rebuild();
-    } else if (key == LV_KEY_LEFT || key == LV_KEY_UP) {
-        display_mode = (display_mode + NUM_MODES - 1) % NUM_MODES;
-        nametag_rebuild();
-    }
-}
-
-static void nametag_setup(lv_obj_t *parent)
-{
-    printf("[NAMETAG] Setup starting\n");
-
-    nametag_cont = lv_obj_create(parent);
-    lv_obj_remove_style_all(nametag_cont);
-    lv_obj_set_size(nametag_cont, LV_PCT(100), LV_PCT(100));
-    lv_obj_set_style_bg_color(nametag_cont, SUPERCON_BG, 0);
-    lv_obj_set_style_bg_opa(nametag_cont, LV_OPA_COVER, 0);
-    lv_obj_set_style_pad_all(nametag_cont, 4, 0);
-    lv_obj_set_flex_flow(nametag_cont, LV_FLEX_FLOW_COLUMN);
-    lv_obj_set_flex_align(nametag_cont, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
-    lv_obj_set_scrollbar_mode(nametag_cont, LV_SCROLLBAR_MODE_AUTO);
-    lv_obj_set_scroll_dir(nametag_cont, LV_DIR_VER);
-
-    lv_obj_add_event_cb(nametag_cont, nametag_event_cb, LV_EVENT_KEY, NULL);
-    lv_obj_add_event_cb(nametag_cont, nametag_event_cb, LV_EVENT_CLICKED, NULL);
-
-    /* Add to group and focus so encoder works immediately */
-    lv_group_t *g = lv_group_get_default();
-    if (g) {
-        lv_group_add_obj(g, nametag_cont);
-        lv_group_focus_obj(nametag_cont);
-        printf("[NAMETAG] Added to group and focused, group has %d objs\n",
-               (int)lv_group_get_obj_count(g));
-    }
-
-    display_mode = 0;
-    is_editing = false;
-    name_textarea = NULL;
-    nametag_build_name_mode();
-
-    printf("[NAMETAG] Setup complete. Mode=%d\n", display_mode);
+    printf("[NAMETAG] Setup complete. %d items in group\n",
+           g ? (int)lv_group_get_obj_count(g) : -1);
 }
 
 static void nametag_exit(lv_obj_t *parent)
 {
-    printf("[NAMETAG] Exit: cleaning up\n");
-
-    /* Save textarea content if still editing */
-    if (name_textarea) {
-        const char *text = lv_textarea_get_text(name_textarea);
-        if (text && strlen(text) > 0) {
-            strncpy(user_name, text, NAME_MAX_LEN);
-            user_name[NAME_MAX_LEN] = '\0';
-        }
-        name_textarea = NULL;
-    }
-
-    /* Clean group before deleting objects */
-    lv_group_t *g = lv_group_get_default();
-    if (g) {
-        lv_group_remove_all_objs(g);
-        printf("[NAMETAG] Cleared group, now has %d objs\n",
-               (int)lv_group_get_obj_count(g));
-    }
-
-    if (nametag_cont) {
-        lv_obj_del(nametag_cont);
-        nametag_cont = NULL;
+    printf("[NAMETAG] Exit\n");
+    if (menu) {
+        lv_obj_clean(menu);
+        lv_obj_del(menu);
+        menu = NULL;
     }
     name_label = NULL;
     subtitle_label = NULL;
-    mode_label = NULL;
-    is_editing = false;
 }
 
 app_t ui_nametag_main = {nametag_setup, nametag_exit, NULL};
