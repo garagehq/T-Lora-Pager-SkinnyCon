@@ -146,7 +146,9 @@ static void btn_event_cb(lv_event_t *e)
     }
 }
 
-static void create_app(lv_obj_t *parent, const char *name, const lv_img_dsc_t *img, app_t *app_fun)
+typedef void (*icon_draw_fn)(lv_obj_t *parent);
+
+static lv_obj_t *create_app_btn(lv_obj_t *parent, const char *name, app_t *app_fun)
 {
     lv_obj_t *btn = lv_btn_create(parent);
     lv_coord_t w = 150;
@@ -154,20 +156,15 @@ static void create_app(lv_obj_t *parent, const char *name, const lv_img_dsc_t *i
 
     lv_obj_set_size(btn, w, h);
     lv_obj_set_style_bg_opa(btn, LV_OPA_0, 0);
-    lv_obj_set_style_outline_color(btn, lv_color_black(), LV_STATE_FOCUS_KEY);
+    lv_obj_set_style_outline_color(btn, SC_ACCENT, LV_STATE_FOCUS_KEY);
     lv_obj_set_style_shadow_width(btn, 30, LV_PART_MAIN);
-    lv_obj_set_style_shadow_color(btn, lv_color_black(), LV_PART_MAIN);
+    lv_obj_set_style_shadow_color(btn, SC_BORDER, LV_PART_MAIN);
     uint32_t phy_hor_res = lv_display_get_physical_horizontal_resolution(NULL);
     if (phy_hor_res < 320) {
         lv_obj_set_style_radius(btn, LV_RADIUS_CIRCLE, 0);
     }
     lv_obj_set_user_data(btn, (void *)name);
 
-    if (img != NULL) {
-        lv_obj_t *icon = lv_image_create(btn);
-        lv_image_set_src(icon, img);
-        lv_obj_center(icon);
-    }
     /* Text change event callback */
     lv_obj_add_event_cb(btn, btn_event_cb, LV_EVENT_FOCUSED, (void *)name);
 
@@ -189,6 +186,139 @@ static void create_app(lv_obj_t *parent, const char *name, const lv_img_dsc_t *i
         }
     },
     LV_EVENT_CLICKED, app_fun);
+
+    return btn;
+}
+
+static void create_app(lv_obj_t *parent, const char *name, const lv_img_dsc_t *img, app_t *app_fun)
+{
+    lv_obj_t *btn = create_app_btn(parent, name, app_fun);
+    if (img != NULL) {
+        lv_obj_t *icon = lv_image_create(btn);
+        lv_image_set_src(icon, img);
+        lv_obj_center(icon);
+    }
+}
+
+static void create_app_drawn(lv_obj_t *parent, const char *name, icon_draw_fn draw_fn, app_t *app_fun)
+{
+    lv_obj_t *btn = create_app_btn(parent, name, app_fun);
+    if (draw_fn) draw_fn(btn);
+}
+
+/* ── LVGL-drawn menu icons ─────────────────────────────────────── */
+
+/* Nametag icon: badge/ID card shape */
+static void draw_icon_nametag(lv_obj_t *parent)
+{
+    lv_obj_t *card = lv_obj_create(parent);
+    lv_obj_set_size(card, 56, 44);
+    lv_obj_center(card);
+    lv_obj_set_style_bg_color(card, SC_PANEL, 0);
+    lv_obj_set_style_bg_opa(card, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_color(card, SC_ACCENT, 0);
+    lv_obj_set_style_border_width(card, 2, 0);
+    lv_obj_set_style_radius(card, 6, 0);
+    lv_obj_set_style_pad_all(card, 0, 0);
+    lv_obj_remove_flag(card, LV_OBJ_FLAG_SCROLLABLE);
+
+    /* Orange header stripe */
+    lv_obj_t *stripe = lv_obj_create(card);
+    lv_obj_set_size(stripe, LV_PCT(100), 12);
+    lv_obj_align(stripe, LV_ALIGN_TOP_MID, 0, 0);
+    lv_obj_set_style_bg_color(stripe, SC_ACCENT, 0);
+    lv_obj_set_style_bg_opa(stripe, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_width(stripe, 0, 0);
+    lv_obj_set_style_radius(stripe, 0, 0);
+
+    /* Name line */
+    lv_obj_t *line1 = lv_obj_create(card);
+    lv_obj_set_size(line1, 32, 3);
+    lv_obj_align(line1, LV_ALIGN_CENTER, 0, 2);
+    lv_obj_set_style_bg_color(line1, SC_TEXT, 0);
+    lv_obj_set_style_bg_opa(line1, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_width(line1, 0, 0);
+    lv_obj_set_style_radius(line1, 1, 0);
+
+    /* Subtitle line */
+    lv_obj_t *line2 = lv_obj_create(card);
+    lv_obj_set_size(line2, 22, 2);
+    lv_obj_align(line2, LV_ALIGN_CENTER, 0, 10);
+    lv_obj_set_style_bg_color(line2, SC_TEXT_DIM, 0);
+    lv_obj_set_style_bg_opa(line2, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_width(line2, 0, 0);
+    lv_obj_set_style_radius(line2, 1, 0);
+}
+
+/* Schedule icon: calendar grid */
+static void draw_icon_schedule(lv_obj_t *parent)
+{
+    lv_obj_t *cal = lv_obj_create(parent);
+    lv_obj_set_size(cal, 48, 48);
+    lv_obj_center(cal);
+    lv_obj_set_style_bg_color(cal, SC_PANEL, 0);
+    lv_obj_set_style_bg_opa(cal, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_color(cal, SC_ACCENT, 0);
+    lv_obj_set_style_border_width(cal, 2, 0);
+    lv_obj_set_style_radius(cal, 4, 0);
+    lv_obj_set_style_pad_all(cal, 0, 0);
+    lv_obj_remove_flag(cal, LV_OBJ_FLAG_SCROLLABLE);
+
+    /* Header bar */
+    lv_obj_t *hdr = lv_obj_create(cal);
+    lv_obj_set_size(hdr, LV_PCT(100), 14);
+    lv_obj_align(hdr, LV_ALIGN_TOP_MID, 0, 0);
+    lv_obj_set_style_bg_color(hdr, SC_ACCENT, 0);
+    lv_obj_set_style_bg_opa(hdr, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_width(hdr, 0, 0);
+    lv_obj_set_style_radius(hdr, 0, 0);
+
+    /* Grid dots (3x3) */
+    for (int r = 0; r < 3; r++) {
+        for (int c = 0; c < 3; c++) {
+            lv_obj_t *dot = lv_obj_create(cal);
+            lv_obj_set_size(dot, 6, 4);
+            lv_obj_set_pos(dot, 8 + c * 13, 18 + r * 9);
+            lv_obj_set_style_bg_color(dot, (r == 0 && c == 1) ? SC_ACCENT : SC_TEXT_DIM, 0);
+            lv_obj_set_style_bg_opa(dot, LV_OPA_COVER, 0);
+            lv_obj_set_style_border_width(dot, 0, 0);
+            lv_obj_set_style_radius(dot, 1, 0);
+        }
+    }
+}
+
+/* Net Tools icon: signal/antenna waves */
+static void draw_icon_nettools(lv_obj_t *parent)
+{
+    lv_obj_t *cont = lv_obj_create(parent);
+    lv_obj_set_size(cont, 56, 48);
+    lv_obj_center(cont);
+    lv_obj_set_style_bg_opa(cont, LV_OPA_0, 0);
+    lv_obj_set_style_border_width(cont, 0, 0);
+    lv_obj_set_style_pad_all(cont, 0, 0);
+    lv_obj_remove_flag(cont, LV_OBJ_FLAG_SCROLLABLE);
+
+    /* Center dot (antenna base) */
+    lv_obj_t *dot = lv_obj_create(cont);
+    lv_obj_set_size(dot, 8, 8);
+    lv_obj_align(dot, LV_ALIGN_BOTTOM_MID, 0, -2);
+    lv_obj_set_style_radius(dot, LV_RADIUS_CIRCLE, 0);
+    lv_obj_set_style_bg_color(dot, SC_ACCENT, 0);
+    lv_obj_set_style_bg_opa(dot, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_width(dot, 0, 0);
+
+    /* Concentric arcs (signal waves) — using rounded rectangles */
+    int sizes[] = {22, 36, 50};
+    for (int i = 0; i < 3; i++) {
+        lv_obj_t *arc = lv_obj_create(cont);
+        lv_obj_set_size(arc, sizes[i], sizes[i] / 2);
+        lv_obj_align(arc, LV_ALIGN_BOTTOM_MID, 0, -2);
+        lv_obj_set_style_bg_opa(arc, LV_OPA_0, 0);
+        lv_obj_set_style_border_color(arc, SC_TEAL, 0);
+        lv_obj_set_style_border_width(arc, 2, 0);
+        lv_obj_set_style_border_side(arc, LV_BORDER_SIDE_TOP | LV_BORDER_SIDE_LEFT | LV_BORDER_SIDE_RIGHT, 0);
+        lv_obj_set_style_radius(arc, sizes[i], 0);
+    }
 }
 
 
@@ -247,19 +377,40 @@ lv_obj_t *setupClock()
     lv_obj_set_style_radius(bar_top, 0, 0);
     lv_obj_set_style_pad_all(bar_top, 0, 0);
 
-    /* Conference name (large) */
-    lv_obj_t *conf_label = lv_label_create(page);
-    lv_label_set_text(conf_label, "SKINNYCON");
-    lv_obj_set_style_text_font(conf_label, &font_alibaba_60, LV_PART_MAIN);
-    lv_obj_set_style_text_color(conf_label, SC_ACCENT, LV_PART_MAIN);
-    lv_obj_align(conf_label, LV_ALIGN_CENTER, 0, -25);
+    /* Conference logo: SKINNYC + teal circle + N */
+    lv_obj_t *logo_row = lv_obj_create(page);
+    lv_obj_set_size(logo_row, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
+    lv_obj_set_style_bg_opa(logo_row, LV_OPA_0, 0);
+    lv_obj_set_style_border_width(logo_row, 0, 0);
+    lv_obj_set_style_pad_all(logo_row, 0, 0);
+    lv_obj_set_style_pad_column(logo_row, 0, 0);
+    lv_obj_set_flex_flow(logo_row, LV_FLEX_FLOW_ROW);
+    lv_obj_set_flex_align(logo_row, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+    lv_obj_align(logo_row, LV_ALIGN_CENTER, 0, -25);
+
+    lv_obj_t *logo_left = lv_label_create(logo_row);
+    lv_label_set_text(logo_left, "SKINNYC");
+    lv_obj_set_style_text_font(logo_left, &font_alibaba_60, 0);
+    lv_obj_set_style_text_color(logo_left, SC_TEXT, 0);
+
+    lv_obj_t *logo_circle = lv_obj_create(logo_row);
+    lv_obj_set_size(logo_circle, 42, 42);
+    lv_obj_set_style_radius(logo_circle, LV_RADIUS_CIRCLE, 0);
+    lv_obj_set_style_bg_color(logo_circle, SC_TEAL, 0);
+    lv_obj_set_style_bg_opa(logo_circle, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_width(logo_circle, 0, 0);
+
+    lv_obj_t *logo_right = lv_label_create(logo_row);
+    lv_label_set_text(logo_right, "N");
+    lv_obj_set_style_text_font(logo_right, &font_alibaba_60, 0);
+    lv_obj_set_style_text_color(logo_right, SC_TEXT, 0);
 
     /* Year subtitle */
     lv_obj_t *year_label = lv_label_create(page);
-    lv_label_set_text(year_label, "2026  " LV_SYMBOL_WIFI "  Huntsville, AL");
-    lv_obj_set_style_text_font(year_label, &font_alibaba_24, LV_PART_MAIN);
-    lv_obj_set_style_text_color(year_label, SC_GREEN, LV_PART_MAIN);
-    lv_obj_align(year_label, LV_ALIGN_CENTER, 0, 20);
+    lv_label_set_text(year_label, "Presented by Skinny Research and Development");
+    lv_obj_set_style_text_font(year_label, &font_alibaba_12, LV_PART_MAIN);
+    lv_obj_set_style_text_color(year_label, SC_TEXT_DIM, LV_PART_MAIN);
+    lv_obj_align(year_label, LV_ALIGN_CENTER, 0, 15);
 
     /* Bottom bar with time + battery */
     lv_obj_t *footer = lv_obj_create(page);
@@ -371,7 +522,7 @@ static void hw_device_poll(lv_timer_t *t)
     if (params.battery_voltage < 3300 && params.usb_voltage == 0) {
         printf("Low battery voltage: %lu mV USB Voltage: %lu mV\n", params.battery_voltage, params.usb_voltage);
         lv_obj_clean(lv_screen_active());
-        lv_obj_set_style_bg_color(lv_screen_active(), lv_color_black(), LV_PART_MAIN);
+        lv_obj_set_style_bg_color(lv_screen_active(), SC_BG, LV_PART_MAIN);
         lv_obj_set_style_radius(lv_screen_active(), 0, 0);
 
         lv_obj_t *image = lv_image_create(lv_screen_active());
@@ -380,7 +531,7 @@ static void hw_device_poll(lv_timer_t *t)
 
         lv_obj_t *label = lv_label_create(lv_screen_active());
         lv_label_set_text(label, "Battery Low!\nShutting down...");
-        lv_obj_set_style_text_color(label, lv_color_white(), LV_PART_MAIN);
+        lv_obj_set_style_text_color(label, SC_RED, LV_PART_MAIN);
         lv_obj_set_style_text_font(label, &lv_font_montserrat_18, LV_PART_MAIN);
         lv_obj_align(label, LV_ALIGN_BOTTOM_MID, 0, -30);
 
@@ -464,13 +615,13 @@ static void ui_poll_timer_callback(lv_timer_t *t)
 void setupGui()
 {
 
-    lv_obj_set_style_bg_color(lv_screen_active(), lv_color_black(), LV_PART_MAIN);
+    lv_obj_set_style_bg_color(lv_screen_active(), SC_BG, LV_PART_MAIN);
     lv_obj_set_style_radius(lv_screen_active(), 0, 0);
     lv_obj_t *start_logo = lv_label_create(lv_screen_active());
     lv_label_set_text(start_logo, "LilyGo");
     LV_FONT_DECLARE(font_logo_84);
     lv_obj_set_style_text_font(start_logo, &font_logo_84, LV_PART_MAIN);
-    lv_obj_set_style_text_color(start_logo, lv_color_white(), LV_PART_MAIN);
+    lv_obj_set_style_text_color(start_logo, SC_TEXT, LV_PART_MAIN);
     lv_obj_center(start_logo);
     lv_refr_now(NULL);
     lv_delay_ms(5000);
@@ -479,8 +630,8 @@ void setupGui()
     disable_keyboard();
 
     const lv_font_t  *main_font = MAIN_FONT;
-    lv_theme_default_init(NULL, lv_color_black(), lv_palette_darken(LV_PALETTE_GREY, 3),
-                          LV_THEME_DEFAULT_DARK, main_font);
+    lv_theme_default_init(NULL, SC_ACCENT, SC_BG,
+                          false, main_font);
 
     theme_init();
 
@@ -493,9 +644,9 @@ void setupGui()
     lv_style_init(&style_frameless);
     lv_style_set_radius(&style_frameless, 0);
     lv_style_set_border_width(&style_frameless, 0);
-    lv_style_set_bg_color(&style_frameless, lv_color_white());
+    lv_style_set_bg_color(&style_frameless, SC_BG);
     lv_style_set_shadow_width(&style_frameless, 55);
-    lv_style_set_shadow_color(&style_frameless, lv_color_black());
+    lv_style_set_shadow_color(&style_frameless, SC_BORDER);
 
     /* opening animation */
     main_screen = lv_tileview_create(lv_screen_active());
@@ -543,11 +694,11 @@ void setupGui()
     extern app_t ui_schedule_main;
     extern app_t ui_nettools_main;
 
-    /* SkinnyCon primary apps — first in menu (unique icons per app) */
-    create_app(panel, "Nametag", &img_dog, &ui_nametag_main);
-    create_app(panel, "Schedule", &img_cry, &ui_schedule_main);
+    /* SkinnyCon primary apps — first in menu (custom drawn icons) */
+    create_app_drawn(panel, "Nametag", draw_icon_nametag, &ui_nametag_main);
+    create_app_drawn(panel, "Schedule", draw_icon_schedule, &ui_schedule_main);
     create_app(panel, "BadgeShark", &img_monitoring, &ui_badgeshark_main);
-    create_app(panel, "Net Tools", &img_test, &ui_nettools_main);
+    create_app_drawn(panel, "Net Tools", draw_icon_nettools, &ui_nettools_main);
 
     /* Radio & messaging */
     create_app(panel, "LoRa", &img_radio, &ui_radio_main);
@@ -603,12 +754,10 @@ void setupGui()
 
 #if defined(USING_INPUT_DEV_KEYBOARD)
     if (hw_has_keyboard()) {
-        // Removed: BLE Keyboard app (not needed for SkinnyCon)
-        create_app(panel, "Keyboard", &img_keyboard, &ui_keyboard_main);
+        // Removed: Keyboard and Music apps (not needed for SkinnyCon)
     }
 #endif
 
-    create_app(panel, "Music", &img_music, &ui_audio_main);
     create_app(panel, "GPS", &img_gps, &ui_gps_main);
     // Removed: Monitor app (battery info already on clock face, detailed stats are dev-only)
     create_app(panel, "Power", &img_power, &ui_power_main);

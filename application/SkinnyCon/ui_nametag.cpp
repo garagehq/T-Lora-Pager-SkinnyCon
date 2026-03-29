@@ -17,7 +17,7 @@
 /* Map old names to shared palette */
 #define SUPERCON_BG       SC_BG
 #define SUPERCON_ACCENT   SC_ACCENT
-#define SUPERCON_WHITE    SC_TEXT_WHITE
+#define SUPERCON_WHITE    SC_TEXT          /* Primary text on light bg */
 #define SUPERCON_GREEN    SC_GREEN
 #define SUPERCON_PANEL    SC_PANEL
 
@@ -166,7 +166,7 @@ static void nametag_build_about_mode(void)
 static void nametag_build_coc_mode(void)
 {
     lv_obj_t *title = lv_label_create(nametag_cont);
-    lv_label_set_text(title, LV_SYMBOL_WARNING " CODE OF CONDUCT");
+    lv_label_set_text(title, "(!) CODE OF CONDUCT");
     lv_obj_set_style_text_font(title, &font_alibaba_24, 0);
     lv_obj_set_style_text_color(title, SUPERCON_ACCENT, 0);
     lv_obj_set_style_text_align(title, LV_TEXT_ALIGN_CENTER, 0);
