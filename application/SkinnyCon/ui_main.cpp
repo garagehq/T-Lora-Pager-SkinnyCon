@@ -617,15 +617,49 @@ void setupGui()
 
     lv_obj_set_style_bg_color(lv_screen_active(), SC_BG, LV_PART_MAIN);
     lv_obj_set_style_radius(lv_screen_active(), 0, 0);
-    lv_obj_t *start_logo = lv_label_create(lv_screen_active());
-    lv_label_set_text(start_logo, "LilyGo");
-    LV_FONT_DECLARE(font_logo_84);
-    lv_obj_set_style_text_font(start_logo, &font_logo_84, LV_PART_MAIN);
-    lv_obj_set_style_text_color(start_logo, SC_TEXT, LV_PART_MAIN);
-    lv_obj_center(start_logo);
+
+    /* Boot logo: SKINNYC + teal circle + N  /  2026 */
+    lv_obj_t *boot_cont = lv_obj_create(lv_screen_active());
+    lv_obj_set_size(boot_cont, LV_PCT(100), LV_PCT(100));
+    lv_obj_set_style_bg_opa(boot_cont, LV_OPA_0, 0);
+    lv_obj_set_style_border_width(boot_cont, 0, 0);
+    lv_obj_set_flex_flow(boot_cont, LV_FLEX_FLOW_COLUMN);
+    lv_obj_set_flex_align(boot_cont, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+
+    lv_obj_t *logo_row = lv_obj_create(boot_cont);
+    lv_obj_set_size(logo_row, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
+    lv_obj_set_style_bg_opa(logo_row, LV_OPA_0, 0);
+    lv_obj_set_style_border_width(logo_row, 0, 0);
+    lv_obj_set_style_pad_all(logo_row, 0, 0);
+    lv_obj_set_style_pad_column(logo_row, 0, 0);
+    lv_obj_set_flex_flow(logo_row, LV_FLEX_FLOW_ROW);
+    lv_obj_set_flex_align(logo_row, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+
+    lv_obj_t *bl = lv_label_create(logo_row);
+    lv_label_set_text(bl, "SKINNYC");
+    lv_obj_set_style_text_font(bl, &font_alibaba_40, 0);
+    lv_obj_set_style_text_color(bl, SC_TEXT, 0);
+
+    lv_obj_t *bc = lv_obj_create(logo_row);
+    lv_obj_set_size(bc, 30, 30);
+    lv_obj_set_style_radius(bc, LV_RADIUS_CIRCLE, 0);
+    lv_obj_set_style_bg_color(bc, SC_TEAL, 0);
+    lv_obj_set_style_bg_opa(bc, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_width(bc, 0, 0);
+
+    lv_obj_t *br = lv_label_create(logo_row);
+    lv_label_set_text(br, "N");
+    lv_obj_set_style_text_font(br, &font_alibaba_40, 0);
+    lv_obj_set_style_text_color(br, SC_TEXT, 0);
+
+    lv_obj_t *year_lbl = lv_label_create(boot_cont);
+    lv_label_set_text(year_lbl, "2026");
+    lv_obj_set_style_text_font(year_lbl, &font_alibaba_24, 0);
+    lv_obj_set_style_text_color(year_lbl, SC_TEXT_DIM, 0);
+
     lv_refr_now(NULL);
     lv_delay_ms(5000);
-    lv_obj_delete(start_logo);
+    lv_obj_delete(boot_cont);
 
     disable_keyboard();
 
