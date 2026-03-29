@@ -50,7 +50,7 @@ static void nametag_build_name_mode(void)
     /* Top accent bar */
     lv_obj_t *bar = lv_obj_create(nametag_cont);
     lv_obj_set_size(bar, LV_PCT(100), 4);
-    lv_obj_set_style_bg_color(bar, SUPERCON_ACCENT, 0);
+    lv_obj_set_style_bg_color(bar, SC_TEAL, 0);
     lv_obj_set_style_bg_opa(bar, LV_OPA_COVER, 0);
     lv_obj_set_style_border_width(bar, 0, 0);
     lv_obj_set_style_radius(bar, 0, 0);
@@ -75,7 +75,7 @@ static void nametag_build_name_mode(void)
     /* Bottom accent bar */
     lv_obj_t *bot = lv_obj_create(nametag_cont);
     lv_obj_set_size(bot, LV_PCT(100), 4);
-    lv_obj_set_style_bg_color(bot, SUPERCON_ACCENT, 0);
+    lv_obj_set_style_bg_color(bot, SC_TEAL, 0);
     lv_obj_set_style_bg_opa(bot, LV_OPA_COVER, 0);
     lv_obj_set_style_border_width(bot, 0, 0);
     lv_obj_set_style_radius(bot, 0, 0);
@@ -131,7 +131,7 @@ static void nametag_build_about_mode(void)
     lv_obj_set_flex_grow(panel, 1);
     lv_obj_set_style_bg_color(panel, SUPERCON_PANEL, 0);
     lv_obj_set_style_bg_opa(panel, LV_OPA_COVER, 0);
-    lv_obj_set_style_border_color(panel, SUPERCON_ACCENT, 0);
+    lv_obj_set_style_border_color(panel, SC_TEAL, 0);
     lv_obj_set_style_border_width(panel, 1, 0);
     lv_obj_set_style_radius(panel, 6, 0);
     lv_obj_set_style_pad_all(panel, 8, 0);
@@ -177,7 +177,7 @@ static void nametag_build_coc_mode(void)
     lv_obj_set_flex_grow(panel, 1);
     lv_obj_set_style_bg_color(panel, SUPERCON_PANEL, 0);
     lv_obj_set_style_bg_opa(panel, LV_OPA_COVER, 0);
-    lv_obj_set_style_border_color(panel, SUPERCON_ACCENT, 0);
+    lv_obj_set_style_border_color(panel, SC_TEAL, 0);
     lv_obj_set_style_border_width(panel, 1, 0);
     lv_obj_set_style_radius(panel, 6, 0);
     lv_obj_set_style_pad_all(panel, 8, 0);
@@ -227,7 +227,7 @@ static void nametag_build_badge_info_mode(void)
     lv_obj_set_size(panel, LV_PCT(90), LV_SIZE_CONTENT);
     lv_obj_set_style_bg_color(panel, SUPERCON_PANEL, 0);
     lv_obj_set_style_bg_opa(panel, LV_OPA_COVER, 0);
-    lv_obj_set_style_border_color(panel, SUPERCON_ACCENT, 0);
+    lv_obj_set_style_border_color(panel, SC_TEAL, 0);
     lv_obj_set_style_border_width(panel, 1, 0);
     lv_obj_set_style_radius(panel, 8, 0);
     lv_obj_set_style_pad_all(panel, 10, 0);

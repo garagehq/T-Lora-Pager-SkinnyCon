@@ -92,7 +92,7 @@ static void draw_test_icon_nametag(lv_obj_t *parent)
     lv_obj_center(card);
     lv_obj_set_style_bg_color(card, SC_PANEL, 0);
     lv_obj_set_style_bg_opa(card, LV_OPA_COVER, 0);
-    lv_obj_set_style_border_color(card, SC_ACCENT, 0);
+    lv_obj_set_style_border_color(card, SC_TEAL, 0);
     lv_obj_set_style_border_width(card, 2, 0);
     lv_obj_set_style_radius(card, 6, 0);
     lv_obj_remove_flag(card, LV_OBJ_FLAG_SCROLLABLE);
@@ -131,7 +131,7 @@ static void draw_test_icon_schedule(lv_obj_t *parent)
     lv_obj_center(cal);
     lv_obj_set_style_bg_color(cal, SC_PANEL, 0);
     lv_obj_set_style_bg_opa(cal, LV_OPA_COVER, 0);
-    lv_obj_set_style_border_color(cal, SC_ACCENT, 0);
+    lv_obj_set_style_border_color(cal, SC_TEAL, 0);
     lv_obj_set_style_border_width(cal, 2, 0);
     lv_obj_set_style_radius(cal, 4, 0);
     lv_obj_remove_flag(cal, LV_OBJ_FLAG_SCROLLABLE);
@@ -184,7 +184,7 @@ static void draw_test_icon_nettools(lv_obj_t *parent)
         lv_obj_set_style_bg_opa(arc, LV_OPA_0, 0);
         lv_obj_set_style_border_color(arc, SC_TEAL, 0);
         lv_obj_set_style_border_width(arc, 2, 0);
-        lv_obj_set_style_border_side(arc, LV_BORDER_SIDE_TOP | LV_BORDER_SIDE_LEFT | LV_BORDER_SIDE_RIGHT, 0);
+        lv_obj_set_style_border_side(arc, (lv_border_side_t)(LV_BORDER_SIDE_TOP | LV_BORDER_SIDE_LEFT | LV_BORDER_SIDE_RIGHT), 0);
         lv_obj_set_style_radius(arc, sizes[i], 0);
     }
 }
@@ -281,7 +281,7 @@ void test_factory_clock_screen(void)
     lv_obj_t *bar_top = lv_obj_create(page);
     lv_obj_set_size(bar_top, LV_PCT(100), 4);
     lv_obj_align(bar_top, LV_ALIGN_TOP_MID, 0, 0);
-    lv_obj_set_style_bg_color(bar_top, SC_ACCENT, 0);
+    lv_obj_set_style_bg_color(bar_top, SC_TEAL, 0);
     lv_obj_set_style_bg_opa(bar_top, LV_OPA_COVER, 0);
     lv_obj_set_style_border_width(bar_top, 0, 0);
     lv_obj_set_style_radius(bar_top, 0, 0);
@@ -782,7 +782,7 @@ void test_supercon_nametag(void)
     /* Top accent bar */
     lv_obj_t *accent = lv_obj_create(cont);
     lv_obj_set_size(accent, LV_PCT(100), 4);
-    lv_obj_set_style_bg_color(accent, SUPERCON_ACCENT_C, 0);
+    lv_obj_set_style_bg_color(accent, SC_TEAL, 0);
     lv_obj_set_style_bg_opa(accent, LV_OPA_COVER, 0);
     lv_obj_set_style_border_width(accent, 0, 0);
     lv_obj_set_style_radius(accent, 0, 0);
@@ -806,7 +806,7 @@ void test_supercon_nametag(void)
     /* Bottom accent bar */
     lv_obj_t *bottom = lv_obj_create(cont);
     lv_obj_set_size(bottom, LV_PCT(100), 4);
-    lv_obj_set_style_bg_color(bottom, SUPERCON_ACCENT_C, 0);
+    lv_obj_set_style_bg_color(bottom, SC_TEAL, 0);
     lv_obj_set_style_bg_opa(bottom, LV_OPA_COVER, 0);
     lv_obj_set_style_border_width(bottom, 0, 0);
     lv_obj_set_style_radius(bottom, 0, 0);
@@ -863,7 +863,7 @@ void test_supercon_about(void)
     lv_obj_set_flex_grow(panel, 1);
     lv_obj_set_style_bg_color(panel, SUPERCON_PANEL_C, 0);
     lv_obj_set_style_bg_opa(panel, LV_OPA_COVER, 0);
-    lv_obj_set_style_border_color(panel, SUPERCON_ACCENT_C, 0);
+    lv_obj_set_style_border_color(panel, SC_TEAL, 0);
     lv_obj_set_style_border_width(panel, 1, 0);
     lv_obj_set_style_radius(panel, 6, 0);
     lv_obj_set_style_pad_all(panel, 8, 0);
@@ -925,7 +925,7 @@ void test_supercon_coc(void)
     lv_obj_set_flex_grow(panel, 1);
     lv_obj_set_style_bg_color(panel, SUPERCON_PANEL_C, 0);
     lv_obj_set_style_bg_opa(panel, LV_OPA_COVER, 0);
-    lv_obj_set_style_border_color(panel, SUPERCON_ACCENT_C, 0);
+    lv_obj_set_style_border_color(panel, SC_TEAL, 0);
     lv_obj_set_style_border_width(panel, 1, 0);
     lv_obj_set_style_radius(panel, 6, 0);
     lv_obj_set_style_pad_all(panel, 8, 0);
@@ -990,7 +990,7 @@ void test_supercon_badgeshark(void)
     lv_obj_set_style_pad_hor(header, 8, 0);
 
     lv_obj_t *title = lv_label_create(header);
-    lv_label_set_text(title, LV_SYMBOL_EYE_OPEN " BadgeShark");
+    lv_label_set_text(title, "BadgeShark");
     lv_obj_set_style_text_color(title, SHARK_GREEN_C, 0);
     lv_obj_set_style_text_font(title, &font_alibaba_12, 0);
     lv_obj_align(title, LV_ALIGN_LEFT_MID, 0, 0);
@@ -1015,7 +1015,7 @@ void test_supercon_badgeshark(void)
     for (int i = 0; i < 4; i++) {
         lv_obj_t *c = lv_label_create(col_header);
         lv_label_set_text(c, cols[i]);
-        lv_obj_set_style_text_color(c, SC_ACCENT, 0);
+        lv_obj_set_style_text_color(c, SC_TEXT, 0);
         if (col_widths[i] > 0) lv_obj_set_style_min_width(c, col_widths[i], 0);
         else lv_obj_set_flex_grow(c, 1);
     }
@@ -1117,7 +1117,7 @@ void test_supercon_schedule(void)
     lv_obj_set_style_pad_hor(header, 8, 0);
 
     lv_obj_t *htitle = lv_label_create(header);
-    lv_label_set_text(htitle, LV_SYMBOL_LIST " SkinnyCon 2026");
+    lv_label_set_text(htitle, "SkinnyCon 2026");
     lv_obj_set_style_text_color(htitle, SUPERCON_ACCENT_C, 0);
     lv_obj_set_style_text_font(htitle, &font_alibaba_12, 0);
     lv_obj_align(htitle, LV_ALIGN_LEFT_MID, 0, 0);
@@ -1221,7 +1221,7 @@ void test_supercon_nettools(void)
     lv_obj_set_style_pad_hor(header, 8, 0);
 
     lv_obj_t *ntitle = lv_label_create(header);
-    lv_label_set_text(ntitle, LV_SYMBOL_WIFI " Net Tools");
+    lv_label_set_text(ntitle, "Net Tools");
     lv_obj_set_style_text_color(ntitle, NET_GREEN_C, 0);
     lv_obj_set_style_text_font(ntitle, &font_alibaba_12, 0);
     lv_obj_align(ntitle, LV_ALIGN_LEFT_MID, 0, 0);

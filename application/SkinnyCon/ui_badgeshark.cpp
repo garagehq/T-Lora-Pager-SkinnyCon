@@ -177,7 +177,7 @@ static void shark_setup(lv_obj_t *parent)
     for (int i = 0; i < 4; i++) {
         lv_obj_t *c = lv_label_create(col_header);
         lv_label_set_text(c, cols[i]);
-        lv_obj_set_style_text_color(c, SC_ACCENT, 0);
+        lv_obj_set_style_text_color(c, SC_TEXT, 0);
         if (col_widths[i] > 0) {
             lv_obj_set_style_min_width(c, col_widths[i], 0);
         } else {
