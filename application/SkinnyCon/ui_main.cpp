@@ -1056,10 +1056,9 @@ void setupGui()
 #endif
 
     create_app_drawn(panel, "GPS", draw_icon_gps, &ui_gps_main);
-    // Removed: Monitor app (battery info already on clock face, detailed stats are dev-only)
-    create_app_drawn(panel, "Power", draw_icon_power, &ui_power_main);
     create_app_drawn(panel, "Microphone", draw_icon_mic, &ui_microphone_main);
     create_app_drawn(panel, "IMU", draw_icon_imu, &ui_sensor_main);
+    create_app_drawn(panel, "Power", draw_icon_power, &ui_power_main);
 
     int offset = -10;
     if (lv_display_get_physical_vertical_resolution(NULL) > 320) {
