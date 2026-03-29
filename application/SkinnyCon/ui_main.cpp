@@ -218,9 +218,8 @@ static void create_app_drawn(lv_obj_t *parent, const char *name, icon_draw_fn dr
 static lv_obj_t *draw_skinnycon_logo(lv_obj_t *parent, const lv_font_t *font, int circle_size)
 {
     lv_obj_t *row = lv_obj_create(parent);
+    lv_obj_remove_style_all(row);
     lv_obj_set_size(row, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
-    lv_obj_set_style_bg_opa(row, LV_OPA_0, 0);
-    lv_obj_set_style_border_width(row, 0, 0);
     lv_obj_set_style_pad_all(row, 0, 0);
     lv_obj_set_style_pad_column(row, 0, 0);
     lv_obj_set_flex_flow(row, LV_FLEX_FLOW_ROW);
@@ -232,12 +231,11 @@ static lv_obj_t *draw_skinnycon_logo(lv_obj_t *parent, const lv_font_t *font, in
     lv_obj_set_style_text_color(left, SC_TEXT, 0);
 
     lv_obj_t *circle = lv_obj_create(row);
+    lv_obj_remove_style_all(circle);
     lv_obj_set_size(circle, circle_size, circle_size);
     lv_obj_set_style_radius(circle, LV_RADIUS_CIRCLE, 0);
     lv_obj_set_style_bg_color(circle, SC_TEAL, 0);
     lv_obj_set_style_bg_opa(circle, LV_OPA_COVER, 0);
-    lv_obj_set_style_border_width(circle, 0, 0);
-    /* Overlap with adjacent letters like the real logo */
     lv_obj_set_style_margin_left(circle, -2, 0);
     lv_obj_set_style_margin_right(circle, -2, 0);
 
@@ -255,9 +253,12 @@ static lv_obj_t *draw_skinnycon_logo(lv_obj_t *parent, const lv_font_t *font, in
 static lv_obj_t *icon_shape(lv_obj_t *parent, int w, int h)
 {
     lv_obj_t *o = lv_obj_create(parent);
+    lv_obj_remove_style_all(o);
     lv_obj_set_size(o, w, h);
     lv_obj_set_style_bg_opa(o, LV_OPA_0, 0);
     lv_obj_set_style_border_width(o, 0, 0);
+    lv_obj_set_style_outline_width(o, 0, 0);
+    lv_obj_set_style_shadow_width(o, 0, 0);
     lv_obj_set_style_pad_all(o, 0, 0);
     lv_obj_set_style_radius(o, 0, 0);
     lv_obj_remove_flag(o, LV_OBJ_FLAG_SCROLLABLE);
