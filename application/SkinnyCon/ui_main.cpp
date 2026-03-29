@@ -684,12 +684,11 @@ lv_obj_t *setupClock()
 
     /* Bottom bar with time + battery */
     lv_obj_t *footer = lv_obj_create(page);
+    lv_obj_remove_style_all(footer);
     lv_obj_set_size(footer, LV_PCT(100), 30);
     lv_obj_align(footer, LV_ALIGN_BOTTOM_MID, 0, 0);
     lv_obj_set_style_bg_color(footer, SC_PANEL, 0);
     lv_obj_set_style_bg_opa(footer, LV_OPA_COVER, 0);
-    lv_obj_set_style_border_width(footer, 0, 0);
-    lv_obj_set_style_radius(footer, 0, 0);
     lv_obj_set_style_pad_hor(footer, 10, 0);
 
     /* Time (left side of footer) */
@@ -716,16 +715,21 @@ lv_obj_t *setupClock()
     lv_obj_align(batt_label, LV_ALIGN_RIGHT_MID, 0, 0);
     clock_label.battery_label = batt_label;
 
-    /* Hidden labels not used in nametag mode (keep struct happy) */
+    /* Hidden placeholders — not used in SkinnyCon idle mode (keep struct happy) */
     clock_label.seg = lv_label_create(page);
     lv_obj_add_flag(clock_label.seg, LV_OBJ_FLAG_HIDDEN);
     lv_obj_set_size(clock_label.seg, 0, 0);
+    lv_obj_remove_style_all(clock_label.seg);
     clock_label.minute = lv_label_create(page);
     lv_obj_add_flag(clock_label.minute, LV_OBJ_FLAG_HIDDEN);
     lv_obj_set_size(clock_label.minute, 0, 0);
-    clock_label.battery_bar = lv_bar_create(page);
-    lv_obj_add_flag(clock_label.battery_bar, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_remove_style_all(clock_label.minute);
+    /* Use a label instead of bar to avoid bar widget rendering artifacts */
+    clock_label.battery_bar = lv_bar_create(lv_screen_active());
+    lv_obj_remove_style_all(clock_label.battery_bar);
     lv_obj_set_size(clock_label.battery_bar, 0, 0);
+    lv_obj_add_flag(clock_label.battery_bar, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_set_pos(clock_label.battery_bar, -100, -100);
 
     clock_timer = lv_timer_create(clock_update_datetime, 1000, NULL);
     lv_timer_pause(clock_timer);
