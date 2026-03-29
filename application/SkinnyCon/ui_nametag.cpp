@@ -60,19 +60,7 @@ static void name_edit_done_cb(lv_event_t *e)
     lv_obj_send_event(lv_menu_get_main_header_back_button(menu), LV_EVENT_CLICKED, NULL);
 }
 
-/* Called when user confirms subtitle edit */
-static void subtitle_edit_done_cb(lv_event_t *e)
-{
-    lv_obj_t *ta = lv_event_get_target_obj(e);
-    const char *text = lv_textarea_get_text(ta);
-    if (text && strlen(text) > 0) {
-        strncpy(nametag_user_subtitle, text, SUBTITLE_MAX_LEN);
-        nametag_user_subtitle[SUBTITLE_MAX_LEN] = '\0';
-    }
-    if (subtitle_label) lv_label_set_text(subtitle_label, nametag_user_subtitle);
-    printf("[NAMETAG] Subtitle saved: '%s'\n", nametag_user_subtitle);
-    lv_obj_send_event(lv_menu_get_main_header_back_button(menu), LV_EVENT_CLICKED, NULL);
-}
+/* (Edit Subtitle removed per user request) */
 
 static void nametag_setup(lv_obj_t *parent)
 {
@@ -122,7 +110,7 @@ static void nametag_setup(lv_obj_t *parent)
 
     /* ── Menu items (scrollable via encoder) ─────────────────────── */
 
-    /* Edit Name */
+    /* Edit Name — textarea on subpage, only menu_cont in group */
     lv_obj_t *edit_name_page = lv_menu_page_create(menu, NULL);
     lv_obj_t *name_ta = lv_textarea_create(edit_name_page);
     lv_obj_set_size(name_ta, LV_PCT(90), 40);
@@ -131,7 +119,6 @@ static void nametag_setup(lv_obj_t *parent)
     lv_textarea_set_one_line(name_ta, true);
     lv_obj_set_style_text_font(name_ta, &font_alibaba_24, 0);
     lv_obj_add_event_cb(name_ta, name_edit_done_cb, LV_EVENT_READY, NULL);
-    if (g) lv_group_add_obj(g, name_ta);
 
     lv_obj_t *edit_name_cont = lv_menu_cont_create(main_page);
     lv_obj_t *edit_name_lbl = lv_label_create(edit_name_cont);
@@ -139,24 +126,6 @@ static void nametag_setup(lv_obj_t *parent)
     lv_obj_set_style_text_color(edit_name_lbl, SUPERCON_ACCENT, 0);
     lv_menu_set_load_page_event(menu, edit_name_cont, edit_name_page);
     if (g) lv_group_add_obj(g, edit_name_cont);
-
-    /* Edit Subtitle */
-    lv_obj_t *edit_sub_page = lv_menu_page_create(menu, NULL);
-    lv_obj_t *sub_ta = lv_textarea_create(edit_sub_page);
-    lv_obj_set_size(sub_ta, LV_PCT(90), 40);
-    lv_textarea_set_max_length(sub_ta, SUBTITLE_MAX_LEN);
-    lv_textarea_set_text(sub_ta, nametag_user_subtitle);
-    lv_textarea_set_one_line(sub_ta, true);
-    lv_obj_set_style_text_font(sub_ta, &font_alibaba_24, 0);
-    lv_obj_add_event_cb(sub_ta, subtitle_edit_done_cb, LV_EVENT_READY, NULL);
-    if (g) lv_group_add_obj(g, sub_ta);
-
-    lv_obj_t *edit_sub_cont = lv_menu_cont_create(main_page);
-    lv_obj_t *edit_sub_lbl = lv_label_create(edit_sub_cont);
-    lv_label_set_text(edit_sub_lbl, "Edit Subtitle");
-    lv_obj_set_style_text_color(edit_sub_lbl, SUPERCON_ACCENT, 0);
-    lv_menu_set_load_page_event(menu, edit_sub_cont, edit_sub_page);
-    if (g) lv_group_add_obj(g, edit_sub_cont);
 
     /* About SkinnyCon */
     lv_obj_t *about_page = lv_menu_page_create(menu, NULL);
