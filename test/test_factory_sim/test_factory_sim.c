@@ -203,12 +203,12 @@ static void draw_test_icon_lora(lv_obj_t *p) {
 static void draw_test_icon_chat(lv_obj_t *p) {
     lv_obj_t *btn = create_app_btn_test(p, "LoRa Chat");
     lv_obj_t *c = icon_shape(btn, 52, 48); lv_obj_center(c);
-    lv_obj_t *back = icon_fill(c, 36, 26, SC_TEXT_DIM, 12); lv_obj_align(back, LV_ALIGN_TOP_RIGHT, -2, 0);
-    lv_obj_t *front = icon_fill(c, 36, 26, SC_TEXT, 12); lv_obj_align(front, LV_ALIGN_BOTTOM_LEFT, 2, -6);
+    lv_obj_t *bub = icon_fill(c, 44, 32, SC_TEXT, 16); lv_obj_align(bub, LV_ALIGN_TOP_MID, 0, 0);
     for (int i = 0; i < 3; i++) {
-        lv_obj_t *dot = icon_fill(front, 5, 5, SC_PANEL, LV_RADIUS_CIRCLE);
-        lv_obj_align(dot, LV_ALIGN_CENTER, (i-1)*10, 0);
+        lv_obj_t *dot = icon_fill(bub, 6, 6, SC_PANEL, LV_RADIUS_CIRCLE);
+        lv_obj_align(dot, LV_ALIGN_CENTER, (i-1)*12, 0);
     }
+    lv_obj_t *tail = icon_fill(c, 12, 12, SC_TEXT, 0); lv_obj_align(tail, LV_ALIGN_BOTTOM_LEFT, 6, -4);
 }
 static void draw_test_icon_setting(lv_obj_t *p) {
     lv_obj_t *btn = create_app_btn_test(p, "Setting");

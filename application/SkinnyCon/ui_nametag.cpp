@@ -7,9 +7,8 @@
  *            2 = About SkinnyCon
  *            3 = Code of Conduct
  *            4 = Badge info (hardware specs)
- *            Encoder press = go back to menu.
- *            Encoder rotate = cycle modes.
- *            Physical keyboard = edit name/subtitle (mode 0 only).
+ *            Press any letter key to start editing name. Backspace to delete.
+ *            Enter to confirm. Rotary/arrows cycle modes.
  */
 #include "ui_define.h"
 #include <string.h>
@@ -87,6 +86,7 @@ static void nametag_build_name_mode(void)
     if (editing_name) {
         lv_label_set_text(mode_label, "Type name " LV_SYMBOL_KEYBOARD "  Enter=done  Tab=subtitle");
         lv_obj_set_style_text_color(mode_label, SUPERCON_ACCENT, 0);
+        /* Cursor blink effect on name */
         char buf[NAME_MAX_LEN + 4];
         snprintf(buf, sizeof(buf), "%s_", user_name);
         lv_label_set_text(name_label, buf);
@@ -97,7 +97,7 @@ static void nametag_build_name_mode(void)
         snprintf(buf, sizeof(buf), "%s_", user_subtitle);
         lv_label_set_text(subtitle_label, buf);
     } else {
-        lv_label_set_text(mode_label, "Click=back  Rotate=mode  Type=edit");
+        lv_label_set_text(mode_label, "ESC=back  " LV_SYMBOL_REFRESH " Rotate=mode  " LV_SYMBOL_KEYBOARD " Type=edit");
         lv_obj_set_style_text_color(mode_label, SC_TEXT_DIM, 0);
     }
     lv_obj_set_style_text_align(mode_label, LV_TEXT_ALIGN_CENTER, 0);
@@ -121,7 +121,7 @@ static void nametag_build_about_mode(void)
 {
     lv_obj_t *title = lv_label_create(nametag_cont);
     lv_label_set_text(title, "SKINNYCON 2026");
-    lv_obj_set_style_text_font(title, &font_alibaba_12, 0);
+    lv_obj_set_style_text_font(title, &font_alibaba_24, 0);
     lv_obj_set_style_text_color(title, SUPERCON_ACCENT, 0);
     lv_obj_set_style_text_align(title, LV_TEXT_ALIGN_CENTER, 0);
     lv_obj_set_width(title, LV_PCT(100));
@@ -134,7 +134,7 @@ static void nametag_build_about_mode(void)
     lv_obj_set_style_border_color(panel, SC_TEAL, 0);
     lv_obj_set_style_border_width(panel, 1, 0);
     lv_obj_set_style_radius(panel, 6, 0);
-    lv_obj_set_style_pad_all(panel, 6, 0);
+    lv_obj_set_style_pad_all(panel, 8, 0);
     lv_obj_set_scrollbar_mode(panel, LV_SCROLLBAR_MODE_AUTO);
     lv_obj_set_scroll_dir(panel, LV_DIR_VER);
 
@@ -156,7 +156,7 @@ static void nametag_build_about_mode(void)
     lv_label_set_long_mode(info, LV_LABEL_LONG_WRAP);
 
     mode_label = lv_label_create(nametag_cont);
-    lv_label_set_text(mode_label, "Click=back  Rotate=mode");
+    lv_label_set_text(mode_label, "ESC=back  " LV_SYMBOL_REFRESH " Rotate=mode");
     lv_obj_set_style_text_color(mode_label, SC_TEXT_DIM, 0);
     lv_obj_set_style_text_align(mode_label, LV_TEXT_ALIGN_CENTER, 0);
     lv_obj_set_width(mode_label, LV_PCT(100));
@@ -167,7 +167,7 @@ static void nametag_build_coc_mode(void)
 {
     lv_obj_t *title = lv_label_create(nametag_cont);
     lv_label_set_text(title, "(!) CODE OF CONDUCT");
-    lv_obj_set_style_text_font(title, &font_alibaba_12, 0);
+    lv_obj_set_style_text_font(title, &font_alibaba_24, 0);
     lv_obj_set_style_text_color(title, SUPERCON_ACCENT, 0);
     lv_obj_set_style_text_align(title, LV_TEXT_ALIGN_CENTER, 0);
     lv_obj_set_width(title, LV_PCT(100));
@@ -180,7 +180,7 @@ static void nametag_build_coc_mode(void)
     lv_obj_set_style_border_color(panel, SC_TEAL, 0);
     lv_obj_set_style_border_width(panel, 1, 0);
     lv_obj_set_style_radius(panel, 6, 0);
-    lv_obj_set_style_pad_all(panel, 6, 0);
+    lv_obj_set_style_pad_all(panel, 8, 0);
     lv_obj_set_scrollbar_mode(panel, LV_SCROLLBAR_MODE_AUTO);
     lv_obj_set_scroll_dir(panel, LV_DIR_VER);
 
@@ -207,7 +207,7 @@ static void nametag_build_coc_mode(void)
     lv_label_set_long_mode(coc, LV_LABEL_LONG_WRAP);
 
     mode_label = lv_label_create(nametag_cont);
-    lv_label_set_text(mode_label, "Click=back  Rotate=mode");
+    lv_label_set_text(mode_label, "ESC=back  " LV_SYMBOL_REFRESH " Rotate=mode");
     lv_obj_set_style_text_color(mode_label, SC_TEXT_DIM, 0);
     lv_obj_set_style_text_align(mode_label, LV_TEXT_ALIGN_CENTER, 0);
     lv_obj_set_width(mode_label, LV_PCT(100));
@@ -218,22 +218,21 @@ static void nametag_build_badge_info_mode(void)
 {
     lv_obj_t *title = lv_label_create(nametag_cont);
     lv_label_set_text(title, "BADGE INFO");
-    lv_obj_set_style_text_font(title, &font_alibaba_12, 0);
+    lv_obj_set_style_text_font(title, &font_alibaba_24, 0);
     lv_obj_set_style_text_color(title, SUPERCON_ACCENT, 0);
     lv_obj_set_style_text_align(title, LV_TEXT_ALIGN_CENTER, 0);
     lv_obj_set_width(title, LV_PCT(100));
 
     lv_obj_t *panel = lv_obj_create(nametag_cont);
-    lv_obj_set_size(panel, LV_PCT(95), LV_PCT(100));
-    lv_obj_set_flex_grow(panel, 1);
+    lv_obj_set_size(panel, LV_PCT(90), LV_SIZE_CONTENT);
     lv_obj_set_style_bg_color(panel, SUPERCON_PANEL, 0);
     lv_obj_set_style_bg_opa(panel, LV_OPA_COVER, 0);
     lv_obj_set_style_border_color(panel, SC_TEAL, 0);
     lv_obj_set_style_border_width(panel, 1, 0);
-    lv_obj_set_style_radius(panel, 6, 0);
-    lv_obj_set_style_pad_all(panel, 6, 0);
-    lv_obj_set_scrollbar_mode(panel, LV_SCROLLBAR_MODE_AUTO);
-    lv_obj_set_scroll_dir(panel, LV_DIR_VER);
+    lv_obj_set_style_radius(panel, 8, 0);
+    lv_obj_set_style_pad_all(panel, 10, 0);
+    lv_obj_set_flex_flow(panel, LV_FLEX_FLOW_COLUMN);
+    lv_obj_center(panel);
 
     lv_obj_t *info = lv_label_create(panel);
     lv_label_set_text(info,
@@ -247,11 +246,9 @@ static void nametag_build_badge_info_mode(void)
         "Garage Agency LLC"
     );
     lv_obj_set_style_text_color(info, SUPERCON_WHITE, 0);
-    lv_obj_set_width(info, LV_PCT(100));
-    lv_label_set_long_mode(info, LV_LABEL_LONG_WRAP);
 
     mode_label = lv_label_create(nametag_cont);
-    lv_label_set_text(mode_label, "Click=back  Rotate=mode");
+    lv_label_set_text(mode_label, "ESC=back  " LV_SYMBOL_REFRESH " Rotate=mode");
     lv_obj_set_style_text_color(mode_label, SC_TEXT_DIM, 0);
     lv_obj_set_style_text_align(mode_label, LV_TEXT_ALIGN_CENTER, 0);
     lv_obj_set_width(mode_label, LV_PCT(100));
@@ -340,31 +337,16 @@ static void nametag_kb_callback(int state, char &c)
 }
 #endif
 
-static void nametag_exit(lv_obj_t *parent);  /* forward decl */
+static void nametag_exit(lv_obj_t *parent);  /* forward decl for ESC handler */
 
 static void nametag_event_cb(lv_event_t *e)
 {
     lv_event_code_t code = lv_event_get_code(e);
-
-    /* Encoder click or ESC = go back to menu */
-    if (code == LV_EVENT_CLICKED || code == LV_EVENT_LONG_PRESSED) {
-        if (editing_name || editing_subtitle) {
-            /* If editing, click confirms edit (same as Enter) */
-            editing_name = false;
-            editing_subtitle = false;
-            nametag_rebuild();
-        } else {
-            nametag_exit(NULL);
-            menu_show();
-        }
-        return;
-    }
-
     if (code != LV_EVENT_KEY) return;
 
     uint32_t key = lv_event_get_key(e);
 
-    /* ESC also exits (for keyboards that have it) */
+    /* ESC exits even while editing */
     if (key == LV_KEY_ESC) {
         nametag_exit(NULL);
         menu_show();
@@ -391,14 +373,12 @@ static void nametag_setup(lv_obj_t *parent)
     lv_obj_set_style_bg_opa(nametag_cont, LV_OPA_COVER, 0);
     lv_obj_set_style_border_width(nametag_cont, 0, 0);
     lv_obj_set_style_radius(nametag_cont, 0, 0);
-    lv_obj_set_style_pad_all(nametag_cont, 4, 0);
+    lv_obj_set_style_pad_all(nametag_cont, 8, 0);
     lv_obj_set_flex_flow(nametag_cont, LV_FLEX_FLOW_COLUMN);
     lv_obj_set_flex_align(nametag_cont, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
     lv_obj_set_scrollbar_mode(nametag_cont, LV_SCROLLBAR_MODE_OFF);
 
     lv_obj_add_event_cb(nametag_cont, nametag_event_cb, LV_EVENT_KEY, NULL);
-    lv_obj_add_event_cb(nametag_cont, nametag_event_cb, LV_EVENT_CLICKED, NULL);
-    lv_obj_add_event_cb(nametag_cont, nametag_event_cb, LV_EVENT_LONG_PRESSED, NULL);
     lv_group_t *g = lv_group_get_default();
     if (g) lv_group_add_obj(g, nametag_cont);
 

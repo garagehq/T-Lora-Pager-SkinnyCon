@@ -85,13 +85,7 @@ static void net_exit(lv_obj_t *parent);  /* forward decl for ESC handler */
 
 static void net_event_cb(lv_event_t *e)
 {
-    lv_event_code_t code = lv_event_get_code(e);
-    if (code == LV_EVENT_CLICKED || code == LV_EVENT_LONG_PRESSED) {
-        net_exit(NULL);
-        menu_show();
-        return;
-    }
-    if (code != LV_EVENT_KEY) return;
+    if (lv_event_get_code(e) != LV_EVENT_KEY) return;
     if (lv_event_get_key(e) == LV_KEY_ESC) {
         net_exit(NULL);
         menu_show();
@@ -190,8 +184,6 @@ static void net_setup(lv_obj_t *parent)
 
     /* Register input for back button */
     lv_obj_add_event_cb(net_cont, net_event_cb, LV_EVENT_KEY, NULL);
-    lv_obj_add_event_cb(net_cont, net_event_cb, LV_EVENT_CLICKED, NULL);
-    lv_obj_add_event_cb(net_cont, net_event_cb, LV_EVENT_LONG_PRESSED, NULL);
     lv_group_t *g = lv_group_get_default();
     if (g) lv_group_add_obj(g, net_cont);
 
