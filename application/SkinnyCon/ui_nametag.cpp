@@ -97,7 +97,7 @@ static void nametag_build_name_mode(void)
         snprintf(buf, sizeof(buf), "%s_", user_subtitle);
         lv_label_set_text(subtitle_label, buf);
     } else {
-        lv_label_set_text(mode_label, LV_SYMBOL_REFRESH " Rotate=mode  " LV_SYMBOL_KEYBOARD " Type=edit name");
+        lv_label_set_text(mode_label, "ESC=back  " LV_SYMBOL_REFRESH " Rotate=mode  " LV_SYMBOL_KEYBOARD " Type=edit");
         lv_obj_set_style_text_color(mode_label, SC_TEXT_DIM, 0);
     }
     lv_obj_set_style_text_align(mode_label, LV_TEXT_ALIGN_CENTER, 0);
@@ -156,7 +156,7 @@ static void nametag_build_about_mode(void)
     lv_label_set_long_mode(info, LV_LABEL_LONG_WRAP);
 
     mode_label = lv_label_create(nametag_cont);
-    lv_label_set_text(mode_label, LV_SYMBOL_REFRESH " Rotate to switch mode");
+    lv_label_set_text(mode_label, "ESC=back  " LV_SYMBOL_REFRESH " Rotate=mode");
     lv_obj_set_style_text_color(mode_label, SC_TEXT_DIM, 0);
     lv_obj_set_style_text_align(mode_label, LV_TEXT_ALIGN_CENTER, 0);
     lv_obj_set_width(mode_label, LV_PCT(100));
@@ -207,7 +207,7 @@ static void nametag_build_coc_mode(void)
     lv_label_set_long_mode(coc, LV_LABEL_LONG_WRAP);
 
     mode_label = lv_label_create(nametag_cont);
-    lv_label_set_text(mode_label, LV_SYMBOL_REFRESH " Rotate to switch mode");
+    lv_label_set_text(mode_label, "ESC=back  " LV_SYMBOL_REFRESH " Rotate=mode");
     lv_obj_set_style_text_color(mode_label, SC_TEXT_DIM, 0);
     lv_obj_set_style_text_align(mode_label, LV_TEXT_ALIGN_CENTER, 0);
     lv_obj_set_width(mode_label, LV_PCT(100));
@@ -247,7 +247,7 @@ static void nametag_build_badge_info_mode(void)
     lv_obj_set_style_text_color(info, SUPERCON_WHITE, 0);
 
     mode_label = lv_label_create(nametag_cont);
-    lv_label_set_text(mode_label, LV_SYMBOL_REFRESH " Rotate to switch mode");
+    lv_label_set_text(mode_label, "ESC=back  " LV_SYMBOL_REFRESH " Rotate=mode");
     lv_obj_set_style_text_color(mode_label, SC_TEXT_DIM, 0);
     lv_obj_set_style_text_align(mode_label, LV_TEXT_ALIGN_CENTER, 0);
     lv_obj_set_width(mode_label, LV_PCT(100));

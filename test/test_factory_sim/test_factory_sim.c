@@ -58,6 +58,43 @@ void tearDown(void)
 }
 
 /* ================================================================
+ *  HELPER: SkinnyCon logo (SKINNYC + teal circle + N)
+ * ================================================================ */
+
+static lv_obj_t *draw_skinnycon_logo_test(lv_obj_t *parent, const lv_font_t *font, int circle_size)
+{
+    lv_obj_t *row = lv_obj_create(parent);
+    lv_obj_set_size(row, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
+    lv_obj_set_style_bg_opa(row, LV_OPA_0, 0);
+    lv_obj_set_style_border_width(row, 0, 0);
+    lv_obj_set_style_pad_all(row, 0, 0);
+    lv_obj_set_style_pad_column(row, 0, 0);
+    lv_obj_set_flex_flow(row, LV_FLEX_FLOW_ROW);
+    lv_obj_set_flex_align(row, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER);
+
+    lv_obj_t *left = lv_label_create(row);
+    lv_label_set_text(left, "SKINNYC");
+    lv_obj_set_style_text_font(left, font, 0);
+    lv_obj_set_style_text_color(left, SC_TEXT, 0);
+
+    lv_obj_t *circle = lv_obj_create(row);
+    lv_obj_set_size(circle, circle_size, circle_size);
+    lv_obj_set_style_radius(circle, LV_RADIUS_CIRCLE, 0);
+    lv_obj_set_style_bg_color(circle, SC_TEAL, 0);
+    lv_obj_set_style_bg_opa(circle, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_width(circle, 0, 0);
+    lv_obj_set_style_margin_left(circle, -2, 0);
+    lv_obj_set_style_margin_right(circle, -2, 0);
+
+    lv_obj_t *right = lv_label_create(row);
+    lv_label_set_text(right, "N");
+    lv_obj_set_style_text_font(right, font, 0);
+    lv_obj_set_style_text_color(right, SC_TEXT, 0);
+
+    return row;
+}
+
+/* ================================================================
  *  HELPER: Create an app icon button (mirrors factory create_app)
  * ================================================================ */
 
@@ -286,33 +323,9 @@ void test_factory_clock_screen(void)
     lv_obj_set_style_border_width(bar_top, 0, 0);
     lv_obj_set_style_radius(bar_top, 0, 0);
 
-    /* Logo: SKINNYC + teal circle + N */
-    lv_obj_t *logo_row = lv_obj_create(page);
-    lv_obj_set_size(logo_row, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
-    lv_obj_set_style_bg_opa(logo_row, LV_OPA_0, 0);
-    lv_obj_set_style_border_width(logo_row, 0, 0);
-    lv_obj_set_style_pad_all(logo_row, 0, 0);
-    lv_obj_set_style_pad_column(logo_row, 0, 0);
-    lv_obj_set_flex_flow(logo_row, LV_FLEX_FLOW_ROW);
-    lv_obj_set_flex_align(logo_row, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+    /* Conference logo */
+    lv_obj_t *logo_row = draw_skinnycon_logo_test(page, &font_alibaba_40, 36);
     lv_obj_align(logo_row, LV_ALIGN_CENTER, 0, -25);
-
-    lv_obj_t *logo_left = lv_label_create(logo_row);
-    lv_label_set_text(logo_left, "SKINNYC");
-    lv_obj_set_style_text_font(logo_left, &font_alibaba_40, 0);
-    lv_obj_set_style_text_color(logo_left, SC_TEXT, 0);
-
-    lv_obj_t *logo_circle = lv_obj_create(logo_row);
-    lv_obj_set_size(logo_circle, 42, 42);
-    lv_obj_set_style_radius(logo_circle, LV_RADIUS_CIRCLE, 0);
-    lv_obj_set_style_bg_color(logo_circle, SC_TEAL, 0);
-    lv_obj_set_style_bg_opa(logo_circle, LV_OPA_COVER, 0);
-    lv_obj_set_style_border_width(logo_circle, 0, 0);
-
-    lv_obj_t *logo_right = lv_label_create(logo_row);
-    lv_label_set_text(logo_right, "N");
-    lv_obj_set_style_text_font(logo_right, &font_alibaba_40, 0);
-    lv_obj_set_style_text_color(logo_right, SC_TEXT, 0);
 
     /* Subtitle */
     lv_obj_t *subtitle = lv_label_create(page);
@@ -533,7 +546,6 @@ void test_factory_logo_screen(void)
     lv_obj_set_style_bg_opa(scr, LV_OPA_COVER, 0);
     lv_obj_set_style_radius(scr, 0, 0);
 
-    /* Boot logo: SKINNYC + teal circle + N  /  2026 */
     lv_obj_t *boot_cont = lv_obj_create(scr);
     lv_obj_set_size(boot_cont, LV_PCT(100), LV_PCT(100));
     lv_obj_set_style_bg_opa(boot_cont, LV_OPA_0, 0);
@@ -541,31 +553,7 @@ void test_factory_logo_screen(void)
     lv_obj_set_flex_flow(boot_cont, LV_FLEX_FLOW_COLUMN);
     lv_obj_set_flex_align(boot_cont, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
 
-    lv_obj_t *logo_row = lv_obj_create(boot_cont);
-    lv_obj_set_size(logo_row, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
-    lv_obj_set_style_bg_opa(logo_row, LV_OPA_0, 0);
-    lv_obj_set_style_border_width(logo_row, 0, 0);
-    lv_obj_set_style_pad_all(logo_row, 0, 0);
-    lv_obj_set_style_pad_column(logo_row, 0, 0);
-    lv_obj_set_flex_flow(logo_row, LV_FLEX_FLOW_ROW);
-    lv_obj_set_flex_align(logo_row, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
-
-    lv_obj_t *bl = lv_label_create(logo_row);
-    lv_label_set_text(bl, "SKINNYC");
-    lv_obj_set_style_text_font(bl, &font_alibaba_40, 0);
-    lv_obj_set_style_text_color(bl, SC_TEXT, 0);
-
-    lv_obj_t *bc = lv_obj_create(logo_row);
-    lv_obj_set_size(bc, 30, 30);
-    lv_obj_set_style_radius(bc, LV_RADIUS_CIRCLE, 0);
-    lv_obj_set_style_bg_color(bc, SC_TEAL, 0);
-    lv_obj_set_style_bg_opa(bc, LV_OPA_COVER, 0);
-    lv_obj_set_style_border_width(bc, 0, 0);
-
-    lv_obj_t *br = lv_label_create(logo_row);
-    lv_label_set_text(br, "N");
-    lv_obj_set_style_text_font(br, &font_alibaba_40, 0);
-    lv_obj_set_style_text_color(br, SC_TEXT, 0);
+    draw_skinnycon_logo_test(boot_cont, &font_alibaba_40, 36);
 
     lv_obj_t *year_lbl = lv_label_create(boot_cont);
     lv_label_set_text(year_lbl, "2026");
@@ -786,7 +774,7 @@ void test_supercon_nametag(void)
 
     /* Mode hint */
     lv_obj_t *hint = lv_label_create(cont);
-    lv_label_set_text(hint, LV_SYMBOL_REFRESH " Rotate=mode  " LV_SYMBOL_KEYBOARD " Type=edit name");
+    lv_label_set_text(hint, "ESC=back  " LV_SYMBOL_REFRESH " Rotate=mode  " LV_SYMBOL_KEYBOARD " Type=edit");
     lv_obj_set_style_text_color(hint, SUPERCON_DIM_C, 0);
     lv_obj_set_style_text_align(hint, LV_TEXT_ALIGN_CENTER, 0);
     lv_obj_set_width(hint, LV_PCT(100));

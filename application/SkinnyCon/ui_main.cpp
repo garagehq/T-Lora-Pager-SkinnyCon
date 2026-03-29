@@ -206,6 +206,49 @@ static void create_app_drawn(lv_obj_t *parent, const char *name, icon_draw_fn dr
     if (draw_fn) draw_fn(btn);
 }
 
+/* ── SkinnyCon logo helper ──────────────────────────────────────── */
+
+/**
+ * @brief Draw the SKINNYCON logo with teal circle replacing the O.
+ * @param parent Parent object to draw into
+ * @param font Font for the text (determines circle size)
+ * @param circle_size Diameter of the teal circle (match to cap height)
+ * @return The flex-row container holding the logo
+ */
+static lv_obj_t *draw_skinnycon_logo(lv_obj_t *parent, const lv_font_t *font, int circle_size)
+{
+    lv_obj_t *row = lv_obj_create(parent);
+    lv_obj_set_size(row, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
+    lv_obj_set_style_bg_opa(row, LV_OPA_0, 0);
+    lv_obj_set_style_border_width(row, 0, 0);
+    lv_obj_set_style_pad_all(row, 0, 0);
+    lv_obj_set_style_pad_column(row, 0, 0);
+    lv_obj_set_flex_flow(row, LV_FLEX_FLOW_ROW);
+    lv_obj_set_flex_align(row, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER);
+
+    lv_obj_t *left = lv_label_create(row);
+    lv_label_set_text(left, "SKINNYC");
+    lv_obj_set_style_text_font(left, font, 0);
+    lv_obj_set_style_text_color(left, SC_TEXT, 0);
+
+    lv_obj_t *circle = lv_obj_create(row);
+    lv_obj_set_size(circle, circle_size, circle_size);
+    lv_obj_set_style_radius(circle, LV_RADIUS_CIRCLE, 0);
+    lv_obj_set_style_bg_color(circle, SC_TEAL, 0);
+    lv_obj_set_style_bg_opa(circle, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_width(circle, 0, 0);
+    /* Overlap with adjacent letters like the real logo */
+    lv_obj_set_style_margin_left(circle, -2, 0);
+    lv_obj_set_style_margin_right(circle, -2, 0);
+
+    lv_obj_t *right = lv_label_create(row);
+    lv_label_set_text(right, "N");
+    lv_obj_set_style_text_font(right, font, 0);
+    lv_obj_set_style_text_color(right, SC_TEXT, 0);
+
+    return row;
+}
+
 /* ── LVGL-drawn menu icons ─────────────────────────────────────── */
 
 /* Nametag icon: badge/ID card shape */
@@ -377,33 +420,9 @@ lv_obj_t *setupClock()
     lv_obj_set_style_radius(bar_top, 0, 0);
     lv_obj_set_style_pad_all(bar_top, 0, 0);
 
-    /* Conference logo: SKINNYC + teal circle + N */
-    lv_obj_t *logo_row = lv_obj_create(page);
-    lv_obj_set_size(logo_row, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
-    lv_obj_set_style_bg_opa(logo_row, LV_OPA_0, 0);
-    lv_obj_set_style_border_width(logo_row, 0, 0);
-    lv_obj_set_style_pad_all(logo_row, 0, 0);
-    lv_obj_set_style_pad_column(logo_row, 0, 0);
-    lv_obj_set_flex_flow(logo_row, LV_FLEX_FLOW_ROW);
-    lv_obj_set_flex_align(logo_row, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+    /* Conference logo */
+    lv_obj_t *logo_row = draw_skinnycon_logo(page, &font_alibaba_60, 52);
     lv_obj_align(logo_row, LV_ALIGN_CENTER, 0, -25);
-
-    lv_obj_t *logo_left = lv_label_create(logo_row);
-    lv_label_set_text(logo_left, "SKINNYC");
-    lv_obj_set_style_text_font(logo_left, &font_alibaba_60, 0);
-    lv_obj_set_style_text_color(logo_left, SC_TEXT, 0);
-
-    lv_obj_t *logo_circle = lv_obj_create(logo_row);
-    lv_obj_set_size(logo_circle, 42, 42);
-    lv_obj_set_style_radius(logo_circle, LV_RADIUS_CIRCLE, 0);
-    lv_obj_set_style_bg_color(logo_circle, SC_TEAL, 0);
-    lv_obj_set_style_bg_opa(logo_circle, LV_OPA_COVER, 0);
-    lv_obj_set_style_border_width(logo_circle, 0, 0);
-
-    lv_obj_t *logo_right = lv_label_create(logo_row);
-    lv_label_set_text(logo_right, "N");
-    lv_obj_set_style_text_font(logo_right, &font_alibaba_60, 0);
-    lv_obj_set_style_text_color(logo_right, SC_TEXT, 0);
 
     /* Year subtitle */
     lv_obj_t *year_label = lv_label_create(page);
@@ -618,7 +637,7 @@ void setupGui()
     lv_obj_set_style_bg_color(lv_screen_active(), SC_BG, LV_PART_MAIN);
     lv_obj_set_style_radius(lv_screen_active(), 0, 0);
 
-    /* Boot logo: SKINNYC + teal circle + N  /  2026 */
+    /* Boot logo */
     lv_obj_t *boot_cont = lv_obj_create(lv_screen_active());
     lv_obj_set_size(boot_cont, LV_PCT(100), LV_PCT(100));
     lv_obj_set_style_bg_opa(boot_cont, LV_OPA_0, 0);
@@ -626,31 +645,7 @@ void setupGui()
     lv_obj_set_flex_flow(boot_cont, LV_FLEX_FLOW_COLUMN);
     lv_obj_set_flex_align(boot_cont, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
 
-    lv_obj_t *logo_row = lv_obj_create(boot_cont);
-    lv_obj_set_size(logo_row, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
-    lv_obj_set_style_bg_opa(logo_row, LV_OPA_0, 0);
-    lv_obj_set_style_border_width(logo_row, 0, 0);
-    lv_obj_set_style_pad_all(logo_row, 0, 0);
-    lv_obj_set_style_pad_column(logo_row, 0, 0);
-    lv_obj_set_flex_flow(logo_row, LV_FLEX_FLOW_ROW);
-    lv_obj_set_flex_align(logo_row, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
-
-    lv_obj_t *bl = lv_label_create(logo_row);
-    lv_label_set_text(bl, "SKINNYC");
-    lv_obj_set_style_text_font(bl, &font_alibaba_40, 0);
-    lv_obj_set_style_text_color(bl, SC_TEXT, 0);
-
-    lv_obj_t *bc = lv_obj_create(logo_row);
-    lv_obj_set_size(bc, 30, 30);
-    lv_obj_set_style_radius(bc, LV_RADIUS_CIRCLE, 0);
-    lv_obj_set_style_bg_color(bc, SC_TEAL, 0);
-    lv_obj_set_style_bg_opa(bc, LV_OPA_COVER, 0);
-    lv_obj_set_style_border_width(bc, 0, 0);
-
-    lv_obj_t *br = lv_label_create(logo_row);
-    lv_label_set_text(br, "N");
-    lv_obj_set_style_text_font(br, &font_alibaba_40, 0);
-    lv_obj_set_style_text_color(br, SC_TEXT, 0);
+    draw_skinnycon_logo(boot_cont, &font_alibaba_40, 36);
 
     lv_obj_t *year_lbl = lv_label_create(boot_cont);
     lv_label_set_text(year_lbl, "2026");
