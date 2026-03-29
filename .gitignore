@@ -7,3 +7,18 @@ script
 *.log
 .vscode
 *.ppm
+
+# Build artifacts
+.env
+.cache/
+*.o
+*.so
+__pycache__/
+*.pyc
+.pytest_cache/
+dist/
+*.egg-info/
+node_modules/
+.gradle/
+*.class
+local.properties
