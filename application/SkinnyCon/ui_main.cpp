@@ -448,22 +448,19 @@ static void draw_icon_lora(lv_obj_t *parent)
     lv_obj_align(tip, LV_ALIGN_TOP_MID, 0, 0);
 }
 
-/* LoRa Chat icon: solid speech bubble with dots */
+/* LoRa Chat icon: two overlapping speech bubbles */
 static void draw_icon_chat(lv_obj_t *parent)
 {
     lv_obj_t *c = icon_shape(parent, 52, 48);
     lv_obj_center(c);
-    /* Solid filled bubble */
-    lv_obj_t *bubble = icon_fill(c, 44, 32, SC_TEXT, 16);
-    lv_obj_align(bubble, LV_ALIGN_TOP_MID, 0, 0);
-    /* Three dots */
+    lv_obj_t *back = icon_fill(c, 36, 26, SC_TEXT_DIM, 12);
+    lv_obj_align(back, LV_ALIGN_TOP_RIGHT, -2, 0);
+    lv_obj_t *front = icon_fill(c, 36, 26, SC_TEXT, 12);
+    lv_obj_align(front, LV_ALIGN_BOTTOM_LEFT, 2, -6);
     for (int i = 0; i < 3; i++) {
-        lv_obj_t *dot = icon_fill(bubble, 6, 6, SC_PANEL, LV_RADIUS_CIRCLE);
-        lv_obj_align(dot, LV_ALIGN_CENTER, (i - 1) * 12, 0);
+        lv_obj_t *dot = icon_fill(front, 5, 5, SC_PANEL, LV_RADIUS_CIRCLE);
+        lv_obj_align(dot, LV_ALIGN_CENTER, (i - 1) * 10, 0);
     }
-    /* Tail — overlaps with bubble bottom-left */
-    lv_obj_t *tail = icon_fill(c, 12, 12, SC_TEXT, 0);
-    lv_obj_align(tail, LV_ALIGN_BOTTOM_LEFT, 6, -4);
 }
 
 /* Setting icon: two horizontal sliders */
