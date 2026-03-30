@@ -181,7 +181,14 @@ static void sched_setup(lv_obj_t *parent)
         const talk_t *talks = days_data[d];
         int n = day_counts[d];
         for (int i = 0; i < n && i < MAX_TALKS; i++) {
-            lv_obj_t *cont = lv_menu_cont_create(sub_page);
+            /* Plain lv_obj instead of lv_menu_cont — lv_menu won't try to
+               navigate these on click, preventing the freeze */
+            lv_obj_t *cont = lv_obj_create(sub_page);
+            lv_obj_remove_style_all(cont);
+            lv_obj_set_size(cont, LV_PCT(100), LV_SIZE_CONTENT);
+            lv_obj_set_style_pad_ver(cont, 4, 0);
+            lv_obj_set_style_pad_hor(cont, 8, 0);
+            lv_obj_remove_flag(cont, LV_OBJ_FLAG_SCROLLABLE);
 
             char buf[80];
             snprintf(buf, sizeof(buf), "%s  %s", talks[i].time, talks[i].title);
@@ -190,9 +197,6 @@ static void sched_setup(lv_obj_t *parent)
             lv_obj_set_style_text_color(lbl, talks[i].is_break ? SCHED_DIM : SCHED_WHITE, 0);
             lv_label_set_long_mode(lbl, LV_LABEL_LONG_CLIP);
             lv_obj_set_width(lbl, LV_PCT(100));
-
-            /* Remove clickable so lv_menu doesn't try to navigate on enter */
-            lv_obj_remove_flag(cont, LV_OBJ_FLAG_CLICKABLE);
             /* Scroll into view on focus */
             lv_obj_add_event_cb(cont, talk_row_focus_cb, LV_EVENT_FOCUSED, NULL);
 
