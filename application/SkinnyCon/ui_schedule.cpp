@@ -1,9 +1,11 @@
 /**
  * @file      ui_schedule.cpp
- * @brief     SkinnyCon 2026 Schedule — flat list with day headers
- * @details   All 3 days on one scrollable page. Each day has a header
- *            followed by talk items as lv_menu_cont (focusable, scrollable).
- *            Back button returns to main menu.
+ * @brief     SkinnyCon 2026 Schedule — Settings-style submenus per day
+ * @details   Copies the exact Settings app pattern:
+ *            - Main page has 3 lv_menu_cont items (one per day)
+ *            - Each day opens a subpage with talk labels (NOT in group)
+ *            - Back button on subpage returns to day list
+ *            - Back button on day list returns to main menu
  */
 #include "ui_define.h"
 #include "ui_skinnycon_theme.h"
@@ -73,21 +75,48 @@ static const int day_counts[] = {
     sizeof(day3_talks) / sizeof(talk_t),
 };
 static const char *day_names[] = {
-    "-- Tue May 12 --",
-    "-- Wed May 13 --",
-    "-- Thu May 14 --"
+    "Tue May 12",
+    "Wed May 13",
+    "Thu May 14"
 };
 
 static void sched_back_handler(lv_event_t *e)
 {
     lv_obj_t *obj = (lv_obj_t *)lv_event_get_target(e);
     if (lv_menu_back_btn_is_root(sched_menu, obj)) {
-        printf("[SCHED] Back button pressed\n");
+        printf("[SCHED] Back to main menu\n");
         lv_obj_clean(sched_menu);
         lv_obj_del(sched_menu);
         sched_menu = NULL;
         menu_show();
     }
+}
+
+/*
+ * Create a subpage for one day — just labels, NOT added to group.
+ * The lv_menu page scrolls automatically when content overflows.
+ * Back button in the menu header navigates back to day list.
+ */
+static lv_obj_t *create_day_subpage(const talk_t *talks, int n)
+{
+    lv_obj_t *page = lv_menu_page_create(sched_menu, NULL);
+
+    for (int i = 0; i < n; i++) {
+        /* Use lv_menu_cont so the menu knows about this content,
+         * but do NOT add to group and do NOT set load_page_event */
+        lv_obj_t *cont = lv_menu_cont_create(page);
+
+        char buf[80];
+        snprintf(buf, sizeof(buf), "%s  %s", talks[i].time, talks[i].title);
+        lv_obj_t *lbl = lv_label_create(cont);
+        lv_label_set_text(lbl, buf);
+        lv_obj_set_style_text_color(lbl, talks[i].is_break ? SCHED_DIM : SCHED_WHITE, 0);
+        lv_label_set_long_mode(lbl, LV_LABEL_LONG_CLIP);
+        lv_obj_set_width(lbl, LV_PCT(100));
+    }
+
+    printf("[SCHED] Created day subpage with %d talks (NOT in group)\n", n);
+    return page;
 }
 
 static void sched_setup(lv_obj_t *parent)
@@ -99,54 +128,44 @@ static void sched_setup(lv_obj_t *parent)
 
     lv_obj_t *main_page = lv_menu_page_create(sched_menu, NULL);
 
-    /* Build a flat list: day headers + talk items for all 3 days */
+    /*
+     * Exactly like Settings: create subpages, then create
+     * lv_menu_cont items on main_page that link to them.
+     * Only the main page menu_cont items go in the group.
+     */
     for (int d = 0; d < 3; d++) {
-        /* Day header — just a label, not focusable */
-        lv_obj_t *day_header = lv_menu_cont_create(main_page);
-        lv_obj_t *day_lbl = lv_label_create(day_header);
+        /* Create the day's subpage (talks inside, not in group) */
+        lv_obj_t *day_page = create_day_subpage(days[d], day_counts[d]);
+
+        /* Create the main page menu item that links to it */
+        lv_obj_t *day_cont = lv_menu_cont_create(main_page);
+        lv_obj_t *day_lbl = lv_label_create(day_cont);
         lv_label_set_text(day_lbl, day_names[d]);
         lv_obj_set_style_text_color(day_lbl, SCHED_ACCENT, 0);
-        lv_obj_set_style_text_font(day_lbl, &font_alibaba_12, 0);
-        lv_obj_set_width(day_lbl, LV_PCT(100));
-        lv_obj_set_style_text_align(day_lbl, LV_TEXT_ALIGN_CENTER, 0);
-        if (g) lv_group_add_obj(g, day_header);
 
-        /* Talk items */
-        const talk_t *talks = days[d];
-        int n = day_counts[d];
-        for (int i = 0; i < n; i++) {
-            lv_obj_t *cont = lv_menu_cont_create(main_page);
+        /* This is what makes clicking the item load the subpage */
+        lv_menu_set_load_page_event(sched_menu, day_cont, day_page);
 
-            char buf[80];
-            snprintf(buf, sizeof(buf), "%s  %s", talks[i].time, talks[i].title);
-            lv_obj_t *lbl = lv_label_create(cont);
-            lv_label_set_text(lbl, buf);
-            lv_obj_set_style_text_color(lbl, talks[i].is_break ? SCHED_DIM : SCHED_WHITE, 0);
-            lv_label_set_long_mode(lbl, LV_LABEL_LONG_CLIP);
-            lv_obj_set_width(lbl, LV_PCT(100));
-
-            if (g) lv_group_add_obj(g, cont);
-        }
+        /* Only the day items go in the group (3 total) */
+        if (g) lv_group_add_obj(g, day_cont);
     }
 
     lv_menu_set_page(sched_menu, main_page);
 
-    printf("[SCHED] Setup complete. %d items in group\n",
+    printf("[SCHED] Setup complete. %d items in group (should be 3 days)\n",
            g ? (int)lv_group_get_obj_count(g) : -1);
 }
 
 static void sched_exit(lv_obj_t *parent)
 {
     lv_group_t *g = lv_group_get_default();
-    printf("[SCHED] Exit — group has %d objs before cleanup\n",
+    printf("[SCHED] Exit — group has %d objs\n",
            g ? (int)lv_group_get_obj_count(g) : -1);
     if (sched_menu) {
         lv_obj_clean(sched_menu);
         lv_obj_del(sched_menu);
         sched_menu = NULL;
     }
-    printf("[SCHED] Exit — group has %d objs after cleanup\n",
-           g ? (int)lv_group_get_obj_count(g) : -1);
 }
 
 app_t ui_schedule_main = {sched_setup, sched_exit, NULL};
