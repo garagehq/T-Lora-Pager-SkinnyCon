@@ -102,9 +102,14 @@ static void deferred_group_swap(lv_timer_t *t)
         printf("[SCHED] Deferred: group now has %d items, focused=%p\n",
                (int)lv_group_get_obj_count(g), (void *)lv_group_get_focused(g));
     } else {
-        /* Returning to main page — show only day items */
+        /* Returning to main page — back button first, then day items */
         printf("[SCHED] Deferred: switching to main page, removing all from group\n");
         lv_group_remove_all_objs(g);
+        lv_obj_t *back_btn = lv_menu_get_main_header_back_button(sched_menu);
+        if (back_btn) {
+            lv_group_add_obj(g, back_btn);
+            printf("[SCHED]   added back_btn=%p to group\n", (void *)back_btn);
+        }
         for (int d = 0; d < 3; d++) {
             if (day_conts[d]) {
                 printf("[SCHED]   adding day_conts[%d]=%p to group\n", d, (void *)day_conts[d]);
@@ -167,6 +172,12 @@ static void sched_setup(lv_obj_t *parent)
 
     lv_group_t *g = lv_group_get_default();
     sched_menu = create_menu(parent, sched_back_handler);
+
+    /* Add back button to group first so encoder can reach it */
+    if (g) {
+        lv_obj_t *back_btn = lv_menu_get_main_header_back_button(sched_menu);
+        if (back_btn) lv_group_add_obj(g, back_btn);
+    }
 
     lv_obj_t *main_page = lv_menu_page_create(sched_menu, NULL);
 
