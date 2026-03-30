@@ -9,6 +9,9 @@
 #include "ui_define.h"
 #include "ui_skinnycon_theme.h"
 #include <string.h>
+#ifdef ARDUINO
+#include <Preferences.h>
+#endif
 
 /* Nametag name storage (defined in ui_nametag.cpp) */
 extern char nametag_user_name[];
@@ -891,6 +894,22 @@ static void ui_poll_timer_callback(lv_timer_t *t)
 
 void setupGui()
 {
+    /* Load saved nametag from flash so idle screen can show it */
+#ifdef ARDUINO
+    {
+        Preferences p;
+        p.begin("nametag", true);
+        String name = p.getString("name", "YOUR NAME");
+        String sub = p.getString("subtitle", "SkinnyCon 2026");
+        p.end();
+        strncpy(nametag_user_name, name.c_str(), 24);
+        nametag_user_name[24] = '\0';
+        strncpy(nametag_user_subtitle, sub.c_str(), 32);
+        nametag_user_subtitle[32] = '\0';
+        printf("[BOOT] Loaded nametag from flash: '%s' / '%s'\n",
+               nametag_user_name, nametag_user_subtitle);
+    }
+#endif
 
     lv_obj_set_style_bg_color(lv_screen_active(), SC_BG, LV_PART_MAIN);
     lv_obj_set_style_radius(lv_screen_active(), 0, 0);

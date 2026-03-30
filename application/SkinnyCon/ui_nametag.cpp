@@ -8,6 +8,11 @@
 #include "ui_define.h"
 #include <string.h>
 #include "ui_skinnycon_theme.h"
+#if defined(ARDUINO) && !defined(LVGL_SIMULATOR)
+#include <Preferences.h>
+static Preferences nametag_prefs;
+#define HAS_PREFERENCES 1
+#endif
 
 #define SUPERCON_BG       SC_BG
 #define SUPERCON_ACCENT   SC_ACCENT
@@ -41,6 +46,32 @@ static void back_event_handler(lv_event_t *e)
         subtitle_label = NULL;
         menu_show();
     }
+}
+
+static void nametag_save_to_flash() {
+#ifdef HAS_PREFERENCES
+    nametag_prefs.begin("nametag", false);
+    nametag_prefs.putString("name", nametag_user_name);
+    nametag_prefs.putString("subtitle", nametag_user_subtitle);
+    nametag_prefs.end();
+    printf("[NAMETAG] Saved to flash: name='%s' subtitle='%s'\n",
+           nametag_user_name, nametag_user_subtitle);
+#endif
+}
+
+static void nametag_load_from_flash() {
+#ifdef HAS_PREFERENCES
+    nametag_prefs.begin("nametag", true);  /* read-only */
+    String name = nametag_prefs.getString("name", "YOUR NAME");
+    String sub = nametag_prefs.getString("subtitle", "SkinnyCon 2026");
+    nametag_prefs.end();
+    strncpy(nametag_user_name, name.c_str(), NAME_MAX_LEN);
+    nametag_user_name[NAME_MAX_LEN] = '\0';
+    strncpy(nametag_user_subtitle, sub.c_str(), SUBTITLE_MAX_LEN);
+    nametag_user_subtitle[SUBTITLE_MAX_LEN] = '\0';
+    printf("[NAMETAG] Loaded from flash: name='%s' subtitle='%s'\n",
+           nametag_user_name, nametag_user_subtitle);
+#endif
 }
 
 static void force_uppercase(char *str) {
@@ -91,6 +122,7 @@ static void nametag_ta_cb(lv_event_t *e)
                 strncpy(nametag_user_name, text, NAME_MAX_LEN);
                 nametag_user_name[NAME_MAX_LEN] = '\0';
                 force_uppercase(nametag_user_name);
+                nametag_save_to_flash();
             }
             if (name_label) lv_label_set_text(name_label, nametag_user_name);
             printf("[NAMETAG] Name saved: '%s'\n", nametag_user_name);
@@ -108,6 +140,7 @@ static void nametag_ta_cb(lv_event_t *e)
                     strncpy(nametag_user_name, text, NAME_MAX_LEN);
                     nametag_user_name[NAME_MAX_LEN] = '\0';
                 force_uppercase(nametag_user_name);
+                nametag_save_to_flash();
                 }
                 if (name_label) lv_label_set_text(name_label, nametag_user_name);
                 printf("[NAMETAG] Name saved via click: '%s'\n", nametag_user_name);
@@ -133,6 +166,7 @@ static void nametag_ta_cb(lv_event_t *e)
             strncpy(nametag_user_name, text, NAME_MAX_LEN);
             nametag_user_name[NAME_MAX_LEN] = '\0';
                 force_uppercase(nametag_user_name);
+                nametag_save_to_flash();
         }
         if (name_label) lv_label_set_text(name_label, nametag_user_name);
     }
@@ -143,6 +177,7 @@ static void nametag_ta_cb(lv_event_t *e)
 static void nametag_setup(lv_obj_t *parent)
 {
     printf("[NAMETAG] Setup starting\n");
+    nametag_load_from_flash();
 
     lv_group_t *g = lv_group_get_default();
     menu = create_menu(parent, back_event_handler);
