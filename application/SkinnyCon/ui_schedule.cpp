@@ -1,11 +1,9 @@
 /**
  * @file      ui_schedule.cpp
- * @brief     SkinnyCon 2026 Schedule — Settings-style submenus per day
- * @details   Copies the exact Settings app pattern:
- *            - Main page has 3 lv_menu_cont items (one per day)
- *            - Each day opens a subpage with talk labels (NOT in group)
- *            - Back button on subpage returns to day list
- *            - Back button on day list returns to main menu
+ * @brief     SkinnyCon 2026 Schedule
+ * @details   Day submenus with focusable talk rows that scroll.
+ *            When a day is selected, its talk rows get added to the group.
+ *            When going back, the group is cleaned and day items re-added.
  */
 #include "ui_define.h"
 #include "ui_skinnycon_theme.h"
@@ -18,6 +16,16 @@
 LV_FONT_DECLARE(font_alibaba_12);
 
 static lv_obj_t *sched_menu = NULL;
+static lv_obj_t *day_conts[3] = {NULL, NULL, NULL};
+static lv_obj_t *day_pages[3] = {NULL, NULL, NULL};
+
+/* Track which day's rows are in the group */
+static int active_day = -1;
+
+/* Store row objects per day so we can add/remove from group */
+#define MAX_TALKS 15
+static lv_obj_t *day_rows[3][MAX_TALKS];
+static int day_row_counts[3] = {0, 0, 0};
 
 typedef struct {
     const char *time;
@@ -68,17 +76,16 @@ static const talk_t day3_talks[] = {
     {"1520", "Closing Remarks", false},
 };
 
-static const talk_t *days[] = { day1_talks, day2_talks, day3_talks };
+static const talk_t *days_data[] = { day1_talks, day2_talks, day3_talks };
 static const int day_counts[] = {
     sizeof(day1_talks) / sizeof(talk_t),
     sizeof(day2_talks) / sizeof(talk_t),
     sizeof(day3_talks) / sizeof(talk_t),
 };
-static const char *day_names[] = {
-    "Tue May 12",
-    "Wed May 13",
-    "Thu May 14"
-};
+static const char *day_names[] = {"Tue May 12", "Wed May 13", "Thu May 14"};
+
+static void populate_group_for_day(int day);
+static void populate_group_for_main(void);
 
 static void sched_back_handler(lv_event_t *e)
 {
@@ -88,84 +95,133 @@ static void sched_back_handler(lv_event_t *e)
         lv_obj_clean(sched_menu);
         lv_obj_del(sched_menu);
         sched_menu = NULL;
+        active_day = -1;
         menu_show();
+    } else {
+        /* Going back from a day subpage to the day list */
+        printf("[SCHED] Back from day %d to day list\n", active_day);
+        active_day = -1;
+        populate_group_for_main();
     }
 }
 
-/*
- * Create a subpage for one day — just labels, NOT added to group.
- * The lv_menu page scrolls automatically when content overflows.
- * Back button in the menu header navigates back to day list.
- */
-static lv_obj_t *create_day_subpage(const talk_t *talks, int n)
+/* Called when a day menu item is clicked */
+static void day_selected_cb(lv_event_t *e)
 {
-    lv_obj_t *page = lv_menu_page_create(sched_menu, NULL);
-
-    for (int i = 0; i < n; i++) {
-        /* Use lv_menu_cont so the menu knows about this content,
-         * but do NOT add to group and do NOT set load_page_event */
-        lv_obj_t *cont = lv_menu_cont_create(page);
-
-        char buf[80];
-        snprintf(buf, sizeof(buf), "%s  %s", talks[i].time, talks[i].title);
-        lv_obj_t *lbl = lv_label_create(cont);
-        lv_label_set_text(lbl, buf);
-        lv_obj_set_style_text_color(lbl, talks[i].is_break ? SCHED_DIM : SCHED_WHITE, 0);
-        lv_label_set_long_mode(lbl, LV_LABEL_LONG_CLIP);
-        lv_obj_set_width(lbl, LV_PCT(100));
+    /* Figure out which day was clicked */
+    lv_obj_t *target = lv_event_get_target_obj(e);
+    for (int d = 0; d < 3; d++) {
+        if (target == day_conts[d]) {
+            printf("[SCHED] Day %d selected (%s)\n", d, day_names[d]);
+            active_day = d;
+            populate_group_for_day(d);
+            return;
+        }
     }
+}
 
-    printf("[SCHED] Created day subpage with %d talks (NOT in group)\n", n);
-    return page;
+static void populate_group_for_main(void)
+{
+    lv_group_t *g = lv_group_get_default();
+    if (!g) return;
+
+    /* Remove all schedule items from group */
+    lv_group_remove_all_objs(g);
+
+    /* Add the 3 day menu items */
+    for (int d = 0; d < 3; d++) {
+        if (day_conts[d]) lv_group_add_obj(g, day_conts[d]);
+    }
+    printf("[SCHED] Group set to main: %d items\n", (int)lv_group_get_obj_count(g));
+}
+
+static void populate_group_for_day(int day)
+{
+    lv_group_t *g = lv_group_get_default();
+    if (!g) return;
+
+    /* Remove all items from group */
+    lv_group_remove_all_objs(g);
+
+    /* Add this day's talk rows */
+    for (int i = 0; i < day_row_counts[day]; i++) {
+        lv_group_add_obj(g, day_rows[day][i]);
+    }
+    printf("[SCHED] Group set to day %d: %d items\n", day, (int)lv_group_get_obj_count(g));
 }
 
 static void sched_setup(lv_obj_t *parent)
 {
     printf("[SCHED] Setup starting\n");
+    active_day = -1;
 
     lv_group_t *g = lv_group_get_default();
     sched_menu = create_menu(parent, sched_back_handler);
 
     lv_obj_t *main_page = lv_menu_page_create(sched_menu, NULL);
 
-    /*
-     * Exactly like Settings: create subpages, then create
-     * lv_menu_cont items on main_page that link to them.
-     * Only the main page menu_cont items go in the group.
-     */
     for (int d = 0; d < 3; d++) {
-        /* Create the day's subpage (talks inside, not in group) */
-        lv_obj_t *day_page = create_day_subpage(days[d], day_counts[d]);
+        /* Create day subpage with focusable rows */
+        day_pages[d] = lv_menu_page_create(sched_menu, NULL);
+        day_row_counts[d] = 0;
 
-        /* Create the main page menu item that links to it */
-        lv_obj_t *day_cont = lv_menu_cont_create(main_page);
-        lv_obj_t *day_lbl = lv_label_create(day_cont);
+        const talk_t *talks = days_data[d];
+        int n = day_counts[d];
+        for (int i = 0; i < n && i < MAX_TALKS; i++) {
+            /* Regular lv_obj — focusable but won't trigger page load */
+            lv_obj_t *row = lv_obj_create(day_pages[d]);
+            lv_obj_set_size(row, LV_PCT(100), LV_SIZE_CONTENT);
+            lv_obj_set_style_bg_opa(row, LV_OPA_0, 0);
+            lv_obj_set_style_border_width(row, 0, 0);
+            lv_obj_set_style_radius(row, 0, 0);
+            lv_obj_set_style_pad_ver(row, 3, 0);
+            lv_obj_set_style_pad_hor(row, 4, 0);
+
+            char buf[80];
+            snprintf(buf, sizeof(buf), "%s  %s", talks[i].time, talks[i].title);
+            lv_obj_t *lbl = lv_label_create(row);
+            lv_label_set_text(lbl, buf);
+            lv_obj_set_style_text_color(lbl, talks[i].is_break ? SCHED_DIM : SCHED_WHITE, 0);
+            lv_label_set_long_mode(lbl, LV_LABEL_LONG_CLIP);
+            lv_obj_set_width(lbl, LV_PCT(100));
+
+            day_rows[d][i] = row;
+            day_row_counts[d]++;
+        }
+
+        /* Create the day menu item on the main page */
+        day_conts[d] = lv_menu_cont_create(main_page);
+        lv_obj_t *day_lbl = lv_label_create(day_conts[d]);
         lv_label_set_text(day_lbl, day_names[d]);
         lv_obj_set_style_text_color(day_lbl, SCHED_ACCENT, 0);
 
-        /* This is what makes clicking the item load the subpage */
-        lv_menu_set_load_page_event(sched_menu, day_cont, day_page);
+        lv_menu_set_load_page_event(sched_menu, day_conts[d], day_pages[d]);
 
-        /* Only the day items go in the group (3 total) */
-        if (g) lv_group_add_obj(g, day_cont);
+        /* Listen for click to swap group contents */
+        lv_obj_add_event_cb(day_conts[d], day_selected_cb, LV_EVENT_CLICKED, NULL);
     }
 
     lv_menu_set_page(sched_menu, main_page);
 
-    printf("[SCHED] Setup complete. %d items in group (should be 3 days)\n",
-           g ? (int)lv_group_get_obj_count(g) : -1);
+    /* Initially only 3 day items in group */
+    populate_group_for_main();
+
+    printf("[SCHED] Setup complete\n");
 }
 
 static void sched_exit(lv_obj_t *parent)
 {
-    lv_group_t *g = lv_group_get_default();
-    printf("[SCHED] Exit — group has %d objs\n",
-           g ? (int)lv_group_get_obj_count(g) : -1);
+    printf("[SCHED] Exit\n");
     if (sched_menu) {
         lv_obj_clean(sched_menu);
         lv_obj_del(sched_menu);
         sched_menu = NULL;
     }
+    active_day = -1;
+    memset(day_conts, 0, sizeof(day_conts));
+    memset(day_pages, 0, sizeof(day_pages));
+    memset(day_rows, 0, sizeof(day_rows));
+    memset(day_row_counts, 0, sizeof(day_row_counts));
 }
 
 app_t ui_schedule_main = {sched_setup, sched_exit, NULL};
