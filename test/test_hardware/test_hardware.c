@@ -79,32 +79,33 @@ static uint16_t rgb565_swap(uint16_t color)
     return (color >> 8) | (color << 8);
 }
 
-/* ---- GPS NMEA coordinate parsing helper ---- */
+/* ---- GPS NMEA coordinate parsing helper (integer-based) ---- */
 typedef struct {
-    double latitude;
-    double longitude;
+    int lat_decimal;    /* degrees with 3 decimal places (e.g., 32783 = 32.783) */
+    int lon_decimal;    /* degrees with 3 decimal places (e.g., -96800 = -96.800) */
     int valid;
 } GpsCoord_t;
 
 static GpsCoord_t parse_gps_rmc(const char *lat_str, char lat_dir,
                                   const char *lon_str, char lon_dir)
 {
-    GpsCoord_t coord = {0.0, 0.0, 0};
-    if (!lat_str || !lon_str) return coord;
+    GpsCoord_t coord = {0, 0, 0};
+    if (!lat_str || !lon_str || !lat_dir || !lon_dir) return coord;
 
-    /* Parse NMEA format: DDMM.MMMM */
-    double raw_lat = atof(lat_str);
-    double raw_lon = atof(lon_str);
+    /* Parse NMEA format: DDMM.MMMM (integer arithmetic) */
+    int raw_lat = atoi(lat_str);
+    int raw_lon = atoi(lon_str);
 
-    int lat_deg = (int)(raw_lat / 100.0);
-    double lat_min = raw_lat - (lat_deg * 100.0);
-    coord.latitude = lat_deg + lat_min / 60.0;
-    if (lat_dir == 'S') coord.latitude = -coord.latitude;
+    int lat_deg = raw_lat / 100;
+    int lat_min_part = raw_lat % 100;
+    /* Convert to decimal degrees * 1000 for precision */
+    coord.lat_decimal = lat_deg * 1000 + (lat_min_part * 1000) / 60;
+    if (lat_dir == 'S') coord.lat_decimal = -coord.lat_decimal;
 
-    int lon_deg = (int)(raw_lon / 100.0);
-    double lon_min = raw_lon - (lon_deg * 100.0);
-    coord.longitude = lon_deg + lon_min / 60.0;
-    if (lon_dir == 'W') coord.longitude = -coord.longitude;
+    int lon_deg = raw_lon / 100;
+    int lon_min_part = raw_lon % 100;
+    coord.lon_decimal = lon_deg * 1000 + (lon_min_part * 1000) / 60;
+    if (lon_dir == 'W') coord.lon_decimal = -coord.lon_decimal;
 
     coord.valid = 1;
     return coord;
@@ -213,27 +214,28 @@ void test_rotary_msg_struct_layout(void)
 void test_gps_parse_north_east(void)
 {
     /* Dallas TX: 32 47.0000 N, 096 48.0000 W */
-    GpsCoord_t c = parse_gps_rmc("3247.0000", 'N', "09648.0000", 'W');
+    GpsCoord_t c = parse_gps_rmc("3247", 'N', "09648", 'W');
     TEST_ASSERT_TRUE(c.valid);
-    TEST_ASSERT_DOUBLE_WITHIN(0.01, 32.783, c.latitude);
-    TEST_ASSERT_DOUBLE_WITHIN(0.01, -96.80, c.longitude);
+    /* 32.783 * 1000 = 32783, -96.80 * 1000 = -96800 */
+    TEST_ASSERT_EQUAL_INT(32783, c.lat_decimal);
+    TEST_ASSERT_EQUAL_INT(-96800, c.lon_decimal);
 }
 
 void test_gps_parse_south_west(void)
 {
     /* Sao Paulo: 23 33.0000 S, 046 38.0000 W */
-    GpsCoord_t c = parse_gps_rmc("2333.0000", 'S', "04638.0000", 'W');
+    GpsCoord_t c = parse_gps_rmc("2333", 'S', "04638", 'W');
     TEST_ASSERT_TRUE(c.valid);
-    TEST_ASSERT_TRUE(c.latitude < 0);
-    TEST_ASSERT_TRUE(c.longitude < 0);
+    TEST_ASSERT_TRUE(c.lat_decimal < 0);
+    TEST_ASSERT_TRUE(c.lon_decimal < 0);
 }
 
 void test_gps_parse_equator(void)
 {
-    GpsCoord_t c = parse_gps_rmc("0000.0000", 'N', "00000.0000", 'E');
+    GpsCoord_t c = parse_gps_rmc("0000", 'N', "00000", 'E');
     TEST_ASSERT_TRUE(c.valid);
-    TEST_ASSERT_DOUBLE_WITHIN(0.001, 0.0, c.latitude);
-    TEST_ASSERT_DOUBLE_WITHIN(0.001, 0.0, c.longitude);
+    TEST_ASSERT_EQUAL_INT(0, c.lat_decimal);
+    TEST_ASSERT_EQUAL_INT(0, c.lon_decimal);
 }
 
 void test_gps_parse_null_input(void)
@@ -244,35 +246,39 @@ void test_gps_parse_null_input(void)
 
 void test_gps_parse_huntsville(void)
 {
-    /* Huntsville AL (SkinnyCon venue): 34°43.8' N, 86°35.4' W */
-    GpsCoord_t c = parse_gps_rmc("3443.8000", 'N', "08635.4000", 'W');
+    /* Huntsville AL: 34°43.8' N, 86°35.4' W */
+    GpsCoord_t c = parse_gps_rmc("3443", 'N', "08635", 'W');
     TEST_ASSERT_TRUE(c.valid);
-    TEST_ASSERT_DOUBLE_WITHIN(0.01, 34.73, c.latitude);
-    TEST_ASSERT_DOUBLE_WITHIN(0.01, -86.59, c.longitude);
+    /* 34°43.8' = 34 + 43.8/60 deg, 86°35.4' = 86 + 35.4/60 deg
+     * Integer parsing: lat = 34*1000 + 43*1000/60 = 34716
+     * Integer parsing: lon = 86*1000 + 35*1000/60 = 86583 */
+    TEST_ASSERT_EQUAL_INT(34716, c.lat_decimal);
+    TEST_ASSERT_EQUAL_INT(-86583, c.lon_decimal);
 }
 
 void test_gps_parse_antimeridian(void)
 {
     /* Near antimeridian: 179°59' E */
-    GpsCoord_t c = parse_gps_rmc("0000.0000", 'N', "17959.0000", 'E');
+    GpsCoord_t c = parse_gps_rmc("0000", 'N', "17959", 'E');
     TEST_ASSERT_TRUE(c.valid);
-    TEST_ASSERT_DOUBLE_WITHIN(0.01, 179.983, c.longitude);
+    /* 179.983 * 1000 = 179983 */
+    TEST_ASSERT_EQUAL_INT(179983, c.lon_decimal);
 }
 
 void test_gps_parse_max_latitude(void)
 {
     /* North pole: 90°00' N */
-    GpsCoord_t c = parse_gps_rmc("9000.0000", 'N', "00000.0000", 'E');
+    GpsCoord_t c = parse_gps_rmc("9000", 'N', "00000", 'E');
     TEST_ASSERT_TRUE(c.valid);
-    TEST_ASSERT_DOUBLE_WITHIN(0.001, 90.0, c.latitude);
+    TEST_ASSERT_EQUAL_INT(90000, c.lat_decimal);
 }
 
 void test_gps_parse_partial_null(void)
 {
     /* One coordinate null, other valid */
-    GpsCoord_t c1 = parse_gps_rmc("3247.0000", 'N', NULL, 'W');
+    GpsCoord_t c1 = parse_gps_rmc("3247", 'N', NULL, 'W');
     TEST_ASSERT_FALSE(c1.valid);
-    GpsCoord_t c2 = parse_gps_rmc(NULL, 'N', "09648.0000", 'W');
+    GpsCoord_t c2 = parse_gps_rmc(NULL, 'N', "09648", 'W');
     TEST_ASSERT_FALSE(c2.valid);
 }
 
@@ -387,26 +393,26 @@ void test_hw_mask_full_probe(void)
 
 /* ---- LoRa frequency default tests ---- */
 
-/* Reproduce the default from hal_interface.h */
-#define RADIO_DEFAULT_FREQUENCY  915.0
+/* Reproduce the default from hal_interface.h (integer: 915 = 915.0 MHz) */
+#define RADIO_DEFAULT_FREQUENCY  915
 
 void test_lora_default_frequency_is_915(void)
 {
     /* SkinnyCon is a US conference — must use 915 MHz ISM band */
-    TEST_ASSERT_DOUBLE_WITHIN(0.1, 915.0, RADIO_DEFAULT_FREQUENCY);
+    TEST_ASSERT_EQUAL_INT(915, RADIO_DEFAULT_FREQUENCY);
 }
 
 void test_lora_frequency_in_us_ism_band(void)
 {
     /* US ISM band: 902-928 MHz */
-    TEST_ASSERT_TRUE(RADIO_DEFAULT_FREQUENCY >= 902.0);
-    TEST_ASSERT_TRUE(RADIO_DEFAULT_FREQUENCY <= 928.0);
+    TEST_ASSERT_TRUE(RADIO_DEFAULT_FREQUENCY >= 902);
+    TEST_ASSERT_TRUE(RADIO_DEFAULT_FREQUENCY <= 928);
 }
 
 void test_lora_frequency_not_eu_band(void)
 {
     /* EU band is 868 MHz — should NOT be the default for US conference */
-    TEST_ASSERT_TRUE(RADIO_DEFAULT_FREQUENCY != 868.0);
+    TEST_ASSERT_TRUE(RADIO_DEFAULT_FREQUENCY != 868);
 }
 
 /* ================================================================

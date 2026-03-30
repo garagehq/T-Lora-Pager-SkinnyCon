@@ -311,7 +311,136 @@ This project has **two independent build paths** — understanding this is criti
 - [T-LoRa-Pager Hardware Information](./docs/hardware/lilygo-t-lora-pager.md)
 - [GPS AssistNow Usage Guide](./docs/assistNow/assistNow.md)
 - [Flash Recovery Steps](./firmware/README.md)
+- [Third-Party Dependencies](./docs/third_party.md)
 
 ## License
 
 MIT License - See [LICENSE](./LICENSE) for details.
+
+---
+
+## Contributing Guidelines
+
+### Code Style
+
+- Use 4-space indentation
+- Follow Arduino IDE coding conventions for .ino files
+- C++ files should follow Google C++ Style Guide
+- Function names: camelCase (e.g., `initializeDisplay()`)
+- Class names: PascalCase (e.g., `ScreenStateManager`)
+- Constants: UPPER_SNAKE_CASE (e.g., `MAX_BRIGHTNESS_LEVEL`)
+
+### Commit Message Convention
+
+```
+<type>: <subject>
+
+[optional body]
+
+[optional footer]
+```
+
+**Types**: feat, fix, docs, style, refactor, test, chore, perf
+
+**Examples**:
+- `feat: add Nametag editable mode with keyboard input`
+- `fix: correct GPS NMEA parsing for GGA sentences`
+- `docs: update hardware specifications table`
+- `test: add test case for brightness clamping edge cases`
+
+### Pull Request Requirements
+
+1. All tests passing (`pio test -e native -v`)
+2. LVGL simulator tests passing (`pio test -e native_lvgl -v`)
+3. Factory simulation tests passing (`pio test -e native_factory -v`)
+4. ESP32 build successful (`pio run -e tlora_pager`)
+5. No new linting warnings
+6. Documentation updated if API changed
+
+### Testing Checklist
+
+- [ ] Unit test coverage for new features
+- [ ] LVGL widget rendering verified
+- [ ] Memory usage within limits (RAM < 80%, Flash < 80%)
+- [ ] Hardware compatibility verified (if applicable)
+- [ ] Edge cases handled (null pointers, empty buffers, etc.)
+
+## Version History
+
+### v1.2.x (Current Development)
+
+- **2026-03-27**: Enhanced documentation, pipeline context updates
+- **2025-12-19**: Factory firmware releases (SX1262 and LR1121 variants)
+- **2025-11**: LVGL 9.2 migration complete
+- **2025-10**: SkinnyCon 2026 badge apps finalized
+
+### v1.1.x (Stable Release)
+
+- **2025-09**: Initial SkinnyCon badge app release
+- **2025-08**: GPS NMEA parsing improvements
+- **2025-07**: NFC tag reading functionality added
+
+### v1.0.x (Foundation)
+
+- **2025-04**: Base firmware releases
+- **2025-03**: LilyGoLib library v0.1.0 release
+- **2025-02**: Initial ESP32-S3 port
+
+## Changelog
+
+See [CHANGELOG.md](./CHANGELOG.md) for detailed version history and API changes.
+
+## Support and Community
+
+### Official Channels
+
+- **GitHub Issues**: [Report bugs and feature requests](https://github.com/garagehq/T-Lora-Pager-SkinnyCon/issues)
+- **GitHub Discussions**: [Community discussions and questions](https://github.com/garagehq/T-Lora-Pager-SkinnyCon/discussions)
+- **LilyGo Forum**: [Official LilyGo support](https://forum.lilygo.cc)
+
+### Community Resources
+
+- **Meshtastic**: [Alternative firmware](https://meshtastic.org)
+- **LVGL Documentation**: [Official LVGL 9 docs](https://docs.lvgl.io)
+- **ESP32 Arduino**: [Arduino Core for ESP32](https://github.com/espressif/arduino-esp32)
+
+## Security
+
+### Firmware Security
+
+- **Secure Boot**: Enabled by default on ESP32-S3
+- **Flash Encryption**: Optional, configurable in partition scheme
+- **USB CDC**: Can be disabled for secure deployments
+
+### Reporting Security Issues
+
+Please report security vulnerabilities responsibly to the maintainers. Do not create public issues for security-sensitive matters.
+
+## Acknowledgments
+
+### Hardware
+
+- **LilyGo**: T-LoRa-Pager hardware design and manufacturing
+- **Espressif Systems**: ESP32-S3 chip and ESP-IDF framework
+- **STMicroelectronics**: ST7796U display controller, AW9364 backlight, ST25R3911B NFC
+
+### Open Source Libraries
+
+- **LVGL**: Light and Versatile Graphics Library
+- **RadioLib**: LoRa library for Arduino
+- **TinyGPSPlus**: GPS NMEA parsing library
+- **Adafruit Libraries**: TCA8418, BusIO, GFX, SH110X
+
+### Community Contributors
+
+- All GitHub contributors who have submitted code, documentation, or bug reports
+- SkinnyCon community for badge app requirements and testing
+
+---
+
+**T-Lora-Pager-SkinnyCon** — A conference badge powered by LilyGo hardware and ESP32-S3.
+
+Last Updated: March 27, 2026
+Version: 1.2.x
+License: MIT
+
