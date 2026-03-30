@@ -391,34 +391,19 @@ static void draw_icon_schedule(lv_obj_t *parent)
 /* Net Tools icon: signal/antenna waves */
 static void draw_icon_nettools(lv_obj_t *parent)
 {
-    lv_obj_t *cont = lv_obj_create(parent);
-    lv_obj_set_size(cont, 56, 48);
+    lv_obj_t *cont = icon_shape(parent, 56, 48);
     lv_obj_center(cont);
-    lv_obj_set_style_bg_opa(cont, LV_OPA_0, 0);
-    lv_obj_set_style_border_width(cont, 0, 0);
-    lv_obj_set_style_pad_all(cont, 0, 0);
-    lv_obj_remove_flag(cont, LV_OBJ_FLAG_SCROLLABLE);
 
     /* Center dot (antenna base) */
-    lv_obj_t *dot = lv_obj_create(cont);
-    lv_obj_set_size(dot, 8, 8);
+    lv_obj_t *dot = icon_fill(cont, 8, 8, SC_ACCENT, LV_RADIUS_CIRCLE);
     lv_obj_align(dot, LV_ALIGN_BOTTOM_MID, 0, -2);
-    lv_obj_set_style_radius(dot, LV_RADIUS_CIRCLE, 0);
-    lv_obj_set_style_bg_color(dot, SC_ACCENT, 0);
-    lv_obj_set_style_bg_opa(dot, LV_OPA_COVER, 0);
-    lv_obj_set_style_border_width(dot, 0, 0);
 
     /* Concentric arcs (signal waves) — using rounded rectangles */
     int sizes[] = {22, 36, 50};
     for (int i = 0; i < 3; i++) {
-        lv_obj_t *arc = lv_obj_create(cont);
-        lv_obj_set_size(arc, sizes[i], sizes[i] / 2);
+        lv_obj_t *arc = icon_ring(cont, sizes[i], sizes[i] / 2, SC_TEAL, 2, sizes[i]);
         lv_obj_align(arc, LV_ALIGN_BOTTOM_MID, 0, -2);
-        lv_obj_set_style_bg_opa(arc, LV_OPA_0, 0);
-        lv_obj_set_style_border_color(arc, SC_TEAL, 0);
-        lv_obj_set_style_border_width(arc, 2, 0);
         lv_obj_set_style_border_side(arc, (lv_border_side_t)(LV_BORDER_SIDE_TOP | LV_BORDER_SIDE_LEFT | LV_BORDER_SIDE_RIGHT), 0);
-        lv_obj_set_style_radius(arc, sizes[i], 0);
     }
 }
 
@@ -563,10 +548,10 @@ static void draw_icon_imu(lv_obj_t *parent)
         lv_obj_align(rp, LV_ALIGN_CENTER, 13, -6 + i * 6);
     }
     /* Motion arc (upper-right) */
-    lv_obj_t *a1 = icon_ring(c, 20, 10, SC_ACCENT, 2, 20);
+    lv_obj_t *a1 = icon_ring(c, 20, 10, SC_TEAL, 2, 20);
     lv_obj_align(a1, LV_ALIGN_TOP_RIGHT, -2, 4);
     lv_obj_set_style_border_side(a1, (lv_border_side_t)(LV_BORDER_SIDE_TOP), 0);
-    lv_obj_t *a2 = icon_ring(c, 30, 14, SC_ACCENT, 2, 30);
+    lv_obj_t *a2 = icon_ring(c, 30, 14, SC_TEAL, 2, 30);
     lv_obj_align(a2, LV_ALIGN_TOP_RIGHT, 2, 0);
     lv_obj_set_style_border_side(a2, (lv_border_side_t)(LV_BORDER_SIDE_TOP), 0);
 }

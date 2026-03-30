@@ -87,9 +87,14 @@ static void deferred_group_swap(lv_timer_t *t)
     if (!g) return;
 
     if (pending_day >= 0 && pending_day < 3) {
-        /* Entering a day subpage — show only that day's rows */
+        /* Entering a day subpage — back button first, then that day's rows */
         printf("[SCHED] Deferred: switching to day %d, removing all from group\n", pending_day);
         lv_group_remove_all_objs(g);
+        lv_obj_t *back_btn = lv_menu_get_main_header_back_button(sched_menu);
+        if (back_btn) {
+            lv_group_add_obj(g, back_btn);
+            printf("[SCHED]   added back_btn=%p to group\n", (void *)back_btn);
+        }
         for (int i = 0; i < day_row_counts[pending_day]; i++) {
             printf("[SCHED]   adding row[%d][%d]=%p to group\n", pending_day, i, (void *)day_rows[pending_day][i]);
             lv_group_add_obj(g, day_rows[pending_day][i]);
@@ -129,15 +134,6 @@ static void sched_back_handler(lv_event_t *e)
         pending_day = -1;  /* -1 means main page */
         lv_timer_create(deferred_group_swap, 50, NULL);
     }
-}
-
-/* Suppress clicks on talk rows — they are display-only, not sub-navigable */
-static void talk_row_click_cb(lv_event_t *e)
-{
-    lv_obj_t *target = lv_event_get_target_obj(e);
-    printf("[SCHED] Talk row clicked (suppressed) obj=%p\n", (void *)target);
-    lv_event_stop_bubbling(e);
-    lv_event_stop_processing(e);
 }
 
 /* When a talk row gains focus, scroll it into view */
@@ -195,8 +191,8 @@ static void sched_setup(lv_obj_t *parent)
             lv_label_set_long_mode(lbl, LV_LABEL_LONG_CLIP);
             lv_obj_set_width(lbl, LV_PCT(100));
 
-            /* Suppress click so lv_menu doesn't try to navigate */
-            lv_obj_add_event_cb(cont, talk_row_click_cb, LV_EVENT_CLICKED, NULL);
+            /* Remove clickable so lv_menu doesn't try to navigate on enter */
+            lv_obj_remove_flag(cont, LV_OBJ_FLAG_CLICKABLE);
             /* Scroll into view on focus */
             lv_obj_add_event_cb(cont, talk_row_focus_cb, LV_EVENT_FOCUSED, NULL);
 
