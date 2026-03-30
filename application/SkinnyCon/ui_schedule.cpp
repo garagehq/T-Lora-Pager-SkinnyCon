@@ -88,20 +88,26 @@ static void deferred_group_swap(lv_timer_t *t)
 
     if (pending_day >= 0 && pending_day < 3) {
         /* Entering a day subpage — show only that day's rows */
+        printf("[SCHED] Deferred: switching to day %d, removing all from group\n", pending_day);
         lv_group_remove_all_objs(g);
         for (int i = 0; i < day_row_counts[pending_day]; i++) {
+            printf("[SCHED]   adding row[%d][%d]=%p to group\n", pending_day, i, (void *)day_rows[pending_day][i]);
             lv_group_add_obj(g, day_rows[pending_day][i]);
         }
-        printf("[SCHED] Deferred: group set to day %d with %d items\n",
-               pending_day, (int)lv_group_get_obj_count(g));
+        printf("[SCHED] Deferred: group now has %d items, focused=%p\n",
+               (int)lv_group_get_obj_count(g), (void *)lv_group_get_focused(g));
     } else {
         /* Returning to main page — show only day items */
+        printf("[SCHED] Deferred: switching to main page, removing all from group\n");
         lv_group_remove_all_objs(g);
         for (int d = 0; d < 3; d++) {
-            if (day_conts[d]) lv_group_add_obj(g, day_conts[d]);
+            if (day_conts[d]) {
+                printf("[SCHED]   adding day_conts[%d]=%p to group\n", d, (void *)day_conts[d]);
+                lv_group_add_obj(g, day_conts[d]);
+            }
         }
-        printf("[SCHED] Deferred: group set to main with %d items\n",
-               (int)lv_group_get_obj_count(g));
+        printf("[SCHED] Deferred: group now has %d items, focused=%p\n",
+               (int)lv_group_get_obj_count(g), (void *)lv_group_get_focused(g));
     }
     pending_day = -1;
 }
@@ -109,6 +115,8 @@ static void deferred_group_swap(lv_timer_t *t)
 static void sched_back_handler(lv_event_t *e)
 {
     lv_obj_t *obj = (lv_obj_t *)lv_event_get_target(e);
+    printf("[SCHED] Back handler: obj=%p is_root=%d\n",
+           (void *)obj, lv_menu_back_btn_is_root(sched_menu, obj));
     if (lv_menu_back_btn_is_root(sched_menu, obj)) {
         printf("[SCHED] Back to main menu\n");
         lv_obj_clean(sched_menu);
@@ -117,9 +125,30 @@ static void sched_back_handler(lv_event_t *e)
         menu_show();
     } else {
         /* Going back from day subpage to main */
-        printf("[SCHED] Back to day list\n");
+        printf("[SCHED] Back to day list (was on day %d)\n", pending_day);
         pending_day = -1;  /* -1 means main page */
         lv_timer_create(deferred_group_swap, 50, NULL);
+    }
+}
+
+/* Suppress clicks on talk rows — they are display-only, not sub-navigable */
+static void talk_row_click_cb(lv_event_t *e)
+{
+    lv_obj_t *target = lv_event_get_target_obj(e);
+    printf("[SCHED] Talk row clicked (suppressed) obj=%p\n", (void *)target);
+    lv_event_stop_bubbling(e);
+    lv_event_stop_processing(e);
+}
+
+/* When a talk row gains focus, scroll it into view */
+static void talk_row_focus_cb(lv_event_t *e)
+{
+    lv_obj_t *target = lv_event_get_target_obj(e);
+    lv_obj_t *parent = lv_obj_get_parent(target);
+    printf("[SCHED] Focus on obj=%p parent=%p\n", (void *)target, (void *)parent);
+    if (parent) {
+        lv_obj_scroll_to_view(target, LV_ANIM_ON);
+        printf("[SCHED]   scrolled to view\n");
     }
 }
 
@@ -166,9 +195,15 @@ static void sched_setup(lv_obj_t *parent)
             lv_label_set_long_mode(lbl, LV_LABEL_LONG_CLIP);
             lv_obj_set_width(lbl, LV_PCT(100));
 
+            /* Suppress click so lv_menu doesn't try to navigate */
+            lv_obj_add_event_cb(cont, talk_row_click_cb, LV_EVENT_CLICKED, NULL);
+            /* Scroll into view on focus */
+            lv_obj_add_event_cb(cont, talk_row_focus_cb, LV_EVENT_FOCUSED, NULL);
+
             /* Store ref but do NOT add to group yet */
             day_rows[d][i] = cont;
             day_row_counts[d]++;
+            printf("[SCHED]   row[%d][%d] = %p '%s'\n", d, i, (void *)cont, buf);
         }
 
         /* Main page entry */
