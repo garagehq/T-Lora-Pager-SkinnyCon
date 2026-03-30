@@ -7,6 +7,7 @@
  *
  */
 #include "ui_define.h"
+#include "ui_skinnycon_theme.h"
 
 static lv_obj_t *menu = NULL;
 
@@ -75,7 +76,7 @@ void ui_power_enter(lv_obj_t *parent)
     } else {
         lv_obj_set_style_text_font(label, &lv_font_montserrat_24, 0);
     }
-    lv_obj_set_style_text_color(label, lv_color_black(), 0);
+    lv_obj_set_style_text_color(label, SC_TEXT, 0);
     lv_obj_set_width(label, lv_pct(90));
     lv_obj_align(label, LV_ALIGN_TOP_MID, 0, 20);
     lv_obj_set_style_text_align(label, LV_TEXT_ALIGN_CENTER, 0);

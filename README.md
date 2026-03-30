@@ -35,36 +35,27 @@
 
 ### Prerequisites
 
-- [PlatformIO Core](https://docs.platformio.org/en/latest/core/installation.html) (for testing and native builds)
-- [Arduino IDE](https://www.arduino.cc/en/software) or [arduino-cli](https://arduino.github.io/arduino-cli/) (for flashing)
-- ESP32 Arduino Core >= 3.3.0
+- [PlatformIO Core](https://docs.platformio.org/en/latest/core/installation.html)
 
 ### Install
 
 ```bash
-# Clone the repository
 git clone https://github.com/garagehq/T-Lora-Pager-SkinnyCon.git
 cd T-Lora-Pager-SkinnyCon
-
-# Install PlatformIO (if not already installed)
 pip install platformio
 ```
 
 ### Build & Flash
 
 ```bash
-# Compile for ESP32-S3 (build check only)
+# Compile for ESP32-S3
 pio run -e tlora_pager
 
-# Upload to device (requires connected T-LoRa-Pager via USB)
+# Upload to device
 pio run -e tlora_pager --target upload
 
-# Or use Arduino IDE:
-# 1. Add ESP32 board URL: https://espressif.github.io/arduino-esp32/package_esp32_dev_index.json
-# 2. Install esp32 board package
-# 3. Select board: ESP32S3 Dev Module
-# 4. Set: USB Mode=Hardware CDC, Upload Speed=921600, Partition=app3M_fat9M_16MB
-# 5. Open application/SkinnyCon/SkinnyCon.ino and upload
+# Serial monitor
+pio device monitor -b 115200
 ```
 
 ### Run Tests
@@ -90,7 +81,9 @@ pio test -e native_factory -v  # Factory app simulation (15 tests, ~7s)
 | 3 - Factory Sim | `native_factory` | 15 | Real factory app screens with actual Alibaba fonts (12/24/40/100px), 9 app icons, and 6 SkinnyCon screens | ~7s |
 | 4 - Build | `tlora_pager` | — | Full ESP32-S3 compilation against real Arduino SDK and vendor libraries | ~60s |
 
-**Total: 62 tests, all running without hardware.**
+| 5 - Interaction | `native_factory` | 8 | Real nametag app code with stubs: keyboard typing, tab/backspace, encoder click, mode rotation, group lifecycle | ~4s |
+
+**Total: 98 tests, all running without hardware.**
 
 ### LVGL Headless Simulator
 
@@ -121,7 +114,9 @@ Screenshots are saved as PPM files and uploaded as CI artifacts for visual regre
 |------|-------|-------------|
 | `test/test_hardware/test_hardware.c` | 27 | Brightness clamping, GPS NMEA parsing, RGB565 byte swap, power channels, hardware masks, rotary input, LoRa frequency |
 | `test/test_lvgl_render/test_lvgl_render.c` | 20 | LVGL widgets, rendering, framebuffer verification |
-| `test/test_factory_sim/test_factory_sim.c` | 15 | Factory app screens with real fonts, icons, and SkinnyCon screens |
+| `test/test_factory_sim/test_factory_sim.c` | 17 | Factory app screens with real fonts, icons, and SkinnyCon screens |
+| `test/test_app_interaction/test_app_interaction.cpp` | 8 | Real nametag code: typing, tab, backspace, click, rotate, group lifecycle |
+| `test/test_screen_state/test_screen_state.c` | 46 | Screen state manager unit tests |
 | `test/simulator/sim_main.c` | — | Headless LVGL 9.2 simulator (480x222 RGB565) |
 | `test/simulator/lv_conf.h` | — | LVGL config for simulator |
 | `test/mocks/` | — | Mock headers for Arduino, SPI, Wire, FreeRTOS, ESP-IDF |
@@ -164,35 +159,26 @@ The main application (`application/SkinnyCon/`) is the SkinnyCon conference badg
 
 Built for [SkinnyCon 2026](https://skinnycon.com) (May 12-14, Huntsville AL), these apps turn the T-LoRa-Pager into a conference badge. Design inspired by the [2025 Supercon badge](https://github.com/zx96/2025-supercon-badge).
 
-- **Nametag**: Editable name badge — type your name on the QWERTY keyboard. 5 display modes cycled via rotary: name+subtitle (editable), fullscreen giant name, About SkinnyCon, Code of Conduct, and badge hardware info. Hackaday color palette (grey `#1A1A1A`, yellow `#E39810`, sage green `#ABC5A0`). Tab switches between name and subtitle editing.
-- **BadgeShark**: LoRa packet sniffer with terminal-style dark theme. Shows packet number, length, RSSI (color-coded red/green by signal strength), and hex dump preview. Auto-scrolling list with max 50 packets, real-time stats bar.
-- **Schedule**: SkinnyCon 2026 3-day schedule browser. Left/Right arrows switch days (Tue/Wed/Thu). Each entry shows time and talk title. Keyboard/rotary Up/Down navigates with visual highlight. Break sessions dimmed.
-- **Net Tools**: LoRa mesh diagnostic tool with two-panel layout. Left panel shows ping/pong results with round-trip time and color-coded status (green=fast, yellow=slow, red=timeout). Right panel lists discovered peers with RSSI. Stats bar shows sent/recv/loss%/avg RTT.
+- **Nametag**: Editable name badge — type your name on the QWERTY keyboard. 5 display modes cycled via rotary: name+subtitle (editable), fullscreen name, About SkinnyCon, Code of Conduct, and badge hardware info. SkinnyCon light theme (`#EFF6F6` bg, `#F96123` orange titles, `#5BBEC0` teal). Tab switches between name and subtitle editing. Encoder click to go back.
+- **BadgeShark**: LoRa packet sniffer with teal-tinted theme. Shows packet number, length, RSSI (color-coded red/green by signal strength), and hex dump preview. Auto-scrolling list with max 50 packets, real-time stats bar. LVGL menu with back button.
+- **Schedule**: SkinnyCon 2026 3-day schedule browser. Rotate scrolls through talks, wraps to next/prev day at boundaries. Each entry shows time and talk title. Break sessions dimmed. LVGL menu with back button.
+- **Net Tools**: LoRa mesh diagnostic tool with two-panel layout. Left panel shows ping/pong results with round-trip time and color-coded status (green=fast, yellow=slow, red=timeout). Right panel lists discovered peers with RSSI. Stats bar shows sent/recv/loss%/avg RTT. LVGL menu with back button.
 
 ### Idle Screen (Low Power Mode)
 
-After 10 seconds of inactivity, the device shows the SkinnyCon badge screen:
-- Large "SKINNYCON" conference name in accent yellow
-- "2026  Huntsville, AL" subtitle in green
+After 10 seconds of inactivity, the device shows the badge idle screen:
+- If user has set their name: large name centered with subtitle below
+- If name is default ("YOUR NAME"): SKINNYCON logo with teal circle O
 - Footer bar with time, date, and battery percentage
 - CPU downclocked to 80 MHz for power savings
 - Any input wakes back to app menu at 240 MHz
 
 ## CI/CD
 
-### Workflows
-
 | Workflow | Jobs | Trigger |
 |----------|------|---------|
 | `tests.yml` | Native Tests + LVGL Simulator + Factory Sim + ESP32 Build | PR, push to master |
-| `base_examples_ci.yml` | Arduino compile: 31 base sketches x tlora_pager | PR, push |
-| `lvgl_examples_ci.yml` | Arduino compile: 42 LVGL widget examples x tlora_pager | PR, push |
-| `radio_examples_ci.yml` | Arduino compile: 13 radio examples x tlora_pager | PR, push |
 | `release.yml` | ESP32-S3 firmware build + artifact upload | Push to master, manual |
-
-**Board matrix**: `tlora_pager` only (this fork focuses exclusively on the T-LoRa-Pager).
-
-**CI artifacts**: PPM screenshots from factory simulation are uploaded for visual review on every PR.
 
 ### Firmware Downloads
 
@@ -278,19 +264,6 @@ The default radio is SX1262 (LoRa). Configurable parameters:
 | TX Power | -9 to 22 dBm | 10 dBm |
 | Coding Rate | 4/5 to 4/8 | 4/5 |
 
-## Dual Build System
-
-This project has **two independent build paths** — understanding this is critical:
-
-| Build Tool | Used For | Config |
-|------------|----------|--------|
-| **PlatformIO** | Local dev, unit tests (`native`, `native_lvgl`, `native_factory`), ESP32-S3 compilation (`tlora_pager`) | `platformio.ini` |
-| **Arduino CLI** | GitHub Actions CI for all example sketches (31 base + 42 LVGL + 13 radio = 86 sketches) | `arduino-cli compile --library .` |
-
-**Key difference**: Arduino CLI uses `--library .` which compiles everything in `src/` for ALL sketches. PlatformIO uses `build_src_filter` to selectively include `application/SkinnyCon/`. Never put example-specific code in `src/`.
-
-**`pio_main.cpp`**: PlatformIO doesn't auto-process `.ino` files outside `src_dir`, so `application/SkinnyCon/pio_main.cpp` wraps `SkinnyCon.ino` with `#include "SkinnyCon.ino"`. It's guarded with `#ifdef PLATFORMIO` so Arduino IDE (which compiles all `.cpp` in the sketch directory) sees an empty translation unit — no duplicate `setup()`/`loop()` definitions.
-
 ## Troubleshooting
 
 | Issue | Solution |
@@ -300,17 +273,36 @@ This project has **two independent build paths** — understanding this is criti
 | No LoRa signal | Verify antenna connected, check frequency matches receiver |
 | GPS no fix | Move outdoors, wait 30-60s for cold start acquisition |
 | Keyboard unresponsive | Check I2C address (TCA8418), verify `USING_INPUT_DEV_KEYBOARD` defined |
-| Build fails | Ensure ESP32 Arduino Core >= 3.3.0, install all lib_deps |
+| Build fails | Run `pio run -e tlora_pager` and check errors |
 | Tests fail | Run `pio test -e native -v` first to verify PlatformIO setup |
-| Arduino CI: duplicate symbols | Check `pio_main.cpp` has `#ifdef PLATFORMIO` guard |
-| Arduino CI: transient 404s | Espressif package server intermittent — re-run failed jobs |
 
 ## Additional Documentation
 
-- [T-LoRa-Pager Arduino IDE Quick Start](./docs/lilygo-t-lora-pager.md)
 - [T-LoRa-Pager Hardware Information](./docs/hardware/lilygo-t-lora-pager.md)
 - [GPS AssistNow Usage Guide](./docs/assistNow/assistNow.md)
 - [Flash Recovery Steps](./firmware/README.md)
+
+## Theme
+
+SkinnyCon light theme (defined in `application/SkinnyCon/ui_skinnycon_theme.h`):
+
+| Color | Hex | Usage |
+|-------|-----|-------|
+| Background | `#EFF6F6` | Main screen bg |
+| Teal | `#BDE4E6` | Headers, panels, accent bars |
+| Logo teal | `#5BBEC0` | SKINNYCON circle O, icon borders |
+| Orange | `#F96123` | Titles only |
+| Text | `#000000` | Primary text |
+| Dim | `#5A6672` | Secondary/hint text |
+
+All 12 menu icons are custom LVGL-drawn (no PNG assets).
+
+## Credits
+
+- **Conference**: [SkinnyCon 2026](https://skinnycon.com) — Skinny Research and Development
+- **Badge firmware**: Cyril Engmann / [The Garage Agency, LLC](https://thegarage.dev/)
+- **Hardware**: [LilyGo T-LoRa-Pager](https://www.lilygo.cc/)
+- **Base firmware**: Lewis He / ShenZhen XinYuan Electronic Technology Co., Ltd
 
 ## License
 

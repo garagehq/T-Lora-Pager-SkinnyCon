@@ -7,6 +7,7 @@
  *
  */
 #include "ui_define.h"
+#include "ui_skinnycon_theme.h"
 
 #ifdef USING_TOUCHPAD
 static lv_obj_t *keyboard = NULL;
@@ -223,7 +224,7 @@ void create_chat_ui(lv_obj_t *parent)
 {
     lv_obj_t *main_cont = lv_obj_create(parent);
     lv_obj_set_size(main_cont, lv_pct(100), lv_pct(100));
-    lv_obj_set_style_bg_color(main_cont, lv_color_white(), LV_PART_MAIN);
+    lv_obj_set_style_bg_color(main_cont, SC_BG, LV_PART_MAIN);
     lv_obj_set_style_border_width(main_cont, 0, LV_PART_MAIN);
     lv_obj_set_style_pad_all(main_cont, 0, LV_PART_MAIN);
 
@@ -261,8 +262,8 @@ void create_chat_ui(lv_obj_t *parent)
     lv_textarea_set_placeholder_text(input_textarea, "Please enter your message...");
     lv_obj_set_style_radius(input_textarea, 5, LV_PART_MAIN);
     lv_obj_set_style_border_width(input_textarea, 1, LV_PART_MAIN);
-    lv_obj_set_style_border_color(input_textarea, lv_color_black(), LV_PART_MAIN);
-    lv_obj_set_style_bg_color(input_textarea, lv_color_white(), LV_PART_MAIN);
+    lv_obj_set_style_border_color(input_textarea, SC_BORDER, LV_PART_MAIN);
+    lv_obj_set_style_bg_color(input_textarea, SC_PANEL, LV_PART_MAIN);
     lv_textarea_set_max_length(input_textarea, 500);
     lv_obj_set_scroll_dir(input_textarea, LV_DIR_NONE);
     lv_obj_set_scrollbar_mode(input_textarea, LV_SCROLLBAR_MODE_OFF);
@@ -271,26 +272,26 @@ void create_chat_ui(lv_obj_t *parent)
     lv_obj_t *send_btn = lv_btn_create(input_cont);
     lv_obj_set_size(send_btn, lv_pct(10), lv_pct(100));
     lv_obj_set_style_radius(send_btn, 5, LV_PART_MAIN);
-    lv_obj_set_style_bg_color(send_btn, lv_color_white(), LV_PART_MAIN);
+    lv_obj_set_style_bg_color(send_btn, SC_PANEL, LV_PART_MAIN);
     lv_obj_add_event_cb(send_btn, send_btn_cb, LV_EVENT_CLICKED, NULL);
     lv_obj_set_style_pad_all(send_btn, 0, LV_PART_MAIN);
     lv_obj_set_style_border_width(send_btn, 1, LV_PART_MAIN);
     lv_obj_t *send_label = lv_label_create(send_btn);
     lv_label_set_text(send_label, LV_SYMBOL_GPS);
     lv_obj_center(send_label);
-    lv_obj_set_style_text_color(send_label, lv_color_black(), LV_PART_MAIN);
+    lv_obj_set_style_text_color(send_label, SC_TEXT, LV_PART_MAIN);
 
 
     lv_obj_t *setting_btn = lv_btn_create(input_cont);
     lv_obj_set_size(setting_btn, lv_pct(10), lv_pct(100));
     lv_obj_set_style_radius(setting_btn, 5, LV_PART_MAIN);
-    lv_obj_set_style_bg_color(setting_btn, lv_color_white(), LV_PART_MAIN);
+    lv_obj_set_style_bg_color(setting_btn, SC_PANEL, LV_PART_MAIN);
     lv_obj_set_style_pad_all(setting_btn, 0, LV_PART_MAIN);
     lv_obj_set_style_border_width(setting_btn, 1, LV_PART_MAIN);
     lv_obj_t *setting_label = lv_label_create(setting_btn);
     lv_label_set_text(setting_label, LV_SYMBOL_SETTINGS);
     lv_obj_center(setting_label);
-    lv_obj_set_style_text_color(setting_label, lv_color_black(), LV_PART_MAIN);
+    lv_obj_set_style_text_color(setting_label, SC_TEXT, LV_PART_MAIN);
 
     lv_obj_t *section;
     lv_obj_t *sub_rf_setting_page = lv_menu_page_create(menu, NULL);

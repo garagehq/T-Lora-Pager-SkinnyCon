@@ -8,6 +8,14 @@
  */
 #include "ui_define.h"
 #include "ui_skinnycon_theme.h"
+#include <string.h>
+#ifdef ARDUINO
+#include <Preferences.h>
+#endif
+
+/* Nametag name storage (defined in ui_nametag.cpp) */
+extern char nametag_user_name[];
+extern char nametag_user_subtitle[];
 
 LV_IMG_DECLARE(img_microphone);
 LV_IMG_DECLARE(img_ir_remote);
@@ -146,7 +154,9 @@ static void btn_event_cb(lv_event_t *e)
     }
 }
 
-static void create_app(lv_obj_t *parent, const char *name, const lv_img_dsc_t *img, app_t *app_fun)
+typedef void (*icon_draw_fn)(lv_obj_t *parent);
+
+static lv_obj_t *create_app_btn(lv_obj_t *parent, const char *name, app_t *app_fun)
 {
     lv_obj_t *btn = lv_btn_create(parent);
     lv_coord_t w = 150;
@@ -154,20 +164,15 @@ static void create_app(lv_obj_t *parent, const char *name, const lv_img_dsc_t *i
 
     lv_obj_set_size(btn, w, h);
     lv_obj_set_style_bg_opa(btn, LV_OPA_0, 0);
-    lv_obj_set_style_outline_color(btn, lv_color_black(), LV_STATE_FOCUS_KEY);
+    lv_obj_set_style_outline_color(btn, SC_ACCENT, LV_STATE_FOCUS_KEY);
     lv_obj_set_style_shadow_width(btn, 30, LV_PART_MAIN);
-    lv_obj_set_style_shadow_color(btn, lv_color_black(), LV_PART_MAIN);
+    lv_obj_set_style_shadow_color(btn, SC_BORDER, LV_PART_MAIN);
     uint32_t phy_hor_res = lv_display_get_physical_horizontal_resolution(NULL);
     if (phy_hor_res < 320) {
         lv_obj_set_style_radius(btn, LV_RADIUS_CIRCLE, 0);
     }
     lv_obj_set_user_data(btn, (void *)name);
 
-    if (img != NULL) {
-        lv_obj_t *icon = lv_image_create(btn);
-        lv_image_set_src(icon, img);
-        lv_obj_center(icon);
-    }
     /* Text change event callback */
     lv_obj_add_event_cb(btn, btn_event_cb, LV_EVENT_FOCUSED, (void *)name);
 
@@ -189,6 +194,366 @@ static void create_app(lv_obj_t *parent, const char *name, const lv_img_dsc_t *i
         }
     },
     LV_EVENT_CLICKED, app_fun);
+
+    return btn;
+}
+
+static void create_app(lv_obj_t *parent, const char *name, const lv_img_dsc_t *img, app_t *app_fun)
+{
+    lv_obj_t *btn = create_app_btn(parent, name, app_fun);
+    if (img != NULL) {
+        lv_obj_t *icon = lv_image_create(btn);
+        lv_image_set_src(icon, img);
+        lv_obj_center(icon);
+    }
+}
+
+static void create_app_drawn(lv_obj_t *parent, const char *name, icon_draw_fn draw_fn, app_t *app_fun)
+{
+    lv_obj_t *btn = create_app_btn(parent, name, app_fun);
+    if (draw_fn) draw_fn(btn);
+}
+
+/* ── SkinnyCon logo helper ──────────────────────────────────────── */
+
+/**
+ * @brief Draw the SKINNYCON logo with teal circle replacing the O.
+ * @param parent Parent object to draw into
+ * @param font Font for the text (determines circle size)
+ * @param circle_size Diameter of the teal circle (match to cap height)
+ * @return The flex-row container holding the logo
+ */
+static lv_obj_t *draw_skinnycon_logo(lv_obj_t *parent, const lv_font_t *font, int circle_size)
+{
+    lv_obj_t *row = lv_obj_create(parent);
+    lv_obj_remove_style_all(row);
+    lv_obj_set_size(row, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
+    lv_obj_set_style_pad_all(row, 0, 0);
+    lv_obj_set_style_pad_column(row, 0, 0);
+    lv_obj_set_flex_flow(row, LV_FLEX_FLOW_ROW);
+    lv_obj_set_flex_align(row, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER);
+
+    lv_obj_t *left = lv_label_create(row);
+    lv_label_set_text(left, "SKINNYC");
+    lv_obj_set_style_text_font(left, font, 0);
+    lv_obj_set_style_text_color(left, SC_TEXT, 0);
+
+    lv_obj_t *circle = lv_obj_create(row);
+    lv_obj_remove_style_all(circle);
+    lv_obj_set_size(circle, circle_size, circle_size);
+    lv_obj_set_style_radius(circle, LV_RADIUS_CIRCLE, 0);
+    lv_obj_set_style_bg_color(circle, SC_TEAL, 0);
+    lv_obj_set_style_bg_opa(circle, LV_OPA_COVER, 0);
+    lv_obj_set_style_margin_left(circle, -2, 0);
+    lv_obj_set_style_margin_right(circle, -2, 0);
+
+    lv_obj_t *right = lv_label_create(row);
+    lv_label_set_text(right, "N");
+    lv_obj_set_style_text_font(right, font, 0);
+    lv_obj_set_style_text_color(right, SC_TEXT, 0);
+
+    return row;
+}
+
+/* ── LVGL-drawn menu icons ─────────────────────────────────────── */
+
+/* Helper: create a clean shape with no default LVGL styling artifacts */
+static lv_obj_t *icon_shape(lv_obj_t *parent, int w, int h)
+{
+    lv_obj_t *o = lv_obj_create(parent);
+    lv_obj_remove_style_all(o);
+    lv_obj_set_size(o, w, h);
+    lv_obj_set_style_bg_opa(o, LV_OPA_0, 0);
+    lv_obj_set_style_border_width(o, 0, 0);
+    lv_obj_set_style_outline_width(o, 0, 0);
+    lv_obj_set_style_shadow_width(o, 0, 0);
+    lv_obj_set_style_pad_all(o, 0, 0);
+    lv_obj_set_style_radius(o, 0, 0);
+    lv_obj_remove_flag(o, LV_OBJ_FLAG_SCROLLABLE);
+    return o;
+}
+
+/* Helper: create a filled shape */
+static lv_obj_t *icon_fill(lv_obj_t *parent, int w, int h, lv_color_t color, int radius)
+{
+    lv_obj_t *o = icon_shape(parent, w, h);
+    lv_obj_set_style_bg_color(o, color, 0);
+    lv_obj_set_style_bg_opa(o, LV_OPA_COVER, 0);
+    lv_obj_set_style_radius(o, radius, 0);
+    return o;
+}
+
+/* Helper: create a ring (border-only circle/shape) */
+static lv_obj_t *icon_ring(lv_obj_t *parent, int w, int h, lv_color_t color, int bw, int radius)
+{
+    lv_obj_t *o = icon_shape(parent, w, h);
+    lv_obj_set_style_border_color(o, color, 0);
+    lv_obj_set_style_border_width(o, bw, 0);
+    lv_obj_set_style_radius(o, radius, 0);
+    return o;
+}
+
+/* Nametag icon: vertical ID badge with person silhouette */
+static void draw_icon_nametag(lv_obj_t *parent)
+{
+    LV_FONT_DECLARE(font_alibaba_12);
+
+    lv_obj_t *badge = lv_obj_create(parent);
+    lv_obj_set_size(badge, 44, 58);
+    lv_obj_center(badge);
+    lv_obj_set_style_bg_color(badge, SC_PANEL, 0);
+    lv_obj_set_style_bg_opa(badge, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_color(badge, SC_TEXT, 0);
+    lv_obj_set_style_border_width(badge, 2, 0);
+    lv_obj_set_style_radius(badge, 4, 0);
+    lv_obj_set_style_pad_all(badge, 0, 0);
+    lv_obj_remove_flag(badge, LV_OBJ_FLAG_SCROLLABLE);
+
+    /* Orange header band */
+    lv_obj_t *band = lv_obj_create(badge);
+    lv_obj_set_size(band, LV_PCT(100), 10);
+    lv_obj_align(band, LV_ALIGN_TOP_MID, 0, 0);
+    lv_obj_set_style_bg_color(band, SC_ACCENT, 0);
+    lv_obj_set_style_bg_opa(band, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_width(band, 0, 0);
+    lv_obj_set_style_radius(band, 0, 0);
+
+    /* Person head (circle) */
+    lv_obj_t *head = lv_obj_create(badge);
+    lv_obj_set_size(head, 14, 14);
+    lv_obj_align(head, LV_ALIGN_CENTER, 0, -6);
+    lv_obj_set_style_radius(head, LV_RADIUS_CIRCLE, 0);
+    lv_obj_set_style_bg_color(head, SC_TEXT_DIM, 0);
+    lv_obj_set_style_bg_opa(head, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_width(head, 0, 0);
+
+    /* Person body (wider rounded rect) */
+    lv_obj_t *body = lv_obj_create(badge);
+    lv_obj_set_size(body, 22, 10);
+    lv_obj_align(body, LV_ALIGN_CENTER, 0, 6);
+    lv_obj_set_style_radius(body, 10, 0);
+    lv_obj_set_style_bg_color(body, SC_TEXT_DIM, 0);
+    lv_obj_set_style_bg_opa(body, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_width(body, 0, 0);
+
+    /* Name text line */
+    lv_obj_t *nline = lv_obj_create(badge);
+    lv_obj_set_size(nline, 28, 3);
+    lv_obj_align(nline, LV_ALIGN_BOTTOM_MID, 0, -10);
+    lv_obj_set_style_bg_color(nline, SC_TEXT, 0);
+    lv_obj_set_style_bg_opa(nline, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_width(nline, 0, 0);
+    lv_obj_set_style_radius(nline, 1, 0);
+
+    /* Subtitle text line */
+    lv_obj_t *sline = lv_obj_create(badge);
+    lv_obj_set_size(sline, 20, 2);
+    lv_obj_align(sline, LV_ALIGN_BOTTOM_MID, 0, -5);
+    lv_obj_set_style_bg_color(sline, SC_TEXT_DIM, 0);
+    lv_obj_set_style_bg_opa(sline, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_width(sline, 0, 0);
+    lv_obj_set_style_radius(sline, 1, 0);
+}
+
+/* Schedule icon: calendar page with day number */
+static void draw_icon_schedule(lv_obj_t *parent)
+{
+    LV_FONT_DECLARE(font_alibaba_24);
+
+    lv_obj_t *cal = lv_obj_create(parent);
+    lv_obj_set_size(cal, 48, 52);
+    lv_obj_center(cal);
+    lv_obj_set_style_bg_color(cal, SC_PANEL, 0);
+    lv_obj_set_style_bg_opa(cal, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_color(cal, SC_TEXT, 0);
+    lv_obj_set_style_border_width(cal, 2, 0);
+    lv_obj_set_style_radius(cal, 4, 0);
+    lv_obj_set_style_pad_all(cal, 0, 0);
+    lv_obj_remove_flag(cal, LV_OBJ_FLAG_SCROLLABLE);
+
+    /* Red/orange header band (like a real calendar top) */
+    lv_obj_t *hdr = lv_obj_create(cal);
+    lv_obj_set_size(hdr, LV_PCT(100), 14);
+    lv_obj_align(hdr, LV_ALIGN_TOP_MID, 0, 0);
+    lv_obj_set_style_bg_color(hdr, SC_ACCENT, 0);
+    lv_obj_set_style_bg_opa(hdr, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_width(hdr, 0, 0);
+    lv_obj_set_style_radius(hdr, 0, 0);
+
+    /* Day number "12" (May 12) */
+    lv_obj_t *day = lv_label_create(cal);
+    lv_label_set_text(day, "12");
+    lv_obj_set_style_text_font(day, &font_alibaba_24, 0);
+    lv_obj_set_style_text_color(day, SC_TEXT, 0);
+    lv_obj_align(day, LV_ALIGN_CENTER, 0, 5);
+}
+
+/* Net Tools icon: signal/antenna waves */
+static void draw_icon_nettools(lv_obj_t *parent)
+{
+    lv_obj_t *cont = icon_shape(parent, 56, 48);
+    lv_obj_center(cont);
+
+    /* Center dot (antenna base) */
+    lv_obj_t *dot = icon_fill(cont, 8, 8, SC_ACCENT, LV_RADIUS_CIRCLE);
+    lv_obj_align(dot, LV_ALIGN_BOTTOM_MID, 0, -2);
+
+    /* Concentric arcs (signal waves) — using rounded rectangles */
+    int sizes[] = {22, 36, 50};
+    for (int i = 0; i < 3; i++) {
+        lv_obj_t *arc = icon_ring(cont, sizes[i], sizes[i] / 2, SC_TEAL, 2, sizes[i]);
+        lv_obj_align(arc, LV_ALIGN_BOTTOM_MID, 0, -2);
+        lv_obj_set_style_border_side(arc, (lv_border_side_t)(LV_BORDER_SIDE_TOP | LV_BORDER_SIDE_LEFT | LV_BORDER_SIDE_RIGHT), 0);
+    }
+}
+
+/* BadgeShark icon: eye */
+static void draw_icon_badgeshark(lv_obj_t *parent)
+{
+    lv_obj_t *c = icon_shape(parent, 52, 48);
+    lv_obj_center(c);
+    lv_obj_t *eye = icon_ring(c, 44, 28, SC_TEXT, 3, LV_RADIUS_CIRCLE);
+    lv_obj_align(eye, LV_ALIGN_CENTER, 0, 0);
+    lv_obj_t *pupil = icon_fill(c, 16, 16, SC_TEXT, LV_RADIUS_CIRCLE);
+    lv_obj_align(pupil, LV_ALIGN_CENTER, 0, 0);
+    lv_obj_t *hl = icon_fill(c, 6, 6, SC_PANEL, LV_RADIUS_CIRCLE);
+    lv_obj_align(hl, LV_ALIGN_CENTER, -2, -2);
+}
+
+/* LoRa icon: simple radio tower — vertical bar with 3 horizontal bars */
+static void draw_icon_lora(lv_obj_t *parent)
+{
+    LV_FONT_DECLARE(font_alibaba_12);
+    lv_obj_t *c = icon_shape(parent, 48, 52);
+    lv_obj_center(c);
+
+    /* Tower body */
+    lv_obj_t *tower = icon_fill(c, 6, 40, SC_TEXT, 2);
+    lv_obj_align(tower, LV_ALIGN_CENTER, 0, 0);
+    /* Cross bars */
+    lv_obj_t *b1 = icon_fill(c, 30, 4, SC_TEXT, 1);
+    lv_obj_align(b1, LV_ALIGN_CENTER, 0, -12);
+    lv_obj_t *b2 = icon_fill(c, 22, 4, SC_TEXT, 1);
+    lv_obj_align(b2, LV_ALIGN_CENTER, 0, -2);
+    lv_obj_t *b3 = icon_fill(c, 14, 4, SC_TEXT, 1);
+    lv_obj_align(b3, LV_ALIGN_CENTER, 0, 8);
+    /* Tip */
+    lv_obj_t *tip = icon_fill(c, 10, 10, SC_ACCENT, LV_RADIUS_CIRCLE);
+    lv_obj_align(tip, LV_ALIGN_TOP_MID, 0, 0);
+}
+
+/* LoRa Chat icon: two overlapping speech bubbles */
+static void draw_icon_chat(lv_obj_t *parent)
+{
+    lv_obj_t *c = icon_shape(parent, 52, 48);
+    lv_obj_center(c);
+    lv_obj_t *back = icon_fill(c, 36, 26, SC_TEXT_DIM, 12);
+    lv_obj_align(back, LV_ALIGN_TOP_RIGHT, -2, 0);
+    lv_obj_t *front = icon_fill(c, 36, 26, SC_TEXT, 12);
+    lv_obj_align(front, LV_ALIGN_BOTTOM_LEFT, 2, -6);
+    for (int i = 0; i < 3; i++) {
+        lv_obj_t *dot = icon_fill(front, 5, 5, SC_PANEL, LV_RADIUS_CIRCLE);
+        lv_obj_align(dot, LV_ALIGN_CENTER, (i - 1) * 10, 0);
+    }
+}
+
+/* Setting icon: two horizontal sliders */
+static void draw_icon_setting(lv_obj_t *parent)
+{
+    lv_obj_t *c = icon_shape(parent, 48, 48);
+    lv_obj_center(c);
+
+    /* Three horizontal tracks with knobs at different positions */
+    int y_offsets[] = {-14, 0, 14};
+    int knob_x[] = {10, -6, 6};
+    for (int i = 0; i < 3; i++) {
+        lv_obj_t *track = icon_fill(c, 36, 3, SC_TEXT_DIM, 1);
+        lv_obj_align(track, LV_ALIGN_CENTER, 0, y_offsets[i]);
+        lv_obj_t *knob = icon_fill(c, 10, 10, SC_TEXT, LV_RADIUS_CIRCLE);
+        lv_obj_align(knob, LV_ALIGN_CENTER, knob_x[i], y_offsets[i]);
+    }
+}
+
+/* Wireless icon: WiFi dot + 3 arcs */
+static void draw_icon_wireless(lv_obj_t *parent)
+{
+    lv_obj_t *c = icon_shape(parent, 52, 48);
+    lv_obj_center(c);
+    lv_obj_t *dot = icon_fill(c, 8, 8, SC_TEXT, LV_RADIUS_CIRCLE);
+    lv_obj_align(dot, LV_ALIGN_BOTTOM_MID, 0, -4);
+    int sizes[] = {22, 36, 50};
+    for (int i = 0; i < 3; i++) {
+        lv_obj_t *arc = icon_ring(c, sizes[i], sizes[i] / 2, SC_TEXT, 3, sizes[i]);
+        lv_obj_align(arc, LV_ALIGN_BOTTOM_MID, 0, -4);
+        lv_obj_set_style_border_side(arc, (lv_border_side_t)(LV_BORDER_SIDE_TOP), 0);
+    }
+}
+
+/* GPS icon: location pin — circle with narrow point below */
+static void draw_icon_gps(lv_obj_t *parent)
+{
+    lv_obj_t *c = icon_shape(parent, 36, 52);
+    lv_obj_center(c);
+    /* Pin point (narrow, underneath the circle) */
+    lv_obj_t *point = icon_fill(c, 8, 22, SC_ACCENT, 0);
+    lv_obj_align(point, LV_ALIGN_BOTTOM_MID, 0, -2);
+    /* Pin head circle (on top of point) */
+    lv_obj_t *head = icon_fill(c, 30, 30, SC_ACCENT, LV_RADIUS_CIRCLE);
+    lv_obj_align(head, LV_ALIGN_TOP_MID, 0, 2);
+    /* White center dot */
+    lv_obj_t *inner = icon_fill(c, 10, 10, SC_PANEL, LV_RADIUS_CIRCLE);
+    lv_obj_align(inner, LV_ALIGN_TOP_MID, 0, 12);
+}
+
+/* Power icon: power button */
+static void draw_icon_power(lv_obj_t *parent)
+{
+    lv_obj_t *c = icon_shape(parent, 48, 48);
+    lv_obj_center(c);
+    lv_obj_t *ring = icon_ring(c, 36, 36, SC_TEXT, 4, LV_RADIUS_CIRCLE);
+    lv_obj_center(ring);
+    lv_obj_t *line = icon_fill(c, 5, 22, SC_TEXT, 2);
+    lv_obj_align(line, LV_ALIGN_TOP_MID, 0, 4);
+}
+
+/* Microphone icon: simple mic capsule + stand */
+static void draw_icon_mic(lv_obj_t *parent)
+{
+    lv_obj_t *c = icon_shape(parent, 40, 52);
+    lv_obj_center(c);
+    /* Mic capsule */
+    lv_obj_t *capsule = icon_fill(c, 20, 30, SC_TEXT, 10);
+    lv_obj_align(capsule, LV_ALIGN_TOP_MID, 0, 0);
+    /* Stand stem */
+    lv_obj_t *stem = icon_fill(c, 4, 12, SC_TEXT, 0);
+    lv_obj_align(stem, LV_ALIGN_BOTTOM_MID, 0, -8);
+    /* Base */
+    lv_obj_t *base = icon_fill(c, 20, 4, SC_TEXT, 2);
+    lv_obj_align(base, LV_ALIGN_BOTTOM_MID, 0, -4);
+}
+
+/* IMU icon: chip with motion lines */
+static void draw_icon_imu(lv_obj_t *parent)
+{
+    lv_obj_t *c = icon_shape(parent, 48, 48);
+    lv_obj_center(c);
+    /* Chip body */
+    lv_obj_t *chip = icon_ring(c, 28, 28, SC_TEXT, 3, 4);
+    lv_obj_align(chip, LV_ALIGN_CENTER, -2, 2);
+    /* Chip pins (4 on each side) */
+    for (int i = 0; i < 3; i++) {
+        lv_obj_t *lp = icon_fill(c, 6, 2, SC_TEXT, 0);
+        lv_obj_align(lp, LV_ALIGN_CENTER, -17, -6 + i * 6);
+        lv_obj_t *rp = icon_fill(c, 6, 2, SC_TEXT, 0);
+        lv_obj_align(rp, LV_ALIGN_CENTER, 13, -6 + i * 6);
+    }
+    /* Motion arc (upper-right) */
+    lv_obj_t *a1 = icon_ring(c, 20, 10, SC_TEAL, 2, 20);
+    lv_obj_align(a1, LV_ALIGN_TOP_RIGHT, -2, 4);
+    lv_obj_set_style_border_side(a1, (lv_border_side_t)(LV_BORDER_SIDE_TOP), 0);
+    lv_obj_t *a2 = icon_ring(c, 30, 14, SC_TEAL, 2, 30);
+    lv_obj_align(a2, LV_ALIGN_TOP_RIGHT, 2, 0);
+    lv_obj_set_style_border_side(a2, (lv_border_side_t)(LV_BORDER_SIDE_TOP), 0);
 }
 
 
@@ -211,6 +576,8 @@ void menu_name_label_event_cb(lv_event_t *e)
 
 
 
+static void idle_update_center(void);  /* forward decl */
+
 static void clock_update_datetime(lv_timer_t *t)
 {
     const char *week[] = {"Sun", "Mon", "Tue", "Wed", "Thur", "Fri", "Sat"};
@@ -223,12 +590,43 @@ static void clock_update_datetime(lv_timer_t *t)
     monitor_params_t params;
     hw_get_monitor_params(params);
     lv_label_set_text_fmt(clock_label.battery_label, "%d%%", params.battery_percent);
+
+    /* Update idle screen center if user changed their name */
+    idle_update_center();
+}
+
+static lv_obj_t *idle_name_label = NULL;
+static lv_obj_t *idle_subtitle_label = NULL;
+static lv_obj_t *idle_logo_row = NULL;
+
+/* Update idle screen center content based on whether user set their name */
+static void idle_update_center(void)
+{
+    bool name_set = (strcmp(nametag_user_name, "YOUR NAME") != 0);
+
+    if (name_set) {
+        /* Show user's name big in the center */
+        if (idle_logo_row) lv_obj_add_flag(idle_logo_row, LV_OBJ_FLAG_HIDDEN);
+        if (idle_name_label) {
+            lv_obj_remove_flag(idle_name_label, LV_OBJ_FLAG_HIDDEN);
+            lv_label_set_text(idle_name_label, nametag_user_name);
+        }
+        if (idle_subtitle_label) {
+            lv_obj_remove_flag(idle_subtitle_label, LV_OBJ_FLAG_HIDDEN);
+            lv_label_set_text(idle_subtitle_label, nametag_user_subtitle);
+        }
+    } else {
+        /* Show SkinnyCon logo */
+        if (idle_logo_row) lv_obj_remove_flag(idle_logo_row, LV_OBJ_FLAG_HIDDEN);
+        if (idle_name_label) lv_obj_add_flag(idle_name_label, LV_OBJ_FLAG_HIDDEN);
+        if (idle_subtitle_label) lv_obj_add_flag(idle_subtitle_label, LV_OBJ_FLAG_HIDDEN);
+    }
 }
 
 lv_obj_t *setupClock()
 {
-    /* SkinnyCon badge idle screen — replaces the default clock face.
-     * Shows conference name prominently with time/battery in footer. */
+    /* SkinnyCon badge idle screen — shows user's name if set,
+     * otherwise shows SkinnyCon logo. Footer has time/battery. */
     lv_obj_t *page = lv_obj_create(lv_screen_active());
     lv_obj_set_size(page, LV_PCT(100), LV_PCT(100));
     lv_obj_remove_flag(page, LV_OBJ_FLAG_SCROLLABLE);
@@ -241,34 +639,44 @@ lv_obj_t *setupClock()
     lv_obj_t *bar_top = lv_obj_create(page);
     lv_obj_set_size(bar_top, LV_PCT(100), 4);
     lv_obj_align(bar_top, LV_ALIGN_TOP_MID, 0, 0);
-    lv_obj_set_style_bg_color(bar_top, SC_ACCENT, 0);
+    lv_obj_set_style_bg_color(bar_top, SC_TEAL, 0);
     lv_obj_set_style_bg_opa(bar_top, LV_OPA_COVER, 0);
     lv_obj_set_style_border_width(bar_top, 0, 0);
     lv_obj_set_style_radius(bar_top, 0, 0);
     lv_obj_set_style_pad_all(bar_top, 0, 0);
 
-    /* Conference name (large) */
-    lv_obj_t *conf_label = lv_label_create(page);
-    lv_label_set_text(conf_label, "SKINNYCON");
-    lv_obj_set_style_text_font(conf_label, &font_alibaba_60, LV_PART_MAIN);
-    lv_obj_set_style_text_color(conf_label, SC_ACCENT, LV_PART_MAIN);
-    lv_obj_align(conf_label, LV_ALIGN_CENTER, 0, -25);
+    /* Conference logo (shown when name not set) */
+    idle_logo_row = draw_skinnycon_logo(page, &font_alibaba_60, 52);
+    lv_obj_align(idle_logo_row, LV_ALIGN_CENTER, 0, -25);
 
-    /* Year subtitle */
-    lv_obj_t *year_label = lv_label_create(page);
-    lv_label_set_text(year_label, "2026  " LV_SYMBOL_WIFI "  Huntsville, AL");
-    lv_obj_set_style_text_font(year_label, &font_alibaba_24, LV_PART_MAIN);
-    lv_obj_set_style_text_color(year_label, SC_GREEN, LV_PART_MAIN);
-    lv_obj_align(year_label, LV_ALIGN_CENTER, 0, 20);
+    /* User name display (shown when name is set) */
+    idle_name_label = lv_label_create(page);
+    lv_label_set_text(idle_name_label, nametag_user_name);
+    lv_obj_set_style_text_font(idle_name_label, &font_alibaba_60, LV_PART_MAIN);
+    lv_obj_set_style_text_color(idle_name_label, SC_TEXT, LV_PART_MAIN);
+    lv_obj_set_style_text_align(idle_name_label, LV_TEXT_ALIGN_CENTER, 0);
+    lv_obj_set_width(idle_name_label, LV_PCT(100));
+    lv_label_set_long_mode(idle_name_label, LV_LABEL_LONG_SCROLL_CIRCULAR);
+    lv_obj_align(idle_name_label, LV_ALIGN_CENTER, 0, -20);
+
+    idle_subtitle_label = lv_label_create(page);
+    lv_label_set_text(idle_subtitle_label, nametag_user_subtitle);
+    lv_obj_set_style_text_font(idle_subtitle_label, &font_alibaba_24, LV_PART_MAIN);
+    lv_obj_set_style_text_color(idle_subtitle_label, SC_GREEN, LV_PART_MAIN);
+    lv_obj_set_style_text_align(idle_subtitle_label, LV_TEXT_ALIGN_CENTER, 0);
+    lv_obj_set_width(idle_subtitle_label, LV_PCT(100));
+    lv_obj_align(idle_subtitle_label, LV_ALIGN_CENTER, 0, 20);
+
+    /* Show the right center content */
+    idle_update_center();
 
     /* Bottom bar with time + battery */
     lv_obj_t *footer = lv_obj_create(page);
+    lv_obj_remove_style_all(footer);
     lv_obj_set_size(footer, LV_PCT(100), 30);
     lv_obj_align(footer, LV_ALIGN_BOTTOM_MID, 0, 0);
     lv_obj_set_style_bg_color(footer, SC_PANEL, 0);
     lv_obj_set_style_bg_opa(footer, LV_OPA_COVER, 0);
-    lv_obj_set_style_border_width(footer, 0, 0);
-    lv_obj_set_style_radius(footer, 0, 0);
     lv_obj_set_style_pad_hor(footer, 10, 0);
 
     /* Time (left side of footer) */
@@ -295,13 +703,21 @@ lv_obj_t *setupClock()
     lv_obj_align(batt_label, LV_ALIGN_RIGHT_MID, 0, 0);
     clock_label.battery_label = batt_label;
 
-    /* Hidden labels not used in nametag mode (keep struct happy) */
+    /* Hidden placeholders — not used in SkinnyCon idle mode (keep struct happy) */
     clock_label.seg = lv_label_create(page);
     lv_obj_add_flag(clock_label.seg, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_set_size(clock_label.seg, 0, 0);
+    lv_obj_remove_style_all(clock_label.seg);
     clock_label.minute = lv_label_create(page);
     lv_obj_add_flag(clock_label.minute, LV_OBJ_FLAG_HIDDEN);
-    clock_label.battery_bar = lv_bar_create(page);
+    lv_obj_set_size(clock_label.minute, 0, 0);
+    lv_obj_remove_style_all(clock_label.minute);
+    /* Use a label instead of bar to avoid bar widget rendering artifacts */
+    clock_label.battery_bar = lv_bar_create(lv_screen_active());
+    lv_obj_remove_style_all(clock_label.battery_bar);
+    lv_obj_set_size(clock_label.battery_bar, 0, 0);
     lv_obj_add_flag(clock_label.battery_bar, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_set_pos(clock_label.battery_bar, -100, -100);
 
     clock_timer = lv_timer_create(clock_update_datetime, 1000, NULL);
     lv_timer_pause(clock_timer);
@@ -371,7 +787,7 @@ static void hw_device_poll(lv_timer_t *t)
     if (params.battery_voltage < 3300 && params.usb_voltage == 0) {
         printf("Low battery voltage: %lu mV USB Voltage: %lu mV\n", params.battery_voltage, params.usb_voltage);
         lv_obj_clean(lv_screen_active());
-        lv_obj_set_style_bg_color(lv_screen_active(), lv_color_black(), LV_PART_MAIN);
+        lv_obj_set_style_bg_color(lv_screen_active(), SC_BG, LV_PART_MAIN);
         lv_obj_set_style_radius(lv_screen_active(), 0, 0);
 
         lv_obj_t *image = lv_image_create(lv_screen_active());
@@ -380,7 +796,7 @@ static void hw_device_poll(lv_timer_t *t)
 
         lv_obj_t *label = lv_label_create(lv_screen_active());
         lv_label_set_text(label, "Battery Low!\nShutting down...");
-        lv_obj_set_style_text_color(label, lv_color_white(), LV_PART_MAIN);
+        lv_obj_set_style_text_color(label, SC_RED, LV_PART_MAIN);
         lv_obj_set_style_text_font(label, &lv_font_montserrat_18, LV_PART_MAIN);
         lv_obj_align(label, LV_ALIGN_BOTTOM_MID, 0, -30);
 
@@ -463,24 +879,60 @@ static void ui_poll_timer_callback(lv_timer_t *t)
 
 void setupGui()
 {
+    /* Load saved nametag from flash so idle screen can show it */
+#ifdef ARDUINO
+    {
+        Preferences p;
+        p.begin("nametag", true);
+        String name = p.getString("name", "YOUR NAME");
+        String sub = p.getString("subtitle", "SkinnyCon 2026");
+        p.end();
+        strncpy(nametag_user_name, name.c_str(), 24);
+        nametag_user_name[24] = '\0';
+        strncpy(nametag_user_subtitle, sub.c_str(), 32);
+        nametag_user_subtitle[32] = '\0';
+        printf("[BOOT] Loaded nametag from flash: '%s' / '%s'\n",
+               nametag_user_name, nametag_user_subtitle);
+    }
+#endif
 
-    lv_obj_set_style_bg_color(lv_screen_active(), lv_color_black(), LV_PART_MAIN);
+    lv_obj_set_style_bg_color(lv_screen_active(), SC_BG, LV_PART_MAIN);
     lv_obj_set_style_radius(lv_screen_active(), 0, 0);
-    lv_obj_t *start_logo = lv_label_create(lv_screen_active());
-    lv_label_set_text(start_logo, "LilyGo");
-    LV_FONT_DECLARE(font_logo_84);
-    lv_obj_set_style_text_font(start_logo, &font_logo_84, LV_PART_MAIN);
-    lv_obj_set_style_text_color(start_logo, lv_color_white(), LV_PART_MAIN);
-    lv_obj_center(start_logo);
+
+    /* Boot logo */
+    lv_obj_t *boot_cont = lv_obj_create(lv_screen_active());
+    lv_obj_set_size(boot_cont, LV_PCT(100), LV_PCT(100));
+    lv_obj_set_style_bg_opa(boot_cont, LV_OPA_0, 0);
+    lv_obj_set_style_border_width(boot_cont, 0, 0);
+    lv_obj_set_flex_flow(boot_cont, LV_FLEX_FLOW_COLUMN);
+    lv_obj_set_flex_align(boot_cont, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+
+    draw_skinnycon_logo(boot_cont, &font_alibaba_40, 36);
+
+    lv_obj_t *year_lbl = lv_label_create(boot_cont);
+    lv_label_set_text(year_lbl, "2026");
+    lv_obj_set_style_text_font(year_lbl, &font_alibaba_24, 0);
+    lv_obj_set_style_text_color(year_lbl, SC_TEXT_DIM, 0);
+
+    /* Credit line — bottom of screen, outside the centered flex container */
+    lv_obj_t *credit = lv_label_create(lv_screen_active());
+    lv_label_set_text(credit, "Created by: The Garage Agency, LLC - https://thegarage.dev/");
+    lv_obj_set_style_text_color(credit, SC_TEXT_DIM, 0);
+    lv_obj_set_style_text_font(credit, &lv_font_montserrat_14, 0);
+    lv_obj_set_style_text_align(credit, LV_TEXT_ALIGN_CENTER, 0);
+    lv_obj_set_width(credit, LV_PCT(100));
+    lv_obj_align(credit, LV_ALIGN_BOTTOM_MID, 0, -4);
+
     lv_refr_now(NULL);
     lv_delay_ms(5000);
-    lv_obj_delete(start_logo);
+    lv_obj_delete(credit);
+    lv_obj_delete(boot_cont);
 
     disable_keyboard();
 
     const lv_font_t  *main_font = MAIN_FONT;
-    lv_theme_default_init(NULL, lv_color_black(), lv_palette_darken(LV_PALETTE_GREY, 3),
-                          LV_THEME_DEFAULT_DARK, main_font);
+    lv_theme_default_init(NULL, SC_ACCENT, SC_BG,
+                          false, main_font);
 
     theme_init();
 
@@ -493,9 +945,9 @@ void setupGui()
     lv_style_init(&style_frameless);
     lv_style_set_radius(&style_frameless, 0);
     lv_style_set_border_width(&style_frameless, 0);
-    lv_style_set_bg_color(&style_frameless, lv_color_white());
+    lv_style_set_bg_color(&style_frameless, SC_BG);
     lv_style_set_shadow_width(&style_frameless, 55);
-    lv_style_set_shadow_color(&style_frameless, lv_color_black());
+    lv_style_set_shadow_color(&style_frameless, SC_BORDER);
 
     /* opening animation */
     main_screen = lv_tileview_create(lv_screen_active());
@@ -543,15 +995,15 @@ void setupGui()
     extern app_t ui_schedule_main;
     extern app_t ui_nettools_main;
 
-    /* SkinnyCon primary apps — first in menu (unique icons per app) */
-    create_app(panel, "Nametag", &img_dog, &ui_nametag_main);
-    create_app(panel, "Schedule", &img_cry, &ui_schedule_main);
-    create_app(panel, "BadgeShark", &img_monitoring, &ui_badgeshark_main);
-    create_app(panel, "Net Tools", &img_test, &ui_nettools_main);
+    /* SkinnyCon primary apps — first in menu (custom drawn icons) */
+    create_app_drawn(panel, "Nametag", draw_icon_nametag, &ui_nametag_main);
+    create_app_drawn(panel, "Schedule", draw_icon_schedule, &ui_schedule_main);
+    create_app_drawn(panel, "BadgeShark", draw_icon_badgeshark, &ui_badgeshark_main);
+    create_app_drawn(panel, "Net Tools", draw_icon_nettools, &ui_nettools_main);
 
     /* Radio & messaging */
-    create_app(panel, "LoRa", &img_radio, &ui_radio_main);
-    create_app(panel, "LoRa Chat", &img_msgchat, &ui_msgchat_main);
+    create_app_drawn(panel, "LoRa", draw_icon_lora, &ui_radio_main);
+    create_app_drawn(panel, "LoRa Chat", draw_icon_chat, &ui_msgchat_main);
 
     /* Other apps */
 #if defined(USING_IR_REMOTE)
@@ -594,8 +1046,8 @@ void setupGui()
     // #endif
 
     // Removed: Screen Test app (development-only, not needed for SkinnyCon)
-    create_app(panel, "Setting", &img_configuration, &ui_sys_main);
-    create_app(panel, "Wireless", &img_wifi, &ui_wireless_main);
+    create_app_drawn(panel, "Setting", draw_icon_setting, &ui_sys_main);
+    create_app_drawn(panel, "Wireless", draw_icon_wireless, &ui_wireless_main);
 
 #if defined(USING_UART_BLE)
     create_app(panel, "Bluetooth", &img_bluetooth, &ui_ble_main);
@@ -603,17 +1055,14 @@ void setupGui()
 
 #if defined(USING_INPUT_DEV_KEYBOARD)
     if (hw_has_keyboard()) {
-        // Removed: BLE Keyboard app (not needed for SkinnyCon)
-        create_app(panel, "Keyboard", &img_keyboard, &ui_keyboard_main);
+        // Removed: Keyboard and Music apps (not needed for SkinnyCon)
     }
 #endif
 
-    create_app(panel, "Music", &img_music, &ui_audio_main);
-    create_app(panel, "GPS", &img_gps, &ui_gps_main);
-    // Removed: Monitor app (battery info already on clock face, detailed stats are dev-only)
-    create_app(panel, "Power", &img_power, &ui_power_main);
-    create_app(panel, "Microphone", &img_microphone, &ui_microphone_main);
-    create_app(panel, "IMU", &img_gyroscope, &ui_sensor_main);
+    create_app_drawn(panel, "GPS", draw_icon_gps, &ui_gps_main);
+    create_app_drawn(panel, "Microphone", draw_icon_mic, &ui_microphone_main);
+    create_app_drawn(panel, "IMU", draw_icon_imu, &ui_sensor_main);
+    create_app_drawn(panel, "Power", draw_icon_power, &ui_power_main);
 
     int offset = -10;
     if (lv_display_get_physical_vertical_resolution(NULL) > 320) {
