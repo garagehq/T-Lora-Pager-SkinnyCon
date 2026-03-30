@@ -73,6 +73,39 @@ static const int day_counts[] = {
 };
 static const char *day_names[] = {"Tue May 12", "Wed May 13", "Thu May 14"};
 
+/* Store row refs per day for deferred group swap */
+#define MAX_TALKS 15
+static lv_obj_t *day_rows[3][MAX_TALKS];
+static int day_row_counts[3] = {0, 0, 0};
+static lv_obj_t *day_conts[3] = {NULL, NULL, NULL};
+static int pending_day = -1;
+
+static void deferred_group_swap(lv_timer_t *t)
+{
+    lv_timer_del(t);
+    lv_group_t *g = lv_group_get_default();
+    if (!g) return;
+
+    if (pending_day >= 0 && pending_day < 3) {
+        /* Entering a day subpage — show only that day's rows */
+        lv_group_remove_all_objs(g);
+        for (int i = 0; i < day_row_counts[pending_day]; i++) {
+            lv_group_add_obj(g, day_rows[pending_day][i]);
+        }
+        printf("[SCHED] Deferred: group set to day %d with %d items\n",
+               pending_day, (int)lv_group_get_obj_count(g));
+    } else {
+        /* Returning to main page — show only day items */
+        lv_group_remove_all_objs(g);
+        for (int d = 0; d < 3; d++) {
+            if (day_conts[d]) lv_group_add_obj(g, day_conts[d]);
+        }
+        printf("[SCHED] Deferred: group set to main with %d items\n",
+               (int)lv_group_get_obj_count(g));
+    }
+    pending_day = -1;
+}
+
 static void sched_back_handler(lv_event_t *e)
 {
     lv_obj_t *obj = (lv_obj_t *)lv_event_get_target(e);
@@ -82,6 +115,24 @@ static void sched_back_handler(lv_event_t *e)
         lv_obj_del(sched_menu);
         sched_menu = NULL;
         menu_show();
+    } else {
+        /* Going back from day subpage to main */
+        printf("[SCHED] Back to day list\n");
+        pending_day = -1;  /* -1 means main page */
+        lv_timer_create(deferred_group_swap, 50, NULL);
+    }
+}
+
+static void day_clicked_cb(lv_event_t *e)
+{
+    lv_obj_t *target = lv_event_get_target_obj(e);
+    for (int d = 0; d < 3; d++) {
+        if (target == day_conts[d]) {
+            printf("[SCHED] Day %d clicked\n", d);
+            pending_day = d;
+            lv_timer_create(deferred_group_swap, 50, NULL);
+            return;
+        }
     }
 }
 
@@ -94,19 +145,17 @@ static void sched_setup(lv_obj_t *parent)
 
     lv_obj_t *main_page = lv_menu_page_create(sched_menu, NULL);
 
+    memset(day_rows, 0, sizeof(day_rows));
+    memset(day_row_counts, 0, sizeof(day_row_counts));
+    memset(day_conts, 0, sizeof(day_conts));
+
     for (int d = 0; d < 3; d++) {
-        /* Create subpage with talk items — same as Settings subpages */
         lv_obj_t *sub_page = lv_menu_page_create(sched_menu, NULL);
+        day_row_counts[d] = 0;
 
         const talk_t *talks = days_data[d];
         int n = day_counts[d];
-        for (int i = 0; i < n; i++) {
-            /*
-             * Use lv_menu_cont_create — same widget type as Settings uses
-             * for its slider/switch containers. These are focusable by the
-             * encoder when the subpage is visible. Do NOT set load_page_event
-             * so clicking them does nothing (they're display-only).
-             */
+        for (int i = 0; i < n && i < MAX_TALKS; i++) {
             lv_obj_t *cont = lv_menu_cont_create(sub_page);
 
             char buf[80];
@@ -117,17 +166,19 @@ static void sched_setup(lv_obj_t *parent)
             lv_label_set_long_mode(lbl, LV_LABEL_LONG_CLIP);
             lv_obj_set_width(lbl, LV_PCT(100));
 
-            /* Add to group at setup — just like Settings adds sliders */
-            if (g) lv_group_add_obj(g, cont);
+            /* Store ref but do NOT add to group yet */
+            day_rows[d][i] = cont;
+            day_row_counts[d]++;
         }
 
-        /* Main page entry for this day */
-        lv_obj_t *day_cont = lv_menu_cont_create(main_page);
-        lv_obj_t *day_lbl = lv_label_create(day_cont);
+        /* Main page entry */
+        day_conts[d] = lv_menu_cont_create(main_page);
+        lv_obj_t *day_lbl = lv_label_create(day_conts[d]);
         lv_label_set_text(day_lbl, day_names[d]);
         lv_obj_set_style_text_color(day_lbl, SCHED_WHITE, 0);
-        lv_menu_set_load_page_event(sched_menu, day_cont, sub_page);
-        if (g) lv_group_add_obj(g, day_cont);
+        lv_menu_set_load_page_event(sched_menu, day_conts[d], sub_page);
+        lv_obj_add_event_cb(day_conts[d], day_clicked_cb, LV_EVENT_CLICKED, NULL);
+        if (g) lv_group_add_obj(g, day_conts[d]);
     }
 
     lv_menu_set_page(sched_menu, main_page);
@@ -144,6 +195,10 @@ static void sched_exit(lv_obj_t *parent)
         lv_obj_del(sched_menu);
         sched_menu = NULL;
     }
+    memset(day_rows, 0, sizeof(day_rows));
+    memset(day_row_counts, 0, sizeof(day_row_counts));
+    memset(day_conts, 0, sizeof(day_conts));
+    pending_day = -1;
 }
 
 app_t ui_schedule_main = {sched_setup, sched_exit, NULL};
