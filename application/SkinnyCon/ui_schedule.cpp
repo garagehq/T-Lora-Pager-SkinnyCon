@@ -189,6 +189,9 @@ static void sched_setup(lv_obj_t *parent)
             lv_obj_set_style_pad_ver(cont, 4, 0);
             lv_obj_set_style_pad_hor(cont, 8, 0);
             lv_obj_remove_flag(cont, LV_OBJ_FLAG_SCROLLABLE);
+            /* Focus highlight since remove_style_all strips theme focus styling */
+            lv_obj_set_style_bg_color(cont, SCHED_CYAN, LV_STATE_FOCUS_KEY);
+            lv_obj_set_style_bg_opa(cont, LV_OPA_COVER, LV_STATE_FOCUS_KEY);
 
             char buf[80];
             snprintf(buf, sizeof(buf), "%s  %s", talks[i].time, talks[i].title);
