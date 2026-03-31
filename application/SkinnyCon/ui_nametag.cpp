@@ -30,9 +30,26 @@ static lv_obj_t *menu = NULL;
 static lv_obj_t *name_label = NULL;
 static lv_obj_t *subtitle_label = NULL;
 
+/* ── Deferred group management (Schedule pattern) ────────────── */
+/* Subpage IDs: -1=main, 0=about, 1=coc, 2=badge */
+#define NAMETAG_PAGE_MAIN  -1
+#define NAMETAG_PAGE_ABOUT  0
+#define NAMETAG_PAGE_COC    1
+#define NAMETAG_PAGE_BADGE  2
+#define NAMETAG_NUM_SUBPAGES 3
+#define NAMETAG_MAX_ROWS    12
+
+static lv_obj_t *subpage_rows[NAMETAG_NUM_SUBPAGES][NAMETAG_MAX_ROWS];
+static int subpage_row_counts[NAMETAG_NUM_SUBPAGES] = {0, 0, 0};
+static lv_obj_t *main_conts[4] = {NULL, NULL, NULL, NULL}; /* edit, about, coc, badge */
+static lv_obj_t *nametag_ta = NULL; /* textarea ref for group management */
+static int nametag_current_page = NAMETAG_PAGE_MAIN;
+
 /* Editable name storage (non-static so idle screen can read) */
 char nametag_user_name[NAME_MAX_LEN + 1] = "YOUR NAME";
 char nametag_user_subtitle[SUBTITLE_MAX_LEN + 1] = "SkinnyCon 2026";
+
+static void nametag_deferred_group_swap(lv_timer_t *t); /* forward decl */
 
 static void back_event_handler(lv_event_t *e)
 {
@@ -45,6 +62,11 @@ static void back_event_handler(lv_event_t *e)
         name_label = NULL;
         subtitle_label = NULL;
         menu_show();
+    } else {
+        /* Returning from a subpage to main */
+        printf("[NAMETAG] Back from subpage %d to main\n", nametag_current_page);
+        nametag_current_page = NAMETAG_PAGE_MAIN;
+        lv_timer_create(nametag_deferred_group_swap, 50, NULL);
     }
 }
 
@@ -174,15 +196,65 @@ static void nametag_ta_cb(lv_event_t *e)
 
 /* (Edit Subtitle removed per user request) */
 
-/* Focusable text row for scrollable subpages — same pattern as Schedule talk rows */
+static void nametag_deferred_group_swap(lv_timer_t *t)
+{
+    lv_timer_del(t);
+    lv_group_t *g = lv_group_get_default();
+    if (!g || !menu) return;
+
+    lv_group_remove_all_objs(g);
+
+    /* Always add back button first */
+    lv_obj_t *back_btn = lv_menu_get_main_header_back_button(menu);
+    if (back_btn) {
+        lv_group_add_obj(g, back_btn);
+        printf("[NAMETAG] Group: added back_btn\n");
+    }
+
+    if (nametag_current_page >= 0 && nametag_current_page < NAMETAG_NUM_SUBPAGES) {
+        /* On a text subpage — add that page's rows */
+        for (int i = 0; i < subpage_row_counts[nametag_current_page]; i++) {
+            lv_group_add_obj(g, subpage_rows[nametag_current_page][i]);
+        }
+        printf("[NAMETAG] Group: subpage %d with %d rows, total=%d\n",
+               nametag_current_page, subpage_row_counts[nametag_current_page],
+               (int)lv_group_get_obj_count(g));
+    } else {
+        /* On main page — add textarea (for edit name) + main menu conts */
+        if (nametag_ta) lv_group_add_obj(g, nametag_ta);
+        for (int i = 0; i < 4; i++) {
+            if (main_conts[i]) lv_group_add_obj(g, main_conts[i]);
+        }
+        printf("[NAMETAG] Group: main page with %d items\n",
+               (int)lv_group_get_obj_count(g));
+    }
+}
+
+static void nametag_subpage_clicked_cb(lv_event_t *e)
+{
+    lv_obj_t *target = lv_event_get_target_obj(e);
+    for (int i = 0; i < 3; i++) {
+        /* main_conts[1]=about, [2]=coc, [3]=badge */
+        if (target == main_conts[i + 1]) {
+            printf("[NAMETAG] Subpage %d clicked\n", i);
+            nametag_current_page = i;
+            lv_timer_create(nametag_deferred_group_swap, 50, NULL);
+            return;
+        }
+    }
+}
+
+/* Focusable text row for scrollable subpages */
 static void scroll_row_focus_cb(lv_event_t *e)
 {
     lv_obj_t *target = lv_event_get_target_obj(e);
     lv_obj_scroll_to_view(target, LV_ANIM_ON);
 }
 
-static lv_obj_t *add_text_row(lv_obj_t *page, const char *text, lv_color_t color,
-                               const lv_font_t *font, lv_group_t *g)
+/* Create a text row — stored in subpage_rows but NOT added to group */
+static lv_obj_t *add_text_row(lv_obj_t *page, int subpage_id,
+                               const char *text, lv_color_t color,
+                               const lv_font_t *font)
 {
     lv_obj_t *row = lv_obj_create(page);
     lv_obj_remove_style_all(row);
@@ -202,7 +274,13 @@ static lv_obj_t *add_text_row(lv_obj_t *page, const char *text, lv_color_t color
     lv_label_set_long_mode(lbl, LV_LABEL_LONG_WRAP);
 
     lv_obj_add_event_cb(row, scroll_row_focus_cb, LV_EVENT_FOCUSED, NULL);
-    if (g) lv_group_add_obj(g, row);
+
+    /* Store ref but do NOT add to group */
+    int idx = subpage_row_counts[subpage_id];
+    if (idx < NAMETAG_MAX_ROWS) {
+        subpage_rows[subpage_id][idx] = row;
+        subpage_row_counts[subpage_id]++;
+    }
     return row;
 }
 
@@ -254,6 +332,11 @@ static void nametag_setup(lv_obj_t *parent)
     lv_obj_set_style_bg_opa(bar2, LV_OPA_COVER, 0);
 
     /* ── Menu items (scrollable via encoder) ─────────────────────── */
+    memset(subpage_rows, 0, sizeof(subpage_rows));
+    memset(subpage_row_counts, 0, sizeof(subpage_row_counts));
+    memset(main_conts, 0, sizeof(main_conts));
+    nametag_ta = NULL;
+    nametag_current_page = NAMETAG_PAGE_MAIN;
 
     /* Edit Name — textarea in a menu subpage */
     lv_obj_t *edit_name_page = lv_menu_page_create(menu, NULL);
@@ -263,100 +346,98 @@ static void nametag_setup(lv_obj_t *parent)
     lv_obj_set_style_text_font(ta_label, &font_alibaba_12, 0);
     lv_obj_set_style_text_color(ta_label, SC_TEXT_DIM, 0);
 
-    lv_obj_t *name_ta = lv_textarea_create(edit_name_page);
-    lv_obj_set_size(name_ta, LV_PCT(90), 40);
-    lv_textarea_set_max_length(name_ta, NAME_MAX_LEN);
-    lv_textarea_set_text(name_ta, nametag_user_name);
-    lv_textarea_set_one_line(name_ta, true);
-    lv_obj_set_style_text_font(name_ta, &font_alibaba_24, 0);
-    lv_obj_add_event_cb(name_ta, nametag_ta_cb, LV_EVENT_ALL, NULL);
+    nametag_ta = lv_textarea_create(edit_name_page);
+    lv_obj_set_size(nametag_ta, LV_PCT(90), 40);
+    lv_textarea_set_max_length(nametag_ta, NAME_MAX_LEN);
+    lv_textarea_set_text(nametag_ta, nametag_user_name);
+    lv_textarea_set_one_line(nametag_ta, true);
+    lv_obj_set_style_text_font(nametag_ta, &font_alibaba_24, 0);
+    lv_obj_add_event_cb(nametag_ta, nametag_ta_cb, LV_EVENT_ALL, NULL);
     /* Textarea needs to be in group for keyboard input */
-    if (g) lv_group_add_obj(g, name_ta);
+    if (g) lv_group_add_obj(g, nametag_ta);
 
-    lv_obj_t *edit_name_cont = lv_menu_cont_create(main_page);
-    lv_obj_t *edit_name_lbl = lv_label_create(edit_name_cont);
+    main_conts[0] = lv_menu_cont_create(main_page);
+    lv_obj_t *edit_name_lbl = lv_label_create(main_conts[0]);
     lv_label_set_text(edit_name_lbl, "Edit Name");
     lv_obj_set_style_text_color(edit_name_lbl, SUPERCON_ACCENT, 0);
-    lv_menu_set_load_page_event(menu, edit_name_cont, edit_name_page);
-    if (g) lv_group_add_obj(g, edit_name_cont);
+    lv_menu_set_load_page_event(menu, main_conts[0], edit_name_page);
+    if (g) lv_group_add_obj(g, main_conts[0]);
 
-    /* About SkinnyCon */
+    /* About SkinnyCon — rows stored but NOT added to group */
     lv_obj_t *about_page = lv_menu_page_create(menu, NULL);
-    add_text_row(about_page, "SKINNYCON 2026", SUPERCON_ACCENT, &font_alibaba_24, g);
-    add_text_row(about_page, "May 12-14, 2026", SUPERCON_WHITE, NULL, g);
-    add_text_row(about_page, "Huntsville, Alabama", SUPERCON_WHITE, NULL, g);
-    add_text_row(about_page, "I2C Invention to Innovation Center\nUAH Campus", SUPERCON_WHITE, NULL, g);
-    add_text_row(about_page, "The best (and only) conference for federal government TSCM professionals.", SUPERCON_WHITE, NULL, g);
-    add_text_row(about_page, "Speakers, classes, workshops, sponsors, swag, and good snacks.", SUPERCON_WHITE, NULL, g);
-    add_text_row(about_page, "Hosted by Skinny R&D\nJason Baird, President", SC_TEXT_DIM, NULL, g);
+    add_text_row(about_page, NAMETAG_PAGE_ABOUT, "SKINNYCON 2026", SUPERCON_ACCENT, &font_alibaba_24);
+    add_text_row(about_page, NAMETAG_PAGE_ABOUT, "May 12-14, 2026", SUPERCON_WHITE, NULL);
+    add_text_row(about_page, NAMETAG_PAGE_ABOUT, "Huntsville, Alabama", SUPERCON_WHITE, NULL);
+    add_text_row(about_page, NAMETAG_PAGE_ABOUT, "I2C Invention to Innovation Center\nUAH Campus", SUPERCON_WHITE, NULL);
+    add_text_row(about_page, NAMETAG_PAGE_ABOUT, "The best (and only) conference for federal government TSCM professionals.", SUPERCON_WHITE, NULL);
+    add_text_row(about_page, NAMETAG_PAGE_ABOUT, "Speakers, classes, workshops, sponsors, swag, and good snacks.", SUPERCON_WHITE, NULL);
+    add_text_row(about_page, NAMETAG_PAGE_ABOUT, "Hosted by Skinny R&D\nJason Baird, President", SC_TEXT_DIM, NULL);
 
-    lv_obj_t *about_cont = lv_menu_cont_create(main_page);
-    lv_obj_t *about_lbl = lv_label_create(about_cont);
+    main_conts[1] = lv_menu_cont_create(main_page);
+    lv_obj_t *about_lbl = lv_label_create(main_conts[1]);
     lv_label_set_text(about_lbl, "About SkinnyCon");
-    lv_menu_set_load_page_event(menu, about_cont, about_page);
-    if (g) lv_group_add_obj(g, about_cont);
+    lv_menu_set_load_page_event(menu, main_conts[1], about_page);
+    lv_obj_add_event_cb(main_conts[1], nametag_subpage_clicked_cb, LV_EVENT_CLICKED, NULL);
+    if (g) lv_group_add_obj(g, main_conts[1]);
 
     /* Code of Conduct */
     lv_obj_t *coc_page = lv_menu_page_create(menu, NULL);
-    add_text_row(coc_page, "CODE OF CONDUCT", SUPERCON_ACCENT, &font_alibaba_24, g);
-    add_text_row(coc_page, "Be kind, considerate, respectful", SUPERCON_WHITE, NULL, g);
-    add_text_row(coc_page, "Behave professionally", SUPERCON_WHITE, NULL, g);
-    add_text_row(coc_page, "Respect differing viewpoints", SUPERCON_WHITE, NULL, g);
-    add_text_row(coc_page, "Be mindful of personal space", SUPERCON_WHITE, NULL, g);
-    add_text_row(coc_page, "Obey venue rules", SUPERCON_WHITE, NULL, g);
-    add_text_row(coc_page, "I2C / UAH campus is shared space. Do not explore beyond con areas.", SUPERCON_WHITE, NULL, g);
-    add_text_row(coc_page, "Do not play with door locks!", SC_RED, NULL, g);
-    add_text_row(coc_page, "UAH is 100% tobacco free.", SC_TEXT_DIM, NULL, g);
+    add_text_row(coc_page, NAMETAG_PAGE_COC, "CODE OF CONDUCT", SUPERCON_ACCENT, &font_alibaba_24);
+    add_text_row(coc_page, NAMETAG_PAGE_COC, "Be kind, considerate, respectful", SUPERCON_WHITE, NULL);
+    add_text_row(coc_page, NAMETAG_PAGE_COC, "Behave professionally", SUPERCON_WHITE, NULL);
+    add_text_row(coc_page, NAMETAG_PAGE_COC, "Respect differing viewpoints", SUPERCON_WHITE, NULL);
+    add_text_row(coc_page, NAMETAG_PAGE_COC, "Be mindful of personal space", SUPERCON_WHITE, NULL);
+    add_text_row(coc_page, NAMETAG_PAGE_COC, "Obey venue rules", SUPERCON_WHITE, NULL);
+    add_text_row(coc_page, NAMETAG_PAGE_COC, "I2C / UAH campus is shared space. Do not explore beyond con areas.", SUPERCON_WHITE, NULL);
+    add_text_row(coc_page, NAMETAG_PAGE_COC, "Do not play with door locks!", SC_RED, NULL);
+    add_text_row(coc_page, NAMETAG_PAGE_COC, "UAH is 100% tobacco free.", SC_TEXT_DIM, NULL);
 
-    lv_obj_t *coc_cont = lv_menu_cont_create(main_page);
-    lv_obj_t *coc_lbl = lv_label_create(coc_cont);
+    main_conts[2] = lv_menu_cont_create(main_page);
+    lv_obj_t *coc_lbl = lv_label_create(main_conts[2]);
     lv_label_set_text(coc_lbl, "Code of Conduct");
-    lv_menu_set_load_page_event(menu, coc_cont, coc_page);
-    if (g) lv_group_add_obj(g, coc_cont);
+    lv_menu_set_load_page_event(menu, main_conts[2], coc_page);
+    lv_obj_add_event_cb(main_conts[2], nametag_subpage_clicked_cb, LV_EVENT_CLICKED, NULL);
+    if (g) lv_group_add_obj(g, main_conts[2]);
 
     /* Badge Info */
     lv_obj_t *badge_page = lv_menu_page_create(menu, NULL);
-    add_text_row(badge_page, "BADGE INFO", SUPERCON_ACCENT, &font_alibaba_24, g);
-    add_text_row(badge_page, "Device: T-LoRa-Pager", SUPERCON_WHITE, NULL, g);
-    add_text_row(badge_page, "MCU: ESP32-S3 240MHz", SUPERCON_WHITE, NULL, g);
-    add_text_row(badge_page, "Display: 480x222 IPS", SUPERCON_WHITE, NULL, g);
-    add_text_row(badge_page, "Radio: SX1262 LoRa 915MHz", SUPERCON_WHITE, NULL, g);
-    add_text_row(badge_page, "GPS: u-blox MIA-M10Q", SUPERCON_WHITE, NULL, g);
-    add_text_row(badge_page, "NFC: ST25R3911B", SUPERCON_WHITE, NULL, g);
-    add_text_row(badge_page, "Created by: Cyril Engmann\nGarage Agency LLC", SC_TEXT_DIM, NULL, g);
+    add_text_row(badge_page, NAMETAG_PAGE_BADGE, "BADGE INFO", SUPERCON_ACCENT, &font_alibaba_24);
+    add_text_row(badge_page, NAMETAG_PAGE_BADGE, "Device: T-LoRa-Pager", SUPERCON_WHITE, NULL);
+    add_text_row(badge_page, NAMETAG_PAGE_BADGE, "MCU: ESP32-S3 240MHz", SUPERCON_WHITE, NULL);
+    add_text_row(badge_page, NAMETAG_PAGE_BADGE, "Display: 480x222 IPS", SUPERCON_WHITE, NULL);
+    add_text_row(badge_page, NAMETAG_PAGE_BADGE, "Radio: SX1262 LoRa 915MHz", SUPERCON_WHITE, NULL);
+    add_text_row(badge_page, NAMETAG_PAGE_BADGE, "GPS: u-blox MIA-M10Q", SUPERCON_WHITE, NULL);
+    add_text_row(badge_page, NAMETAG_PAGE_BADGE, "NFC: ST25R3911B", SUPERCON_WHITE, NULL);
+    add_text_row(badge_page, NAMETAG_PAGE_BADGE, "Created by: Cyril Engmann\nGarage Agency LLC", SC_TEXT_DIM, NULL);
 
-    lv_obj_t *badge_cont = lv_menu_cont_create(main_page);
-    lv_obj_t *badge_lbl = lv_label_create(badge_cont);
+    main_conts[3] = lv_menu_cont_create(main_page);
+    lv_obj_t *badge_lbl = lv_label_create(main_conts[3]);
     lv_label_set_text(badge_lbl, "Badge Info");
-    lv_menu_set_load_page_event(menu, badge_cont, badge_page);
-    if (g) lv_group_add_obj(g, badge_cont);
+    lv_menu_set_load_page_event(menu, main_conts[3], badge_page);
+    lv_obj_add_event_cb(main_conts[3], nametag_subpage_clicked_cb, LV_EVENT_CLICKED, NULL);
+    if (g) lv_group_add_obj(g, main_conts[3]);
 
     lv_menu_set_page(menu, main_page);
 
-    printf("[NAMETAG] Setup complete. %d items in group\n",
+    printf("[NAMETAG] Setup complete. %d items in group (main page only)\n",
            g ? (int)lv_group_get_obj_count(g) : -1);
 }
 
 static void nametag_exit(lv_obj_t *parent)
 {
     printf("[NAMETAG] Exit — cleaning up\n");
-    /* Save name from textarea if still on edit page */
-    lv_group_t *g = lv_group_get_default();
-    if (g) {
-        printf("[NAMETAG] Group had %d objs before cleanup\n",
-               (int)lv_group_get_obj_count(g));
-    }
     if (menu) {
         lv_obj_clean(menu);
         lv_obj_del(menu);
         menu = NULL;
     }
-    if (g) {
-        printf("[NAMETAG] Group has %d objs after menu delete\n",
-               (int)lv_group_get_obj_count(g));
-    }
     name_label = NULL;
     subtitle_label = NULL;
+    memset(subpage_rows, 0, sizeof(subpage_rows));
+    memset(subpage_row_counts, 0, sizeof(subpage_row_counts));
+    memset(main_conts, 0, sizeof(main_conts));
+    nametag_ta = NULL;
+    nametag_current_page = NAMETAG_PAGE_MAIN;
 }
 
 app_t ui_nametag_main = {nametag_setup, nametag_exit, NULL};

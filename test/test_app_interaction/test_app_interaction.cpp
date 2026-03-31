@@ -146,6 +146,103 @@ void test_three_app_cycle(void) {
     TEST_ASSERT_TRUE(true);
 }
 
+/* Verify nametag group only has main page items initially,
+   not hidden subpage rows */
+void test_nametag_group_main_page(void) {
+    lv_obj_t *p = open_app(&ui_nametag_main);
+    lv_group_t *g = lv_group_get_default();
+    TEST_ASSERT_NOT_NULL(g);
+
+    /* Main page should have: name_cont + name_ta + edit_name + about + coc + badge = 6 */
+    uint32_t count = lv_group_get_obj_count(g);
+    printf("[TEST] Main page group count: %d\n", (int)count);
+    TEST_ASSERT_EQUAL_MESSAGE(6, count,
+        "Main page group should have exactly 6 items (name_cont + ta + 4 menu conts)");
+
+    close_app(&ui_nametag_main, p);
+}
+
+/* Simulate clicking About and verify group swaps to about rows + back btn */
+void test_nametag_group_about_subpage(void) {
+    lv_obj_t *p = open_app(&ui_nametag_main);
+    lv_group_t *g = lv_group_get_default();
+
+    /* Simulate clicking "About SkinnyCon" (main_conts[1]) */
+    lv_obj_send_event(main_conts[1], LV_EVENT_CLICKED, NULL);
+    /* Process the deferred timer */
+    lvgl_test_run(100);
+
+    uint32_t count = lv_group_get_obj_count(g);
+    printf("[TEST] About subpage group count: %d\n", (int)count);
+    /* About page has 7 text rows + back button = 8 */
+    TEST_ASSERT_EQUAL_MESSAGE(8, count,
+        "About subpage group should have 8 items (back btn + 7 text rows)");
+
+    close_app(&ui_nametag_main, p);
+}
+
+/* Simulate clicking CoC and verify group */
+void test_nametag_group_coc_subpage(void) {
+    lv_obj_t *p = open_app(&ui_nametag_main);
+    lv_group_t *g = lv_group_get_default();
+
+    /* Simulate clicking "Code of Conduct" (main_conts[2]) */
+    lv_obj_send_event(main_conts[2], LV_EVENT_CLICKED, NULL);
+    lvgl_test_run(100);
+
+    uint32_t count = lv_group_get_obj_count(g);
+    printf("[TEST] CoC subpage group count: %d\n", (int)count);
+    /* CoC page has 9 text rows + back button = 10 */
+    TEST_ASSERT_EQUAL_MESSAGE(10, count,
+        "CoC subpage group should have 10 items (back btn + 9 text rows)");
+
+    close_app(&ui_nametag_main, p);
+}
+
+/* Simulate clicking Badge Info and verify group */
+void test_nametag_group_badge_subpage(void) {
+    lv_obj_t *p = open_app(&ui_nametag_main);
+    lv_group_t *g = lv_group_get_default();
+
+    /* Simulate clicking "Badge Info" (main_conts[3]) */
+    lv_obj_send_event(main_conts[3], LV_EVENT_CLICKED, NULL);
+    lvgl_test_run(100);
+
+    uint32_t count = lv_group_get_obj_count(g);
+    printf("[TEST] Badge subpage group count: %d\n", (int)count);
+    /* Badge page has 8 text rows + back button = 9 */
+    TEST_ASSERT_EQUAL_MESSAGE(9, count,
+        "Badge subpage group should have 9 items (back btn + 8 text rows)");
+
+    close_app(&ui_nametag_main, p);
+}
+
+/* Verify group restores to main page after going back from a subpage */
+void test_nametag_group_back_from_subpage(void) {
+    lv_obj_t *p = open_app(&ui_nametag_main);
+    lv_group_t *g = lv_group_get_default();
+
+    /* Enter About subpage */
+    lv_obj_send_event(main_conts[1], LV_EVENT_CLICKED, NULL);
+    lvgl_test_run(100);
+    TEST_ASSERT_EQUAL(8, lv_group_get_obj_count(g));
+
+    /* Click the back button to go back to main */
+    lv_obj_t *back_btn = lv_menu_get_main_header_back_button(menu);
+    TEST_ASSERT_NOT_NULL(back_btn);
+    lv_obj_send_event(back_btn, LV_EVENT_CLICKED, NULL);
+    lvgl_test_run(100);
+
+    /* Should be back to main page items */
+    uint32_t count = lv_group_get_obj_count(g);
+    printf("[TEST] After back, group count: %d\n", (int)count);
+    /* Main page: back_btn + ta + 4 menu conts = 6 */
+    TEST_ASSERT_EQUAL_MESSAGE(6, count,
+        "After going back, group should have 6 items (back btn + ta + 4 menu conts)");
+
+    close_app(&ui_nametag_main, p);
+}
+
 int main(int argc, char **argv) {
     (void)argc; (void)argv;
     UNITY_BEGIN();
@@ -154,5 +251,10 @@ int main(int argc, char **argv) {
     RUN_TEST(test_nametag_then_schedule);
     RUN_TEST(test_schedule_then_nametag);
     RUN_TEST(test_three_app_cycle);
+    RUN_TEST(test_nametag_group_main_page);
+    RUN_TEST(test_nametag_group_about_subpage);
+    RUN_TEST(test_nametag_group_coc_subpage);
+    RUN_TEST(test_nametag_group_badge_subpage);
+    RUN_TEST(test_nametag_group_back_from_subpage);
     return UNITY_END();
 }
