@@ -174,6 +174,38 @@ static void nametag_ta_cb(lv_event_t *e)
 
 /* (Edit Subtitle removed per user request) */
 
+/* Focusable text row for scrollable subpages — same pattern as Schedule talk rows */
+static void scroll_row_focus_cb(lv_event_t *e)
+{
+    lv_obj_t *target = lv_event_get_target_obj(e);
+    lv_obj_scroll_to_view(target, LV_ANIM_ON);
+}
+
+static lv_obj_t *add_text_row(lv_obj_t *page, const char *text, lv_color_t color,
+                               const lv_font_t *font, lv_group_t *g)
+{
+    lv_obj_t *row = lv_obj_create(page);
+    lv_obj_remove_style_all(row);
+    lv_obj_set_size(row, LV_PCT(100), LV_SIZE_CONTENT);
+    lv_obj_set_style_pad_ver(row, 2, 0);
+    lv_obj_set_style_pad_hor(row, 8, 0);
+    lv_obj_remove_flag(row, LV_OBJ_FLAG_SCROLLABLE);
+    /* Focus highlight */
+    lv_obj_set_style_bg_color(row, SC_CYAN, LV_STATE_FOCUS_KEY);
+    lv_obj_set_style_bg_opa(row, LV_OPA_COVER, LV_STATE_FOCUS_KEY);
+
+    lv_obj_t *lbl = lv_label_create(row);
+    lv_label_set_text(lbl, text);
+    lv_obj_set_style_text_color(lbl, color, 0);
+    if (font) lv_obj_set_style_text_font(lbl, font, 0);
+    lv_obj_set_width(lbl, LV_PCT(100));
+    lv_label_set_long_mode(lbl, LV_LABEL_LONG_WRAP);
+
+    lv_obj_add_event_cb(row, scroll_row_focus_cb, LV_EVENT_FOCUSED, NULL);
+    if (g) lv_group_add_obj(g, row);
+    return row;
+}
+
 static void nametag_setup(lv_obj_t *parent)
 {
     printf("[NAMETAG] Setup starting\n");
@@ -250,24 +282,13 @@ static void nametag_setup(lv_obj_t *parent)
 
     /* About SkinnyCon */
     lv_obj_t *about_page = lv_menu_page_create(menu, NULL);
-    lv_obj_t *about_info = lv_label_create(about_page);
-    lv_label_set_text(about_info,
-        "SKINNYCON 2026\n\n"
-        "May 12-14, 2026\n"
-        "Huntsville, Alabama\n"
-        "I2C Invention to Innovation Center\n"
-        "UAH Campus\n\n"
-        "The best (and only) conference for\n"
-        "federal government TSCM professionals.\n\n"
-        "Speakers, classes, workshops,\n"
-        "sponsors, swag, and good snacks.\n\n"
-        "Hosted by Skinny R&D\n"
-        "Jason Baird, President"
-    );
-    lv_obj_set_style_text_font(about_info, &font_alibaba_12, 0);
-    lv_obj_set_style_text_color(about_info, SUPERCON_WHITE, 0);
-    lv_obj_set_width(about_info, LV_PCT(100));
-    lv_label_set_long_mode(about_info, LV_LABEL_LONG_WRAP);
+    add_text_row(about_page, "SKINNYCON 2026", SUPERCON_ACCENT, &font_alibaba_24, g);
+    add_text_row(about_page, "May 12-14, 2026", SUPERCON_WHITE, NULL, g);
+    add_text_row(about_page, "Huntsville, Alabama", SUPERCON_WHITE, NULL, g);
+    add_text_row(about_page, "I2C Invention to Innovation Center\nUAH Campus", SUPERCON_WHITE, NULL, g);
+    add_text_row(about_page, "The best (and only) conference for federal government TSCM professionals.", SUPERCON_WHITE, NULL, g);
+    add_text_row(about_page, "Speakers, classes, workshops, sponsors, swag, and good snacks.", SUPERCON_WHITE, NULL, g);
+    add_text_row(about_page, "Hosted by Skinny R&D\nJason Baird, President", SC_TEXT_DIM, NULL, g);
 
     lv_obj_t *about_cont = lv_menu_cont_create(main_page);
     lv_obj_t *about_lbl = lv_label_create(about_cont);
@@ -277,23 +298,15 @@ static void nametag_setup(lv_obj_t *parent)
 
     /* Code of Conduct */
     lv_obj_t *coc_page = lv_menu_page_create(menu, NULL);
-    lv_obj_t *coc_info = lv_label_create(coc_page);
-    lv_label_set_text(coc_info,
-        "(!) CODE OF CONDUCT\n\n"
-        "- Be kind, considerate, respectful\n"
-        "- Behave professionally\n"
-        "- Respect differing viewpoints\n"
-        "- Be mindful of personal space\n"
-        "- Obey venue rules\n\n"
-        "I2C / UAH campus - shared space.\n"
-        "Do not explore beyond con areas.\n"
-        "Do not play with door locks!\n"
-        "UAH is 100% tobacco free."
-    );
-    lv_obj_set_style_text_font(coc_info, &font_alibaba_12, 0);
-    lv_obj_set_style_text_color(coc_info, SUPERCON_WHITE, 0);
-    lv_obj_set_width(coc_info, LV_PCT(100));
-    lv_label_set_long_mode(coc_info, LV_LABEL_LONG_WRAP);
+    add_text_row(coc_page, "CODE OF CONDUCT", SUPERCON_ACCENT, &font_alibaba_24, g);
+    add_text_row(coc_page, "Be kind, considerate, respectful", SUPERCON_WHITE, NULL, g);
+    add_text_row(coc_page, "Behave professionally", SUPERCON_WHITE, NULL, g);
+    add_text_row(coc_page, "Respect differing viewpoints", SUPERCON_WHITE, NULL, g);
+    add_text_row(coc_page, "Be mindful of personal space", SUPERCON_WHITE, NULL, g);
+    add_text_row(coc_page, "Obey venue rules", SUPERCON_WHITE, NULL, g);
+    add_text_row(coc_page, "I2C / UAH campus is shared space. Do not explore beyond con areas.", SUPERCON_WHITE, NULL, g);
+    add_text_row(coc_page, "Do not play with door locks!", SC_RED, NULL, g);
+    add_text_row(coc_page, "UAH is 100% tobacco free.", SC_TEXT_DIM, NULL, g);
 
     lv_obj_t *coc_cont = lv_menu_cont_create(main_page);
     lv_obj_t *coc_lbl = lv_label_create(coc_cont);
@@ -303,22 +316,14 @@ static void nametag_setup(lv_obj_t *parent)
 
     /* Badge Info */
     lv_obj_t *badge_page = lv_menu_page_create(menu, NULL);
-    lv_obj_t *badge_info = lv_label_create(badge_page);
-    lv_label_set_text(badge_info,
-        "BADGE INFO\n\n"
-        "Device: T-LoRa-Pager\n"
-        "MCU: ESP32-S3 240MHz\n"
-        "Display: 480x222 IPS\n"
-        "Radio: SX1262 LoRa 915MHz\n"
-        "GPS: u-blox MIA-M10Q\n"
-        "NFC: ST25R3911B\n\n"
-        "Created by: Cyril Engmann\n"
-        "Garage Agency LLC"
-    );
-    lv_obj_set_style_text_font(badge_info, &font_alibaba_12, 0);
-    lv_obj_set_style_text_color(badge_info, SUPERCON_WHITE, 0);
-    lv_obj_set_width(badge_info, LV_PCT(100));
-    lv_label_set_long_mode(badge_info, LV_LABEL_LONG_WRAP);
+    add_text_row(badge_page, "BADGE INFO", SUPERCON_ACCENT, &font_alibaba_24, g);
+    add_text_row(badge_page, "Device: T-LoRa-Pager", SUPERCON_WHITE, NULL, g);
+    add_text_row(badge_page, "MCU: ESP32-S3 240MHz", SUPERCON_WHITE, NULL, g);
+    add_text_row(badge_page, "Display: 480x222 IPS", SUPERCON_WHITE, NULL, g);
+    add_text_row(badge_page, "Radio: SX1262 LoRa 915MHz", SUPERCON_WHITE, NULL, g);
+    add_text_row(badge_page, "GPS: u-blox MIA-M10Q", SUPERCON_WHITE, NULL, g);
+    add_text_row(badge_page, "NFC: ST25R3911B", SUPERCON_WHITE, NULL, g);
+    add_text_row(badge_page, "Created by: Cyril Engmann\nGarage Agency LLC", SC_TEXT_DIM, NULL, g);
 
     lv_obj_t *badge_cont = lv_menu_cont_create(main_page);
     lv_obj_t *badge_lbl = lv_label_create(badge_cont);
