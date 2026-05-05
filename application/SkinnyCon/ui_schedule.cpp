@@ -13,6 +13,7 @@
 #define SCHED_DIM         SC_TEXT_DIM
 
 LV_FONT_DECLARE(font_alibaba_12);
+LV_FONT_DECLARE(GoogleSansCodeMono_12);
 
 static lv_obj_t *sched_menu = NULL;
 
@@ -20,49 +21,59 @@ typedef struct {
     const char *time;
     const char *title;
     bool is_break;
+    bool is_child;
 } talk_t;
 
 static const talk_t day1_talks[] = {
-    {"0800", "Check-in/Breakfast/Vendor Setup", true},
-    {"0900", "Welcome", false},
-    {"0915", "How to CTF", false},
-    {"0930", "Tech Ops Case Files: Real Stories", false},
-    {"1030", "Break", true},
-    {"1100", "Intro to Reverse Engineering", false},
-    {"1150", "Lunch", true},
-    {"1300", "Training 1", false},
-    {"1300", "Upping IQ on I&Q: GNU Radio", false},
-    {"1500", "Training 2", false},
-    {"1500", "RF Situational Awareness in IPMS", false},
-    {"1500", "Behind the Waterfall: SDRs", false},
+    {"0800-0900", "Check-in/Breakfast/Vendor Chats/Vendor Setup", true, false},
+    {"0900-0915", "Welcome", false, false},
+    {"0915-0930", "How to Do a CTF", false, false},
+    {"0930-1020", "An Introduction to Reverse Engineering", false, false},
+    {"1020-1050", "Break", true, false},
+    {"1100-1150", "Tech Ops Case Files: Real Stories", false, false},
+    {"1150-1300", "Lunch", true, false},
+    {"1300-1500", "Training Session 1", false, false},
+    {"", "1300-1400 RF Situational Awareness in an IPMS", false, true},
+    {"", "1300-1400 Next-Generation Portable X-Ray in Action", false, true},
+    {"", "1300-1500 Upping Your IQ on I&Q (GNU Radio)", false, true},
+    {"", "1405-1435 EMI Awareness", false, true},
+    {"", "1405-1500 The Rise of Modern Signaling Threats", false, true},
+    {"1500-1700", "Training Session 2", false, false},
+    {"", "1505-1535 Controlling Mobile Sensors and Signals", false, true},
+    {"", "1505-1600 The Rise of Modern Signaling Threats", false, true},
+    {"", "1505-1700 Intro to Reverse Engineering Lab", false, true},
+    {"", "1540-1610 EMI Awareness", false, true},
 };
 
 static const talk_t day2_talks[] = {
-    {"0800", "Check-in/Breakfast/Vendor Setup", true},
-    {"0900", "Welcome", false},
-    {"0910", "H&E Field Ultrasonic+Magnetic Sensor", false},
-    {"0940", "Electronic Sniffing K-9s", false},
-    {"1030", "Break", true},
-    {"1100", "Reverse Engineering Medical Devices", false},
-    {"1150", "Lunch", true},
-    {"1330", "BYOD Upgrades and Updates", false},
-    {"1405", "Training 3", false},
-    {"1405", "Next-Gen Portable X-Ray in Action", false},
-    {"1600", "TSCM Workforce Survey and Report", false},
+    {"0800-0900", "Check-in/Breakfast/Vendor Chats/Vendor Setup", true, false},
+    {"0900-0910", "Welcome", false, false},
+    {"0910-0940", "H&E Field Ultrasonic + Magnetic Sensor", false, false},
+    {"0940-1030", "Electronic Sniffing K-9s", false, false},
+    {"1030-1100", "Break", true, false},
+    {"1100-1150", "Reverse Engineering Medical Devices", false, false},
+    {"1150-1330", "Lunch", true, false},
+    {"1330-1400", "BYOD Upgrades and Updates", false, false},
+    {"1405-1600", "Training Session 3", false, false},
+    {"", "1405-1435 Controlling Mobile Sensors and Signals", false, true},
+    {"", "1405-1505 Next-Generation Portable X-Ray in Action", false, true},
+    {"", "1405-1600 Behind the Waterfall: Spectral Ops with SDRs", false, true},
+    {"", "1440-1540 RF Situational Awareness in an IPMS", false, true},
+    {"1600-1650", "TEMPEST Emissions and Mitigations", false, false},
 };
 
 static const talk_t day3_talks[] = {
-    {"0800", "Check-in/Breakfast/Vendor Chats", true},
-    {"0900", "Welcome", false},
-    {"0910", "Supertooth", false},
-    {"0945", "State of TSCM Education", false},
-    {"1035", "Break", true},
-    {"1100", "Converge and Cringe", false},
-    {"1150", "Lunch", true},
-    {"1300", "Commercial TSCM Panel", false},
-    {"1350", "Break", true},
-    {"1420", "TBD", false},
-    {"1520", "Closing Remarks", false},
+    {"0800-0900", "Check-in/Breakfast/Vendor Chats", true, false},
+    {"0900-0910", "Welcome", false, false},
+    {"0910-0940", "Supertooth", false, false},
+    {"0940-1030", "State of TSCM Education Panel", false, false},
+    {"1030-1100", "Break", true, false},
+    {"1100-1150", "Converge and Cringe", false, false},
+    {"1150-1300", "Lunch", true, false},
+    {"1300-1350", "Commercial TSCM Panel", false, false},
+    {"1350-1420", "Break", true, false},
+    {"1420-1510", "TSCM Workforce Survey", false, false},
+    {"1529-1600", "Closing Remarks", false, false},
 };
 
 static const talk_t *days_data[] = { day1_talks, day2_talks, day3_talks };
@@ -74,7 +85,7 @@ static const int day_counts[] = {
 static const char *day_names[] = {"Tue May 12", "Wed May 13", "Thu May 14"};
 
 /* Store row refs per day for deferred group swap */
-#define MAX_TALKS 15
+#define MAX_TALKS 24
 static lv_obj_t *day_rows[3][MAX_TALKS];
 static int day_row_counts[3] = {0, 0, 0};
 static lv_obj_t *day_conts[3] = {NULL, NULL, NULL};
@@ -204,10 +215,15 @@ static void sched_setup(lv_obj_t *parent)
             lv_obj_set_style_bg_color(cont, SCHED_CYAN, LV_STATE_FOCUS_KEY);
             lv_obj_set_style_bg_opa(cont, LV_OPA_COVER, LV_STATE_FOCUS_KEY);
 
-            char buf[80];
-            snprintf(buf, sizeof(buf), "%s  %s", talks[i].time, talks[i].title);
+            char buf[128];
+            if (talks[i].is_child) {
+                snprintf(buf, sizeof(buf), "  |-- %s", talks[i].title);
+            } else {
+                snprintf(buf, sizeof(buf), "%-10s %s", talks[i].time, talks[i].title);
+            }
             lv_obj_t *lbl = lv_label_create(cont);
             lv_label_set_text(lbl, buf);
+            lv_obj_set_style_text_font(lbl, &GoogleSansCodeMono_12, 0);
             lv_obj_set_style_text_color(lbl, talks[i].is_break ? SCHED_DIM : SCHED_WHITE, 0);
             lv_label_set_long_mode(lbl, LV_LABEL_LONG_CLIP);
             lv_obj_set_width(lbl, LV_PCT(100));
@@ -224,6 +240,7 @@ static void sched_setup(lv_obj_t *parent)
         day_conts[d] = lv_menu_cont_create(main_page);
         lv_obj_t *day_lbl = lv_label_create(day_conts[d]);
         lv_label_set_text(day_lbl, day_names[d]);
+        lv_obj_set_style_text_font(day_lbl, &GoogleSansCodeMono_12, 0);
         lv_obj_set_style_text_color(day_lbl, SCHED_WHITE, 0);
         lv_menu_set_load_page_event(sched_menu, day_conts[d], sub_page);
         lv_obj_add_event_cb(day_conts[d], day_clicked_cb, LV_EVENT_CLICKED, NULL);
